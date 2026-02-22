@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, Crosshair, XCircle } from "lucide-react";
+import { Shield, Crosshair } from "lucide-react";
 import BoardTabs from "./board-tabs";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
@@ -43,7 +43,7 @@ const WarZone = ({ game }: GameBoardProps) => {
         {game.state.playedCards.map((card: Card, index: number) => (
           <div
             key={index}
-            className="absolute w-32 h-32"
+            className="absolute w-24 h-32"
             style={{
               zIndex: index,
             }}

@@ -114,7 +114,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       return {
         ...state,
-        turnPhase: isD6 ? "PLACING" : "IDLE",
+        turnPhase: isD6 ? "BUYING" : "IDLE",
         turnAction: "NONE",
 
         hud: {
@@ -284,6 +284,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
       return {
         ...state,
+        turnPhase: "PLACING",
         teams: {
           ...state.teams,
           [team]: {

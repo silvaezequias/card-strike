@@ -75,8 +75,10 @@ export const useGameEngine = (setup: SetupSettings) => {
 
   const handleEndTime = () => {
     switch (state.turnPhase) {
+      case "BUYING":
       case "PLACING":
-        if (handInventory.length < 3) return dispatch({ type: "BUY_CARD" });
+        if (state.turnPhase === "BUYING" && handInventory.length < 3)
+          return dispatch({ type: "BUY_CARD" });
 
         const d6Result = state.tool.result.d6;
         if (d6Result) {

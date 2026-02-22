@@ -2,6 +2,7 @@ import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
 import { Card } from "@/lib/types";
 import { Clock, Heart, Plus } from "lucide-react";
+import Image from "next/image";
 
 type InventoryProps = {
   game: GameEngine;
@@ -57,6 +58,21 @@ export const CardComponent = ({
 }) => {
   const theme = useGameTheme(card.teamOwner || game.state.currentTeam);
 
+  const cardIcons = {
+    AWP: `/items/${card.teamOwner || game.state.currentTeam}/awp.svg`,
+    "DESERT EAGLE": `/items/desert-eagle.svg`,
+    GLOCK: `/items/faction/glock.svg`,
+    USP: `/items/police/usp.svg`,
+    "AK-47": `/items/faction/ak-47.svg`,
+    BOMBA: `/items/c4.svg`,
+    M4A1: `/items/police/m4a1.svg`,
+    Granada: `/items/granade.svg`,
+    Capacete: `/items/${card.teamOwner || game.state.currentTeam}/cap.svg`,
+    Colete: `/items/${card.teamOwner || game.state.currentTeam}/bulletproof.svg`,
+  };
+
+  const cardIcon = cardIcons[card.name as keyof typeof cardIcons];
+
   const categoryStyle =
     card.cardCategory === "ARMA"
       ? "bg-red-500/20 text-red-300"
@@ -68,25 +84,32 @@ export const CardComponent = ({
     <div
       className={`
         ${theme.border} ${theme.background} border rounded-sm 
-        aspect-[3/4] h-full flex flex-col items-center 
+        aspect-[3/4] h-full flex flex-col justify-between items-center
         ${placed ? "justify-center" : "justify-between"} gap-1 p-6
       `}
       style={card.style}
     >
-      {!placed && (
+      {/* {!placed && (
         <span className={`text-[10px] font-bold px-1 rounded ${categoryStyle}`}>
           {card.cardCategory}
         </span>
+      )} */}
+
+      <span
+        className={`${theme.text} flex flex-col gap-5font-bold text-center mt-0.5 leading-tight ${placed ? "text-[10px]" : "text-base"}`}
+      >
+        {card.name}
+      </span>
+
+      {cardIcon && (
+        <Image
+          src={cardIcon}
+          alt={card.name}
+          width={40}
+          height={40}
+          className="mb-1"
+        />
       )}
-
-      <div className="flex flex-col items-center gap-2">
-        <span
-          className={`${theme.text} font-bold text-center mt-0.5 leading-tight`}
-        >
-          {card.name}
-        </span>
-      </div>
-
       {!placed && <CardStats card={card} />}
     </div>
   );
@@ -110,7 +133,10 @@ export const InventorySlot = ({
   const d6 = tool.result.d6 || -1;
 
   const canBuy =
-    type === "hand" && (inventory[index - 1] || index === 0) && !card;
+    turnPhase === "BUYING" &&
+    type === "hand" &&
+    (inventory[index - 1] || index === 0) &&
+    !card;
 
   const isPlacing = turnPhase === "PLACING" && type === "hand";
 
@@ -145,38 +171,47 @@ export const InventorySlot = ({
     }
   };
 
-  const baseSlotStyle = `
-    aspect-[3/4] w-full 
-    bg-gradient-to-b 
-    border border-zinc-900
-    ${theme.overlay}
-    rounded 
-    shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)]
-    flex flex-col items-center justify-center
-  `;
+  const baseSlotStyle =
+    "aspect-[3/4] w-full  " +
+    "bg-gradient-to-b  " +
+    " border border-zinc-900 " +
+    `${theme.overlay} ` +
+    "rounded " +
+    "shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] " +
+    "flex flex-col items-center justify-center";
 
-  const interactionStyle = card
-    ? "hover:brightness-125 cursor-pointer"
-    : focused
-      ? "cursor-default"
-      : "opacity-50 hover:opacity-75";
+  const interactionStyle =
+    card && turnPhase === "PLACING"
+      ? "hover:brightness-125 cursor-pointer"
+      : focused
+        ? "cursor-default"
+        : "opacity-50 hover:opacity-75";
 
-  const ringStyle = isPlacing
-    ? "ring-2 ring-white/70 animate-pulse"
-    : focused
-      ? "ring-2 ring-white/90 animate-pulse"
-      : "";
+  const ringStyle = canBuy
+    ? "ring-2 ring-white "
+    : isPlacing
+      ? "ring-2 ring-white/70"
+      : focused
+        ? "ring-2 ring-white/90"
+        : "";
+
+  const animatedRingStyle =
+    focused || isPlacing
+      ? "animate-pulse"
+      : canBuy
+        ? "animate-pulse duration-500"
+        : "";
 
   return (
     <button
       onClick={handleBuy}
-      className={`group ${
-        canBuy ? "cursor-pointer" : "cursor-default"
+      className={`group ${animatedRingStyle} ${
+        canBuy ? "cursor-pointer" : "cursor-default animate-accordion-down"
       } ${theme.background}`}
     >
       <div
         onClick={type === "hand" ? handleSelectCard : handlePlayCard}
-        className={`${baseSlotStyle} ${interactionStyle} ${ringStyle}`}
+        className={` ${baseSlotStyle} ${interactionStyle} ${ringStyle} `}
       >
         {card ? (
           <CardComponent card={card} game={game} />
