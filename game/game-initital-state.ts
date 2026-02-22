@@ -4,6 +4,9 @@ export const createInitialGameState = (setup: SetupSettings): GameState => ({
   currentTeam: "faction",
   turnPhase: "COUNTDOWN",
   turnAction: "SELECTING_ACTION",
+
+  playedCards: [],
+
   countdown: {
     gameTime: 0,
     seconds: 60,

@@ -313,6 +313,7 @@ export const useGameEngine = (playerSetup?: PlayerSetup): GameEngine => {
     const randomRot = Math.floor(Math.random() * 40) - 20;
     const randomX = Math.floor(Math.random() * 20) - 10;
     const randomY = Math.floor(Math.random() * 20) - 10;
+
     setPlayedCards((prev) => [
       ...prev,
       {

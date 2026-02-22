@@ -3,6 +3,10 @@ import { GameState } from "./game-types";
 import { GameAction } from "./game-actions";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
+  const currentTeam = state.currentTeam;
+  const warZoneInventory = state.teams[currentTeam].inventory.warZone;
+  const handInventory = state.teams[currentTeam].inventory.hand;
+
   switch (action.type) {
     case "TIMER":
       return {
@@ -12,48 +16,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           gameTime: state.countdown.gameTime + 1,
           seconds:
             state.countdown.seconds > 0 ? state.countdown.seconds - 1 : 0,
-        },
-      };
-
-    case "END_TURN":
-      return {
-        ...state,
-        currentTeam: state.currentTeam === "faction" ? "police" : "faction",
-        turnPhase: "COUNTDOWN",
-        tool: {
-          ...state.tool,
-          selected: null,
-        },
-        countdown: {
-          ...state.countdown,
-          round: state.countdown.round + 1,
-          seconds: 60,
-        },
-        hud: {
-          inventory: {
-            isOpen: false,
-            isLocked: false,
-          },
-        },
-      };
-
-    case "BUY_CARD":
-      const team = state.currentTeam;
-
-      return {
-        ...state,
-        teams: {
-          ...state.teams,
-          [team]: {
-            ...state.teams[team],
-            inventory: {
-              ...state.teams[team].inventory,
-              hand: [
-                ...state.teams[team].inventory.hand,
-                generateRandomCard(team),
-              ],
-            },
-          },
         },
       };
 
@@ -119,10 +81,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           result: action.payload,
         },
         turnPhase: "IDLE",
-
         countdown: {
           ...state.countdown,
-          seconds: 10,
+          seconds: 3,
         },
       };
     case "ROLL_TOOL_START":
@@ -149,14 +110,17 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case "ROLL_TOOL_COMPLETE":
+      const isD6 = state.tool.selected === "d6";
+
       return {
         ...state,
-        turnPhase: state.tool.selected === "spinner" ? "IDLE" : "PLACING",
+        turnPhase: isD6 ? "PLACING" : "IDLE",
         turnAction: "NONE",
+
         hud: {
           inventory: {
-            isOpen: state.tool.selected === "d6",
-            isLocked: state.tool.selected === "d6",
+            isOpen: isD6,
+            isLocked: isD6,
           },
         },
         tool: {
@@ -172,7 +136,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             actionTab: false,
             battlefieldTab: true,
           },
-          warZoneIsActive: state.tool.selected === "spinner",
+          warZoneIsActive: !isD6,
         },
         teams: {
           ...state.teams,
@@ -180,6 +144,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
             ...state.teams[state.currentTeam],
             position: action.payload.spinner,
           },
+        },
+        countdown: {
+          ...state.countdown,
+          seconds: isD6 ? action.payload.timerAfter || 30 : 3,
         },
       } as GameState;
 
@@ -215,7 +183,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         turnAction: "NONE",
         countdown: {
           ...state.countdown,
-          seconds: 10,
+          seconds: 3,
         },
         hud: {
           inventory: {
@@ -235,13 +203,106 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
       };
 
+    case "END_TURN":
+      return {
+        ...state,
+        currentTeam: state.currentTeam === "faction" ? "police" : "faction",
+        turnPhase: "COUNTDOWN",
+        tool: {
+          ...state.tool,
+          selected: null,
+        },
+        countdown: {
+          ...state.countdown,
+          round: state.countdown.round + 1,
+          seconds: 60,
+        },
+        hud: {
+          inventory: {
+            isOpen: false,
+            isLocked: false,
+          },
+        },
+      };
+
+    case "PLAY_CARD":
+      const randomRot = Math.floor(Math.random() * 40) - 20;
+      const randomX = Math.floor(Math.random() * 20) - 10;
+      const randomY = Math.floor(Math.random() * 20) - 10;
+
+      const warZoneInventoryFilterd = warZoneInventory.filter(
+        (card) => card.id !== action.payload.card.id,
+      );
+
+      return {
+        ...state,
+        turnPhase: "IDLE",
+        turnAction: "NONE",
+        hud: {
+          inventory: {
+            isOpen: false,
+            isLocked: false,
+          },
+        },
+        countdown: {
+          ...state.countdown,
+          seconds: 3,
+        },
+        board: {
+          warZoneIsActive: true,
+          activeTab: "battlefieldTab",
+          enabledTabs: {
+            actionTab: false,
+            battlefieldTab: true,
+          },
+        },
+        teams: {
+          ...state.teams,
+          [currentTeam]: {
+            ...state.teams[currentTeam],
+            inventory: {
+              ...state.teams[currentTeam].inventory,
+              warZone: warZoneInventoryFilterd,
+            },
+          },
+        },
+        playedCards: [
+          ...state.playedCards,
+          {
+            ...action.payload.card,
+            teamOwner: currentTeam,
+            style: {
+              transform: `translate(${randomX}px, ${randomY}px) rotate(${randomRot}deg)`,
+              zIndex: state.playedCards.length,
+            },
+          },
+        ],
+      };
+
+    case "BUY_CARD":
+      const team = state.currentTeam;
+
+      return {
+        ...state,
+        teams: {
+          ...state.teams,
+          [team]: {
+            ...state.teams[team],
+            inventory: {
+              ...state.teams[team].inventory,
+              hand: [
+                ...state.teams[team].inventory.hand,
+                generateRandomCard(team),
+              ],
+            },
+          },
+        },
+      };
+
     case "PLACE_CARD":
       const { cardIndex, positionIndex } = action.payload;
-      const currentTeam = state.currentTeam;
-      const cardToPlace = state.teams[currentTeam].inventory.hand[cardIndex];
-
-      const warZoneInventory = state.teams[currentTeam].inventory.warZone;
-      const handInventory = state.teams[currentTeam].inventory.hand.filter(
+      const cardToPlace = handInventory[cardIndex];
+      const handInventoryFiltered = handInventory.filter(
         (_, index) => index !== cardIndex,
       );
       warZoneInventory[positionIndex] = cardToPlace;
@@ -257,7 +318,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           [currentTeam]: {
             ...state.teams[currentTeam],
             inventory: {
-              hand: handInventory,
+              hand: handInventoryFiltered,
               warZone: warZoneInventory,
             },
           },
@@ -276,7 +337,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         },
         countdown: {
           ...state.countdown,
-          seconds: 10,
+          seconds: 3,
         },
         hud: {
           inventory: {

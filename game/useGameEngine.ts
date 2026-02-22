@@ -14,7 +14,11 @@ export const useGameEngine = (setup: SetupSettings) => {
     createInitialGameState(setup),
   );
 
-  const rollTool = () => {
+  const currentTeam = state.currentTeam;
+  const { hand: handInventory, warZone: warZoneInventory } =
+    state.teams[currentTeam].inventory;
+
+  const rollTool = (props: { timerAfter?: number } = {}) => {
     dispatch({ type: "ROLL_TOOL_START" });
 
     const d6Result = Math.floor(Math.random() * 6) + 1;
@@ -60,27 +64,70 @@ export const useGameEngine = (setup: SetupSettings) => {
         payload: {
           d6: d6Result,
           spinner: spinnerResult,
+          timerAfter: props?.timerAfter,
         },
       });
     }, 3000);
   };
 
-  useEffect(() => {
-    let excessSeconds = 0;
-    const timer = setInterval(() => {
-      dispatch({ type: "TIMER" });
+  const { seconds } = state.countdown;
+  const { isRolling } = state.tool;
 
-      if (state.countdown.seconds <= 0) {
-        excessSeconds += 1;
-        if (excessSeconds >= 3) {
-          dispatch({ type: "END_TURN" });
-          excessSeconds = 0;
+  const handleEndTime = () => {
+    switch (state.turnPhase) {
+      case "PLACING":
+        if (handInventory.length < 3) return dispatch({ type: "BUY_CARD" });
+
+        const d6Result = state.tool.result.d6;
+        if (d6Result) {
+          if (warZoneInventory[d6Result - 1]) {
+            dispatch({
+              type: "PLAY_CARD",
+              payload: {
+                card: warZoneInventory[d6Result - 1],
+              },
+            });
+          }
+
+          dispatch({
+            type: "PLACE_CARD",
+            payload: {
+              cardIndex: Math.floor(
+                Math.random() * handInventory.filter((c) => c).length,
+              ),
+              positionIndex: d6Result - 1,
+            },
+          });
         }
-      }
+
+        break;
+
+      case "CHOOSING":
+      case "ACTING":
+        dispatch({ type: "SET_TOOL", payload: "d6" });
+
+        setTimeout(() => {
+          !state.tool.isRolling && rollTool({ timerAfter: 5 });
+          state.tool.isRolling = true;
+        }, 100);
+
+        break;
+
+      case "IDLE":
+      default:
+        dispatch({ type: "END_TURN" });
+    }
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (state.countdown.seconds === 0) handleEndTime();
+
+      dispatch({ type: "TIMER" });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [seconds, handInventory, isRolling]);
 
   return {
     state,
@@ -92,7 +139,6 @@ export const useGameEngine = (setup: SetupSettings) => {
       },
       roll: rollTool,
     },
-    // isFactionTurn: state.currentTeam === "faction",
     teamNames: { faction: "Facção", police: "Polícia" },
     currentTeamName: state.currentTeam === "faction" ? "Facção" : "Polícia",
     currentPlayerName: state.teams[state.currentTeam].playerName,

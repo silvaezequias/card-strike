@@ -1,3 +1,4 @@
+import { Card } from "@/lib/types";
 import { GamePhase, SetupSettings } from "./game-types";
 
 export type GameAction =
@@ -13,6 +14,7 @@ export type GameAction =
   | { type: "SET_PHASE"; payload: GamePhase }
 
   // Cards
+  | { type: "PLAY_CARD"; payload: { card: Card } }
   | { type: "BUY_CARD" }
   | { type: "KEEP_IN_HAND" }
   | {
@@ -39,6 +41,7 @@ export type GameAction =
       payload: {
         d6: number;
         spinner: "A" | "B" | "C";
+        timerAfter?: number;
       };
     }
 

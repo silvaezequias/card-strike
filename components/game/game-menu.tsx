@@ -32,7 +32,7 @@ export const GameMenu = ({
         {/* Title */}
         <div className="text-center mb-10">
           <h1 className="text-4xl font-black text-white tracking-[0.3em] mb-2">
-            CARD STRIKE
+            CARD STRIKE - OPERAÇÃO TÁTICA
           </h1>
           <div className="w-48 h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent mx-auto mb-3" />
           <p className="text-slate-500 text-sm tracking-widest uppercase">

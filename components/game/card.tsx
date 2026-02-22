@@ -49,11 +49,13 @@ export const CardStats = ({ card }: { card: Card }) => {
 export const CardComponent = ({
   card,
   game,
+  placed = false,
 }: {
   card: Card;
   game: GameEngine;
+  placed?: boolean;
 }) => {
-  const theme = useGameTheme(game.state.currentTeam);
+  const theme = useGameTheme(card.teamOwner || game.state.currentTeam);
 
   const categoryStyle =
     card.cardCategory === "ARMA"
@@ -63,10 +65,19 @@ export const CardComponent = ({
         : "bg-blue-500/20 text-blue-300";
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-between gap-1 p-6">
-      <span className={`text-[10px] font-bold px-1 rounded ${categoryStyle}`}>
-        {card.cardCategory}
-      </span>
+    <div
+      className={`
+        ${theme.border} ${theme.background} border rounded-sm 
+        aspect-[3/4] h-full flex flex-col items-center 
+        ${placed ? "justify-center" : "justify-between"} gap-1 p-6
+      `}
+      style={card.style}
+    >
+      {!placed && (
+        <span className={`text-[10px] font-bold px-1 rounded ${categoryStyle}`}>
+          {card.cardCategory}
+        </span>
+      )}
 
       <div className="flex flex-col items-center gap-2">
         <span
@@ -76,7 +87,7 @@ export const CardComponent = ({
         </span>
       </div>
 
-      <CardStats card={card} />
+      {!placed && <CardStats card={card} />}
     </div>
   );
 };
@@ -125,6 +136,15 @@ export const InventorySlot = ({
     }
   };
 
+  const handlePlayCard = () => {
+    if (card && focused) {
+      game.dispatch({
+        type: "PLAY_CARD",
+        payload: { card },
+      });
+    }
+  };
+
   const baseSlotStyle = `
     aspect-[3/4] w-full 
     bg-gradient-to-b 
@@ -155,7 +175,7 @@ export const InventorySlot = ({
       } ${theme.background}`}
     >
       <div
-        onClick={handleSelectCard}
+        onClick={type === "hand" ? handleSelectCard : handlePlayCard}
         className={`${baseSlotStyle} ${interactionStyle} ${ringStyle}`}
       >
         {card ? (

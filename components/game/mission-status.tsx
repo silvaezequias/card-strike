@@ -12,27 +12,17 @@ const HandleNextRound = ({ game }: { game: GameEngine }) => {
   const theme = useGameTheme(game.state.currentTeam);
 
   return (
-    <>
-      <div className={`border-l-2 mb-2 ${theme.border} pl-4`}>
-        <h3
-          className={`text-xl font-black tracking-[0.2em] uppercase mb-1 ${theme.text}`}
-        >
-          Passe a vez
-        </h3>
-        <p className="py-2 text-zinc-300 text-xs tracking-wider">
-          Agora é a vez do seu oponente, passe para o próximo round para
-          continuar.
-        </p>
-      </div>
-      {/*  TODO: remover esse botão e colocar em outro canto */}
-      <button
-        onClick={() => game.dispatch({ type: "END_TURN" })}
-        className="w-full py-6 bg-gradient-to-r animate-pulse duration-1000 from-green-800/50 to-green-700/50 hover:from-green-700/50 hover:to-green-600/50 rounded text-xs text-zinc-300 hover:text-white transition-all active:scale-95 flex items-center justify-center gap-2"
+    <div className={`border-l-2 mb-2 ${theme.border} pl-4`}>
+      <h3
+        className={`text-xl font-black tracking-[0.2em] uppercase mb-1 ${theme.text}`}
       >
-        PRÓXIMO ROUND
-        <LucideArrowBigRightDash size={16} />
-      </button>
-    </>
+        Passe a vez
+      </h3>
+      <p className="py-2 text-zinc-300 text-xs tracking-wider">
+        Agora é a vez do seu oponente, passe para o próximo round para
+        continuar.
+      </p>
+    </div>
   );
 };
 
@@ -138,7 +128,7 @@ export const MissionStatus = ({ game }: { game: GameEngine }) => {
     BUYING: <Buying game={game} />,
   };
 
-  const theme = useGameTheme(game.state.currentTeam);
+  const { gameTime, seconds, round } = game.state.countdown;
 
   return (
     <HUDPanel game={game} title="STATUS DA MISSÃO" icon={<Clock size={12} />}>
@@ -147,7 +137,7 @@ export const MissionStatus = ({ game }: { game: GameEngine }) => {
           <Hash size={10} /> RODADA
         </div>
         <div className="text-4xl font-black text-white bg-zinc-800/50 px-4 py-1 rounded border border-zinc-700 shadow-inner">
-          {game.state.countdown.round}
+          {round}
         </div>
       </div>
       <div className="flex flex-col items-center">
@@ -155,14 +145,14 @@ export const MissionStatus = ({ game }: { game: GameEngine }) => {
           TEMPO DA RODADA
         </span>
         <div
-          className={`text-4xl font-mono ${game.state.countdown.seconds < 10 ? "text-red-500 animate-pulse" : "text-zinc-200"} drop-shadow-md`}
+          className={`text-4xl font-mono ${seconds < 10 ? "text-red-500 animate-pulse" : "text-zinc-200"} drop-shadow-md`}
         >
-          {formatTime(game.state.countdown.seconds)}
+          {formatTime(seconds)}
         </div>
       </div>
 
       <div className="text-xs font-mono text-zinc-500">
-        TOTAL: {formatTime(game.state.countdown.gameTime)}
+        TOTAL: {formatTime(gameTime)}
       </div>
       <div className="w-2/3 h-[1px] bg-zinc-800"></div>
 

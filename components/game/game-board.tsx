@@ -1,9 +1,11 @@
 "use client";
 
-import { Shield, Crosshair } from "lucide-react";
+import { Shield, Crosshair, XCircle } from "lucide-react";
 import BoardTabs from "./board-tabs";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
+import { Card } from "@/lib/types";
+import { CardComponent } from "./card";
 
 export interface GameBoardProps {
   game: GameEngine;
@@ -37,19 +39,18 @@ const WarZone = ({ game }: GameBoardProps) => {
 
       {/* Center */}
       <div className="relative w-48 h-48 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/60 clip-octagon flex items-center justify-center border-4 border-slate-600">
-          {/* {game.playedCards.map((card: Card, idx: number) => (
-            <div
-              key={idx}
-              className="absolute w-24 h-32 bg-black border rounded-lg shadow-lg flex items-center justify-center"
-              style={card.style}
-            >
-              <div className={`scale-110`}>
-                {card.overlayText ? <XCircle size={32} /> : "card.icon"}
-              </div>
-            </div>
-          ))} */}
-        </div>
+        <div className="absolute inset-0 bg-black/60 clip-octagon flex items-center justify-center border-4 border-slate-600"></div>
+        {game.state.playedCards.map((card: Card, index: number) => (
+          <div
+            key={index}
+            className="absolute w-32 h-32"
+            style={{
+              zIndex: index,
+            }}
+          >
+            <CardComponent card={card} game={game} placed={true} />
+          </div>
+        ))}
       </div>
 
       {/* Right Wing */}
@@ -62,7 +63,7 @@ const WarZone = ({ game }: GameBoardProps) => {
             className={`relative group w-16 h-16 bg-gradient-to-br ${theme.slotItem} rounded-lg border ${theme.orbInner} flex items-center justify-center`}
           >
             {game.state.teams.faction.position === char && (
-              <div className="absolute inset-0 flex items-center justify-center bg-zinc-950 z-20">
+              <div className="absolute inset-0 flex items-center justify-center z-20">
                 <div className="w-10 h-10 bg-red-600 rounded-full border-2 border-white flex items-center justify-center">
                   <Crosshair size={20} className="text-white" />
                 </div>

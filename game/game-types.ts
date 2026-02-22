@@ -27,6 +27,7 @@ export interface GameState {
   turnPhase: GamePhase;
   turnAction: TurnActionState;
 
+  playedCards: Card[];
   bomb: BombData;
   countdown: {
     round: number;

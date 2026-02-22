@@ -16,6 +16,7 @@ export interface Card {
   style?: React.CSSProperties;
   flyId?: number;
   team?: "police" | "faction" | "shared";
+  teamOwner?: "police" | "faction";
 }
 
 export interface Rotation {
