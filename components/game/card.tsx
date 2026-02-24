@@ -89,12 +89,6 @@ export const CardComponent = ({
       `}
       style={card.style}
     >
-      {/* {!placed && (
-        <span className={`text-[10px] font-bold px-1 rounded ${categoryStyle}`}>
-          {card.cardCategory}
-        </span>
-      )} */}
-
       <span
         className={`${theme.text} flex flex-col gap-5font-bold text-center mt-0.5 leading-tight ${placed ? "text-[10px]" : "text-base"}`}
       >
