@@ -142,7 +142,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.teams,
           [state.currentTeam]: {
             ...state.teams[state.currentTeam],
-            position: action.payload.spinner,
+            position: isD6
+              ? state.teams[state.currentTeam].position
+              : action.payload.spinner,
           },
         },
         countdown: {
