@@ -1,10 +1,40 @@
-<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M252.881 315.668L276.057 292.493L222.906 239.342L199.731 262.518L252.881 315.668Z" fill="#424242"/>
-<path d="M240.594 221.661L292 293L220.188 373.114L243.365 396.291L334.5 293L263.909 198.345L240.594 221.661Z" fill="#424242"/>
-<path d="M218.591 290.48L148.051 361.019L257.34 512L327.88 441.461L218.591 290.48Z" fill="#424242"/>
-<path d="M60 307.176L100.371 347.547L123.547 324.371L83.1759 284L60 307.176Z" fill="#707070"/>
-<path d="M317.887 31.3654L358.258 71.7366L381.434 48.5607L341.063 8.1895L317.887 31.3654Z" fill="#707070"/>
-<path d="M273.623 366.508L218.591 290.48L148.051 361.019L203.085 437.047L273.623 366.508Z" fill="#707070"/>
-<path d="M383.725 0L90.585 293.14C68.899 314.826 68.899 349.985 90.585 371.671L104.42 357.836L139.406 392.822L444.141 88.087L409.154 53.101L422.99 39.265L383.725 0Z" fill="#464646"/>
-<path d="M409.155 53.101L422.991 39.266L383.725 0L90.585 293.14C79.4636 304.261 51.5 332.5 51.5 332.5C51.5 332.5 80.0204 361.106 90.585 371.671L104.42 357.835L409.155 53.101Z" fill="#575757"/>
-</svg>
+<svg width="512" height="256" viewBox="0 0 512 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Slide Light (Topo perfeitamente retangular) -->
+                <rect x="110" y="55" width="260" height="20" fill="#9ca3af" />
+                <!-- Slide Dark (Base do slide) -->
+                <rect x="110" y="75" width="260" height="25" fill="#6b7280" />
+                
+                <!-- Ranhuras do Slide traseiro (Serrations) -->
+                <rect x="120" y="75" width="6" height="25" fill="#4b5563" />
+                <rect x="130" y="75" width="6" height="25" fill="#4b5563" />
+                <rect x="140" y="75" width="6" height="25" fill="#4b5563" />
+                
+                <!-- Janela de Ejeção (Ejection Port) -->
+                <rect x="250" y="55" width="30" height="20" fill="#4b5563" />
+                <rect x="250" y="75" width="30" height="5" fill="#374151" />
+
+                <!-- Frame / Corpo -->
+                <polygon points="110,100 370,100 370,120 160,120 160,130 110,130" fill="#374151" />
+                
+                <!-- Trilho Frontal (Rail) -->
+                <rect x="330" y="115" width="35" height="5" fill="#1f2937" />
+                
+                <!-- Punho (Grip Quadrado típico) e Sombreamento -->
+                <polygon points="110,130 170,130 150,230 90,230" fill="#1f2937" />
+                <polygon points="110,130 140,130 120,230 90,230" fill="#111827" /> <!-- Sombra -->
+                
+                <!-- Base do Carregador (Mag Baseplate) -->
+                <polygon points="87,230 153,230 150,245 84,245" fill="#4b5563" />
+                <polygon points="87,230 120,230 117,245 84,245" fill="#374151" />
+                
+                <!-- Guarda-mato -->
+                <polygon points="170,120 170,165 240,165 240,120 225,120 225,150 185,150 185,120" fill="#374151" />
+                
+                <!-- Gatilho & Trava de Segurança do Gatilho -->
+                <polygon points="185,120 185,145 195,145 195,120" fill="#9ca3af" />
+                <polygon points="190,130 195,135 195,145 190,145" fill="#4b5563" /> 
+
+                <!-- Miras Quadradas Clássicas -->
+                <rect x="120" y="40" width="15" height="15" fill="#4b5563" />
+                <rect x="350" y="45" width="10" height="10" fill="#4b5563" />
+            </svg>

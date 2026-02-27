@@ -1,19 +1,77 @@
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
-     viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- FUNDO DA GOLA (Interior) -->
+            <polygon points="256,150 160,100 180,30 256,50" fill="#424242" />
+            <polygon points="256,150 352,100 332,30 256,50" fill="#1A1A1A" />
 
-<path style="fill:#424242;" d="M488.837,172.998c-35.092,0-63.539-28.447-63.539-63.539V0h-73.365v41.262
-    c0,52.982-42.951,95.933-95.933,95.933c-52.982,0-95.933-42.95-95.933-95.933V0H86.703v109.459
-    c0,35.091-28.447,63.539-63.539,63.539V512h465.673L488.837,172.998L488.837,172.998z"/>
-<path style="fill:#707070;" d="M256,137.194c-52.982,0-95.933-42.95-95.933-95.933V0H86.703v109.459
-    c0,35.091-28.447,63.539-63.539,63.539V512H256V137.194z"/>
+            <!-- CORPO PRINCIPAL DO COLETE -->
+            <!-- Lado Esquerdo (Iluminado) -->
+            <polygon points="256,150 160,90 130,240 110,450 256,470" fill="#ef4444" />
+            <!-- Lado Direito (Sombreado) -->
+            <polygon points="256,150 352,90 382,240 402,450 256,470" fill="#b91c1c" />
 
-<!-- Substituindo verdes por vermelhos -->
-<rect x="0" y="380.949" style="fill:#f87171;" width="181.233" height="77.152"/>
-<rect x="330.767" y="380.949" style="fill:#b91c1c;" width="181.233" height="77.152"/>
-<rect x="0" y="239.126" style="fill:#f87171;" width="181.233" height="77.152"/>
-<rect x="330.767" y="239.126" style="fill:#b91c1c;" width="181.233" height="77.152"/>
-<rect x="0" y="380.949" style="fill:#fecaca;" width="91.421" height="77.152"/>
-<rect x="330.767" y="380.949" style="fill:#f87171;" width="91.338" height="77.152"/>
-<rect x="0" y="239.126" style="fill:#fecaca;" width="91.421" height="77.152"/>
-<rect x="330.767" y="239.126" style="fill:#f87171;" width="91.338" height="77.152"/>
-</svg>
+            <!-- PAINEL DE VELCRO SUPERIOR DO PEITO -->
+            <rect x="175" y="160" width="81" height="40" fill="#424242" />
+            <rect x="256" y="160" width="81" height="40" fill="#262626" />
+            <!-- Textura Velcro (Tracejado leve) -->
+            <rect x="180" y="165" width="15" height="30" fill="#262626" opacity="0.4" />
+            <rect x="205" y="165" width="15" height="30" fill="#262626" opacity="0.4" />
+            <rect x="230" y="165" width="15" height="30" fill="#262626" opacity="0.4" />
+            <rect x="267" y="165" width="15" height="30" fill="#1A1A1A" opacity="0.4" />
+            <rect x="292" y="165" width="15" height="30" fill="#1A1A1A" opacity="0.4" />
+            <rect x="317" y="165" width="15" height="30" fill="#1A1A1A" opacity="0.4" />
+
+            <!-- BLOCO MOLLE FRONTAL (Centro) -->
+            <!-- Lado Esquerdo -->
+            <polygon points="256,260 145,250 135,450 256,460" fill="#424242" />
+            <!-- Lado Direito -->
+            <polygon points="256,260 367,250 377,450 256,460" fill="#262626" />
+
+            <!-- FITAS MOLLE HORIZONTAIS NO BLOCO -->
+            <!-- Esquerda (Claro) -->
+            <polygon points="256,290 142,282 141,292 256,300" fill="#707070" opacity="0.7" />
+            <polygon points="256,330 139,322 138,332 256,340" fill="#707070" opacity="0.7" />
+            <polygon points="256,370 137,362 136,372 256,380" fill="#707070" opacity="0.7" />
+            <polygon points="256,410 135,402 134,412 256,420" fill="#707070" opacity="0.7" />
+            <!-- Direita (Escuro) -->
+            <polygon points="256,290 370,282 371,292 256,300" fill="#1A1A1A" opacity="0.7" />
+            <polygon points="256,330 373,322 374,332 256,340" fill="#1A1A1A" opacity="0.7" />
+            <polygon points="256,370 375,362 376,372 256,380" fill="#1A1A1A" opacity="0.7" />
+            <polygon points="256,410 377,402 378,412 256,420" fill="#1A1A1A" opacity="0.7" />
+            
+            <!-- Costuras Verticais do MOLLE -->
+            <polygon points="175,255 180,255 170,455 165,455" fill="#262626" opacity="0.6" />
+            <polygon points="215,257 220,257 215,457 210,457" fill="#262626" opacity="0.6" />
+            <polygon points="292,257 297,257 302,457 297,457" fill="#1A1A1A" opacity="0.6" />
+            <polygon points="332,255 337,255 347,455 342,455" fill="#1A1A1A" opacity="0.6" />
+
+            <!-- ALÇAS VERTICAIS GROSSAS (Suspenders) -->
+            <!-- Esquerda -->
+            <polygon points="180,40 130,40 155,290 195,290" fill="#424242" /> <!-- Base da Alça -->
+            <polygon points="152,140 188,140 193,280 157,280" fill="#707070" /> <!-- Parte acolchoada iluminada -->
+            <polygon points="160,250 190,250 192,275 162,275" fill="#262626" /> <!-- Painel Velcro da alça -->
+            
+            <!-- Direita -->
+            <polygon points="332,40 382,40 357,290 317,290" fill="#1A1A1A" /> <!-- Base da Alça -->
+            <polygon points="360,140 324,140 319,280 355,280" fill="#262626" /> <!-- Parte acolchoada escura -->
+            <polygon points="352,250 322,250 320,275 350,275" fill="#1A1A1A" /> <!-- Painel Velcro da alça -->
+
+            <!-- FIVELAS DE ENGATE (Buckles) -->
+            <!-- Fivela Esquerda -->
+            <polygon points="140,80 183,80 180,120 142,120" fill="#707070" />
+            <polygon points="140,90 183,90 182,100 141,100" fill="#262626" /> <!-- Encaixe -->
+            <!-- Fivela Direita -->
+            <polygon points="372,80 329,80 332,120 370,120" fill="#424242" />
+            <polygon points="372,90 329,90 330,100 371,100" fill="#1A1A1A" /> <!-- Encaixe -->
+
+            <!-- BOLSAS LATERAIS LARGAS (Pouches independentes) -->
+            <!-- Bolsa Lateral Esquerda -->
+            <rect x="50" y="250" width="55" height="140" rx="4" fill="#424242" />
+            <rect x="50" y="250" width="55" height="40" rx="4" fill="#707070" /> <!-- Aba/Flap superior -->
+            <rect x="50" y="320" width="55" height="15" fill="#707070" opacity="0.6" /> <!-- Correia horizontal -->
+            <!-- Bolsa Lateral Direita -->
+            <rect x="407" y="250" width="55" height="140" rx="4" fill="#262626" />
+            <rect x="407" y="250" width="55" height="40" rx="4" fill="#424242" /> <!-- Aba/Flap superior -->
+            <rect x="407" y="320" width="55" height="15" fill="#1A1A1A" opacity="0.6" /> <!-- Correia horizontal -->
+
+        </svg>

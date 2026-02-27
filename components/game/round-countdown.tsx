@@ -28,7 +28,7 @@ export const RoundCountdown = ({ game }: RoundCountdownProps) => {
       setTimeout(() => {
         setPhase("done");
 
-        game.dispatch({ type: "START_TURN" });
+        game.dispatch({ type: "SELECT_ACTION" });
       }, 700);
 
       return;

@@ -1,0 +1,36 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Base da Bolsa Principal -->
+                <rect x="50" y="70" width="150" height="130" fill="#15803d" />
+                <!-- Metade Sombreada da Bolsa -->
+                <rect x="125" y="70" width="75" height="130" fill="#14532d" />
+
+                <!-- Fitas de Nylon (Abertura/Costura) -->
+                <rect x="50" y="100" width="150" height="15" fill="#064e3b" />
+                <rect x="50" y="150" width="150" height="15" fill="#064e3b" />
+                <rect x="125" y="100" width="75" height="15" fill="#022c22" />
+                <rect x="125" y="150" width="75" height="15" fill="#022c22" />
+
+                <!-- Fivela Central Geométrica -->
+                <rect x="110" y="140" width="30" height="35" fill="#374151" />
+                <rect x="125" y="140" width="15" height="35" fill="#1f2937" />
+
+                <!-- Multímetro (Saindo pela Esquerda) -->
+                <rect x="40" y="50" width="45" height="85" fill="#eab308" />
+                <rect x="62" y="50" width="23" height="85" fill="#ca8a04" />
+                <!-- Ecrã do Multímetro -->
+                <rect x="45" y="60" width="35" height="20" fill="#1f2937" />
+                <text x="62" y="75" font-family="monospace, sans-serif" font-size="12" fill="#ef4444" font-weight="bold" text-anchor="middle">0.0</text>
+                <!-- Roda Seletora (Octógono) -->
+                <polygon points="55,95 69,95 72,105 69,115 55,115 52,105" fill="#374151" />
+                <polygon points="62,95 69,95 72,105 69,115 62,115" fill="#1f2937" />
+
+                <!-- Alicate (Saindo pela Direita) -->
+                <!-- Pegas do Alicate -->
+                <polygon points="150,70 160,70 170,120 160,120" fill="#ef4444" />
+                <polygon points="170,70 180,70 190,120 180,120" fill="#b91c1c" />
+                <!-- Cabeça de Corte Metálica -->
+                <polygon points="155,70 165,40 165,70" fill="#d1d5db" />
+                <polygon points="175,70 165,40 165,70" fill="#9ca3af" />
+                <!-- Parafuso Central do Alicate -->
+                <rect x="163" y="68" width="4" height="4" fill="#111827" />
+            </svg>

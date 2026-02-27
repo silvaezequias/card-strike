@@ -1,0 +1,159 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- ============================== -->
+            <!-- CORONHA (STOCK)                -->
+            <!-- ============================== -->
+            <!-- Almofada de ombro (Recoil pad) -->
+            <rect x="20" y="180" width="15" height="75" fill="#262626" />
+            
+            <!-- Corpo superior da coronha -->
+            <polygon points="35,180 110,180 110,210 35,210" fill="#707070" />
+            
+            <!-- Corpo inferior da coronha -->
+            <polygon points="35,210 110,210 110,230 80,260 35,260" fill="#424242" />
+            
+            <!-- Detalhe/Recorte da coronha -->
+            <polygon points="50,215 90,215 90,225 75,240 50,240" fill="#262626" />
+
+            <!-- Tubo (Buffer Tube) -->
+            <rect x="110" y="185" width="40" height="10" fill="#707070" />
+            <rect x="110" y="195" width="40" height="12" fill="#424242" />
+
+            <!-- ============================== -->
+            <!-- CORPO (RECEIVER)               -->
+            <!-- ============================== -->
+            <!-- Corpo Superior (Upper Receiver) -->
+            <rect x="150" y="175" width="100" height="15" fill="#C2C2C2" />
+            <rect x="150" y="190" width="100" height="20" fill="#707070" />
+            
+            <!-- Tampa da janela de ejeção (Ejection port cover) -->
+            <rect x="210" y="195" width="30" height="10" fill="#424242" />
+            
+            <!-- Forward Assist -->
+            <circle cx="240" cy="200" r="5" fill="#262626" />
+
+            <!-- Corpo Inferior (Lower Receiver) -->
+            <polygon points="150,210 250,210 250,240 200,240 200,255 150,255" fill="#424242" />
+            
+            <!-- Textura/Relevo do Magwell -->
+            <rect x="205" y="215" width="35" height="5" fill="#262626" />
+            
+            <!-- Botão de libertação do carregador (Mag release) -->
+            <rect x="215" y="224" width="8" height="6" fill="#C2C2C2" />
+            
+            <!-- Seletor de tiro (Fire selector) -->
+            <circle cx="170" cy="220" r="4" fill="#EAEAEA" />
+
+            <!-- ============================== -->
+            <!-- PUNHO & GATILHO (GRIP & TRIGGER)-->
+            <!-- ============================== -->
+            <!-- Punho (Pistol Grip) -->
+            <polygon points="150,255 170,255 160,330 140,330" fill="#262626" />
+            
+            <!-- Realce de luz no punho -->
+            <polygon points="140,330 150,255 155,255 145,330" fill="#424242" />
+
+            <!-- Guarda-mato (Trigger Guard) -->
+            <path d="M170,255 L185,270 L200,255" fill="none" stroke="#262626" stroke-width="4" />
+            
+            <!-- Gatilho (Trigger) -->
+            <rect x="180" y="255" width="4" height="10" fill="#C2C2C2" />
+
+            <!-- ============================== -->
+            <!-- CARREGADOR (MAGAZINE)          -->
+            <!-- ============================== -->
+            <!-- Corpo principal iluminado -->
+            <path d="M205,240 L235,240 L245,360 L210,360 Z" fill="#707070" />
+            
+            <!-- Sombra do carregador -->
+            <path d="M220,240 L235,240 L245,360 L225,360 Z" fill="#424242" />
+            
+            <!-- Placa base (Base plate) -->
+            <polygon points="208,360 247,360 245,370 206,370" fill="#262626" />
+
+            <!-- Detalhe Tático: Fita adesiva azul -->
+            <polygon points="212,300 240,295 242,315 215,320" fill="#1d4ed8" />
+            <polygon points="212,300 225,298 227,318 215,320" fill="#3b82f6" />
+
+            <!-- ============================== -->
+            <!-- ALÇA DE TRANSPORTE (CARRY HANDLE)-->
+            <!-- ============================== -->
+            <!-- Parafusos de fixação -->
+            <circle cx="170" cy="175" r="4" fill="#262626" />
+            <circle cx="230" cy="175" r="4" fill="#262626" />
+            
+            <!-- Pilar esquerdo -->
+            <polygon points="150,175 160,135 175,135 170,175" fill="#707070" />
+            
+            <!-- Pilar direito -->
+            <polygon points="240,135 250,175 230,175 225,135" fill="#707070" />
+            
+            <!-- Barra superior -->
+            <rect x="160" y="135" width="80" height="10" fill="#C2C2C2" />
+            
+            <!-- Mira traseira (Rear sight) -->
+            <rect x="155" y="125" width="10" height="10" fill="#262626" />
+
+            <!-- ============================== -->
+            <!-- GUARDA-MÃO (HANDGUARD)         -->
+            <!-- ============================== -->
+            <!-- Anel Delta (Delta ring) -->
+            <polygon points="250,185 260,180 260,210 250,205" fill="#262626" />
+            
+            <!-- Metade superior iluminada -->
+            <polygon points="260,180 370,185 370,195 260,195" fill="#707070" />
+            
+            <!-- Metade inferior escura -->
+            <polygon points="260,195 370,195 370,210 260,210" fill="#424242" />
+            
+            <!-- Ranhuras (Ribs) do guarda-mão -->
+            <rect x="275" y="183" width="4" height="25" fill="#262626" opacity="0.4" />
+            <rect x="290" y="183" width="4" height="25" fill="#262626" opacity="0.4" />
+            <rect x="305" y="184" width="4" height="25" fill="#262626" opacity="0.4" />
+            <rect x="320" y="184" width="4" height="25" fill="#262626" opacity="0.4" />
+            <rect x="335" y="185" width="4" height="25" fill="#262626" opacity="0.4" />
+            <rect x="350" y="185" width="4" height="25" fill="#262626" opacity="0.4" />
+
+            <!-- ============================== -->
+            <!-- CANO (BARREL)                  -->
+            <!-- ============================== -->
+            <!-- Bloco base do cano -->
+            <rect x="370" y="193" width="15" height="10" fill="#262626" />
+            
+            <!-- Cano superior iluminado -->
+            <rect x="385" y="194" width="80" height="4" fill="#C2C2C2" />
+            
+            <!-- Cano inferior escuro -->
+            <rect x="385" y="198" width="80" height="4" fill="#424242" />
+
+            <!-- ============================== -->
+            <!-- MASSA DE MIRA (FRONT SIGHT)    -->
+            <!-- ============================== -->
+            <!-- Anéis de fixação -->
+            <rect x="395" y="190" width="8" height="16" fill="#262626" />
+            <rect x="415" y="190" width="8" height="16" fill="#262626" />
+            
+            <!-- Base inferior (Bayonet lug) -->
+            <rect x="395" y="206" width="28" height="8" fill="#424242" />
+            
+            <!-- Triângulo da mira -->
+            <polygon points="400,190 408,140 415,140 423,190" fill="#424242" />
+            
+            <!-- Pino da mira (Sight post) -->
+            <rect x="410" y="133" width="4" height="7" fill="#262626" />
+
+            <!-- ============================== -->
+            <!-- QUEBRA-CHAMAS (MUZZLE BRAKE)   -->
+            <!-- ============================== -->
+            <!-- Anilha (Crush washer) -->
+            <rect x="465" y="192" width="4" height="12" fill="#707070" />
+            
+            <!-- Corpo do quebra-chamas -->
+            <polygon points="469,193 485,194 485,202 469,203" fill="#262626" />
+            
+            <!-- Ranhuras do gás (Slots) -->
+            <rect x="472" y="193" width="2" height="10" fill="#C2C2C2" />
+            <rect x="476" y="193" width="2" height="10" fill="#C2C2C2" />
+            <rect x="480" y="194" width="2" height="10" fill="#C2C2C2" />
+
+        </svg>

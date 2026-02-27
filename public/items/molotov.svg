@@ -1,0 +1,37 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Chamas Geométricas -->
+                <!-- Laranja Exterior -->
+                <polygon points="128,10 95,50 128,65 161,50" fill="#f97316" />
+                <polygon points="128,10 128,65 161,50" fill="#ea580c" />
+                <!-- Amarelo Interior -->
+                <polygon points="128,25 110,50 128,55 146,50" fill="#fef08a" />
+                <polygon points="128,25 128,55 146,50" fill="#facc15" />
+                
+                <!-- Trapo/Pano (Cloth) saindo da garrafa -->
+                <polygon points="115,50 141,50 135,70 121,70" fill="#f3f4f6" />
+                <polygon points="128,50 141,50 135,70 128,70" fill="#d1d5db" /> <!-- Sombra do Pano -->
+                <!-- Pedaço do pano caído -->
+                <polygon points="135,60 150,65 140,95 128,85" fill="#f3f4f6" />
+                <polygon points="142,62 150,65 140,95 134,88" fill="#d1d5db" /> <!-- Sombra da cauda -->
+
+                <!-- Gargalo da Garrafa -->
+                <polygon points="115,65 128,65 128,100 100,140 128,140" fill="#166534" />
+                <polygon points="128,65 141,65 141,100 156,140 128,140" fill="#14532d" />
+                
+                <!-- Corpo da Garrafa (Iluminação dividida) -->
+                <polygon points="100,140 128,140 128,240 100,240" fill="#166534" />
+                <polygon points="128,140 156,140 156,240 128,240" fill="#14532d" />
+
+                <!-- Rótulo Desgastado (Geométrico) -->
+                <polygon points="98,160 128,160 128,205 98,205" fill="#fef08a" />
+                <polygon points="128,160 158,160 158,205 128,205" fill="#eab308" />
+                <!-- Detalhes no rótulo -->
+                <rect x="105" y="170" width="15" height="4" fill="#ca8a04" />
+                <rect x="128" y="170" width="15" height="4" fill="#a16207" />
+                <rect x="105" y="180" width="46" height="4" fill="#ca8a04" />
+                <rect x="128" y="190" width="20" height="4" fill="#a16207" />
+
+                <!-- Linha/Sombra do Líquido (Base mais escura) -->
+                <polygon points="100,220 128,220 128,240 100,240" fill="#064e3b" />
+                <polygon points="128,220 156,220 156,240 128,240" fill="#022c22" />
+            </svg>

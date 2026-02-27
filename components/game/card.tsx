@@ -69,38 +69,36 @@ export const CardComponent = ({
     Granada: `/items/granade.svg`,
     Capacete: `/items/${card.teamOwner || game.state.currentTeam}/cap.svg`,
     Colete: `/items/${card.teamOwner || game.state.currentTeam}/bulletproof.svg`,
+    Flashbang: `/items/flashbang.svg`,
+    "KIT DEFUSE": "/items/kit-defuse.svg",
+    Smoke: `/items/smoke.svg`,
   };
 
   const cardIcon = cardIcons[card.name as keyof typeof cardIcons];
-
-  const categoryStyle =
-    card.cardCategory === "ARMA"
-      ? "bg-red-500/20 text-red-300"
-      : card.cardCategory === "BOMBA"
-        ? "bg-orange-500/20 text-orange-300"
-        : "bg-blue-500/20 text-blue-300";
 
   return (
     <div
       className={`
         ${theme.border} ${theme.background} border rounded-sm 
-        aspect-[3/4] h-full flex flex-col justify-between items-center
-        ${placed ? "justify-center" : "justify-between"} gap-1 p-6
+        aspect-[3/4] h-full flex flex-col items-center
+        justify-center gap-1 p-4
       `}
       style={card.style}
     >
-      <span
-        className={`${theme.text} flex flex-col gap-5font-bold text-center mt-0.5 leading-tight ${placed ? "text-[10px]" : "text-base"}`}
-      >
-        {card.name}
-      </span>
+      {!placed && (
+        <span
+          className={`${theme.text} flex flex-col gap-5font-bold text-center mt-0.5 leading-tight text-base`}
+        >
+          {card.name}
+        </span>
+      )}
 
       {cardIcon && (
         <Image
           src={cardIcon}
           alt={card.name}
-          width={40}
-          height={40}
+          width={placed ? 180 : 80}
+          height={placed ? 80 : 40}
           className="mb-1"
         />
       )}

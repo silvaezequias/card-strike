@@ -1,54 +1,84 @@
-<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="300" viewBox="0 0 512 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- CHAPA DE COICE & ESPAÇADORES -->
+            <rect x="40" y="125" width="15" height="65" fill="#262626" />
+            <rect x="35" y="130" width="5" height="55" fill="#1A1A1A" />
+            <rect x="55" y="128" width="5" height="59" fill="#707070" />
+            <rect x="55" y="145" width="5" height="42" fill="#424242" />
 
-<polygon fill="#4b5563"
-points="186.25,169.618 195.436,178.803 85.391,288.848 76.205,279.663 54.047,301.821 
-94.576,342.35 116.734,320.192 107.549,311.006 122.574,295.981 154.664,328.071 
-176.822,305.912 144.732,273.823 180.41,238.145 212.5,270.235 234.658,248.077 
-202.568,215.987 217.594,200.961 226.779,210.147 248.937,187.987 208.41,147.46"/>
-<rect x="250.441" y="244.33"
-transform="matrix(-0.7071 -0.7071 0.7071 -0.7071 318.8567 662.4713)"
-width="92.38" height="41.736"
-fill="#4b5563" />
-  
-  <rect x="75.998" y="318.509"
-transform="matrix(0.7071 0.7071 -0.7071 0.7071 303.3858 49.7292)"
-width="31.332" height="145.15"
-fill="#60a5fa"/>
-  <polygon fill="#6b7280"
-points="240.748,342.092 207.684,375.156 229.843,397.314 279.068,348.088 235.579,263.267 207.712,277.598"/>
+            <!-- APOIO DE BOCHECHA (CHEEK REST) -->
+            <rect x="70" y="115" width="40" height="15" fill="#424242" />
+            <rect x="70" y="125" width="40" height="5" fill="#262626" />
+            <circle cx="80" cy="122" r="3" fill="#707070" />
+            <circle cx="100" cy="122" r="3" fill="#707070" />
 
-<polygon fill="#6b7280"
-points="436.618,23.961 420.545,7.888 398.387,30.048 414.459,46.119 
-293.18,167.398 315.339,189.556 482.737,22.158 460.579,0"/>
+            <!-- CHASSI PRINCIPAL (ILUMINADO - AZUL CLARO) -->
+            <polygon points="60,130 320,130 320,145 60,145" fill="#3b82f6" />
 
-<polygon fill="#3b82f6"
-points="255.083,419.775 192.607,303.901 157.761,338.746 220.238,454.621"/>
-<polygon
-fill="#3b82f6"
-points="260.765,199.815 131.903,328.676 29.263,431.316 109.948,512 176.214,372.988 
-	305.076,244.126 305.076,244.126 369.908,179.293 325.597,134.983"/>
+            <!-- CHASSI PRINCIPAL (SOMBREADO - AZUL ESCURO) -->
+            <path d="M60,145 L320,145 L320,170 L250,170 L240,185 L180,185 L175,170 L145,170 L130,215 L110,215 L125,170 L95,170 L95,190 L60,190 Z" fill="#1d4ed8" />
 
-<polygon fill="#60a5fa"
-points="230.138,373.509 192.607,303.901 157.761,338.746 195.293,408.354"/>
+            <!-- DETALHES DO CHASSI (PAINÉIS E PARAFUSOS) -->
+            <rect x="150" y="135" width="100" height="5" fill="#1A1A1A" opacity="0.3" />
+            <polygon points="260,135 310,135 310,140 260,140" fill="#1A1A1A" opacity="0.3" />
+            <rect x="260" y="150" width="50" height="8" fill="#1A1A1A" opacity="0.3" />
+            <circle cx="155" cy="137" r="2" fill="#262626" />
+            <circle cx="245" cy="137" r="2" fill="#262626" />
+            <circle cx="305" cy="137" r="2" fill="#262626" />
 
+            <!-- CORPO METÁLICO (RECEIVER) -->
+            <rect x="150" y="110" width="90" height="10" fill="#C2C2C2" />
+            <rect x="150" y="120" width="90" height="10" fill="#707070" />
+            <rect x="190" y="115" width="40" height="8" fill="#424242" />
 
-<rect x="127.375" y="255.067"
-transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 575.5014 334.4174)"
-width="182.231" height="62.664"
-fill="#4b5563"/>
-  
+            <!-- FERROLHO (BOLT) -->
+            <rect x="135" y="110" width="15" height="20" fill="#707070" />
+            <rect x="140" y="125" width="6" height="20" fill="#424242" />
+            <circle cx="143" cy="145" r="7" fill="#262626" />
+            <circle cx="141" cy="143" r="3" fill="#707070" />
 
-<rect x="116.289" y="259.662"
-transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 548.7479 323.3574)"
-width="182.231" height="31.332"
-fill="#6b7280"/>
+            <!-- CANO (BARREL) -->
+            <rect x="240" y="115" width="60" height="6" fill="#707070" />
+            <rect x="240" y="121" width="60" height="6" fill="#424242" />
+            <rect x="300" y="117" width="120" height="4" fill="#C2C2C2" />
+            <rect x="300" y="121" width="120" height="4" fill="#424242" />
 
+            <!-- QUEBRA-CHAMAS (MUZZLE BRAKE) -->
+            <rect x="420" y="114" width="20" height="7" fill="#707070" />
+            <rect x="420" y="121" width="20" height="7" fill="#262626" />
+            <rect x="425" y="116" width="3" height="10" fill="#1A1A1A" />
+            <rect x="432" y="116" width="3" height="10" fill="#1A1A1A" />
 
-<rect x="258.414" y="162.814"
-transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 645.6063 89.5403)"
-width="91.69" height="31.332"
-fill="#60a5fa" />
+            <!-- MIRA TELESCÓPICA (SCOPE) -->
+            <!-- Anéis -->
+            <rect x="160" y="95" width="10" height="15" fill="#424242" />
+            <rect x="210" y="95" width="10" height="15" fill="#424242" />
+            <!-- Tubo -->
+            <rect x="140" y="80" width="110" height="8" fill="#707070" />
+            <rect x="140" y="88" width="110" height="7" fill="#424242" />
+            <!-- Lente Frontal -->
+            <polygon points="250,80 290,70 290,88 250,88" fill="#707070" />
+            <polygon points="250,88 290,88 290,105 250,95" fill="#424242" />
+            <!-- Lente Traseira -->
+            <polygon points="140,80 110,75 110,88 140,88" fill="#707070" />
+            <polygon points="140,88 110,88 110,100 140,95" fill="#424242" />
+            <!-- Torres de Ajuste -->
+            <rect x="180" y="70" width="15" height="5" fill="#C2C2C2" />
+            <rect x="180" y="75" width="15" height="5" fill="#707070" />
+            <polygon points="190,85 198,82 198,93 190,90" fill="#262626" />
 
+            <!-- CARREGADOR (MAGAZINE) -->
+            <polygon points="190,185 210,185 205,220 195,220" fill="#707070" />
+            <polygon points="210,185 230,185 225,220 205,220" fill="#424242" />
+            <rect x="193" y="220" width="34" height="6" fill="#262626" />
 
+            <!-- GATILHO E GUARDA-MATO -->
+            <path d="M145,170 L145,190 L175,190 L175,170" fill="none" stroke="#262626" stroke-width="4" />
+            <path d="M155,170 Q155,185 160,185" fill="none" stroke="#C2C2C2" stroke-width="4" />
 
-</svg>
+            <!-- BIPÉ RECOLHIDO (FOLDED BIPOD) -->
+            <rect x="295" y="170" width="15" height="8" fill="#262626" />
+            <polygon points="300,175 310,175 250,182 245,182" fill="#707070" />
+            <polygon points="245,182 250,182 310,175 310,180 250,188 245,188" fill="#424242" />
+
+        </svg>

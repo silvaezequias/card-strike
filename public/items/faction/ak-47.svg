@@ -1,25 +1,132 @@
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
-     viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- ============================== -->
+            <!-- CORONHA (STOCK)                -->
+            <!-- ============================== -->
+            <!-- Chapa de coice (Buttplate) -->
+            <rect x="20" y="180" width="15" height="65" fill="#262626" />
+            
+            <!-- Metade superior iluminada -->
+            <polygon points="35,180 110,180 110,205 35,195" fill="#707070" />
+            
+            <!-- Metade inferior escurecida -->
+            <polygon points="35,195 110,205 110,230 60,245 35,245" fill="#424242" />
+            
+            <!-- Rebaixo característico da coronha -->
+            <polygon points="50,200 95,200 95,220 65,230 50,230" fill="#262626" opacity="0.3" />
 
-<rect x="235.809" y="324.824" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -151.4565 315.3481)" style="fill:#424242;" width="138.243" height="31.348"/>
-<g>
-    <polygon style="fill:#8F8F8F;" points="215.402,354.327 254.541,448.818 306.969,427.101 258.835,310.895"/>
-    <path style="fill:#8F8F8F;" d="M346.049,242.126l-35.21-35.21l-44.391,44.391l35.21,35.21
-        c44.938,44.938,108.586,59.757,165.869,44.465l-16.251-60.648C414.937,280.036,374.558,270.635,346.049,242.126z"/>
-</g>
-<g>
-    <polygon style="fill:#424242;" points="471.463,24.126 447.337,0 425.171,22.166 449.297,46.293 335.252,160.338 357.418,182.505 
-        511.482,28.441 489.316,6.274"/>
-    <polygon style="fill:#424242;" points="100.868,346.469 0.518,446.82 65.698,512 136.078,381.679 166.049,411.65 340.799,236.899 
-        275.619,171.718"/>
-</g>
-<rect x="211.93" y="181.054" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 677.5671 131.9103)" style="fill:#8F8F8F;" width="199.068" height="50.459"/>
-<rect x="203.009" y="184.762" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 656.0391 123.0084)" style="fill:#C2C2C2;" width="199.068" height="25.224"/>
+            <!-- ============================== -->
+            <!-- CORPO (RECEIVER)               -->
+            <!-- ============================== -->
+            <!-- Tampa da culatra (Dust Cover) - Topo -->
+            <polygon points="110,185 110,165 135,155 230,155 240,185" fill="#707070" />
+            
+            <!-- Ranhuras da tampa da culatra -->
+            <path d="M140,158 L145,185" stroke="#424242" stroke-width="2" />
+            <path d="M160,156 L165,185" stroke="#424242" stroke-width="2" />
+            <path d="M180,155 L185,185" stroke="#424242" stroke-width="2" />
+            <path d="M200,155 L205,185" stroke="#424242" stroke-width="2" />
+            <path d="M220,156 L225,185" stroke="#424242" stroke-width="2" />
 
-<!-- Verdes convertidos para vermelho -->
-<rect x="99.889" y="244.508" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 589.5687 344.4008)" style="fill:#b91c1c;" width="247.135" height="99.592"/>
-<rect x="82.276" y="251.804" transform="matrix(-0.7071 0.7071 -0.7071 -0.7071 547.0548 326.8047)" style="fill:#f87171;" width="247.135" height="49.794"/>
+            <!-- Base do corpo (Lower Receiver) -->
+            <rect x="110" y="185" width="130" height="40" fill="#424242" />
+            
+            <!-- Dimple do carregador (Recuo do Magwell) -->
+            <rect x="150" y="195" width="20" height="10" rx="2" fill="#262626" />
 
-<rect x="156.48" y="278.627" transform="matrix(0.7071 -0.7071 0.7071 0.7071 -142.6538 244.2045)" style="fill:#424242;" width="133.949" height="31.348"/>
-<rect x="43.402" y="343.302" transform="matrix(0.7071 0.7071 -0.7071 0.7071 312.9285 73.0389)" style="fill:#707070;" width="49.794" height="141.911"/>
-</svg>
+            <!-- Seletor de tiro (Safety Lever - Marca registada da AK) -->
+            <circle cx="170" cy="190" r="8" fill="#262626" />
+            <polygon points="165,190 175,190 220,210 215,215" fill="#262626" />
+
+            <!-- Retém do carregador (Mag release lever) -->
+            <polygon points="150,225 160,225 155,245" fill="#707070" />
+
+            <!-- ============================== -->
+            <!-- PUNHO & GATILHO (GRIP & TRIGGER)-->
+            <!-- ============================== -->
+            <!-- Punho (Pistol Grip) -->
+            <polygon points="110,225 135,225 125,310 95,305" fill="#262626" />
+            
+            <!-- Realce de luz no punho -->
+            <polygon points="110,225 115,225 105,305 95,305" fill="#424242" />
+
+            <!-- Guarda-mato (Trigger Guard) -->
+            <path d="M135,225 C135,255 165,255 165,225" fill="none" stroke="#262626" stroke-width="5" />
+            
+            <!-- Gatilho (Trigger) -->
+            <path d="M145,225 Q145,240 150,245" fill="none" stroke="#C2C2C2" stroke-width="4" />
+
+            <!-- ============================== -->
+            <!-- CARREGADOR (BANANA MAGAZINE)   -->
+            <!-- ============================== -->
+            <!-- Metade Iluminada -->
+            <path d="M165,225 Q150,320 180,410 L205,415 Q180,320 190,225 Z" fill="#707070" />
+            
+            <!-- Metade Escurecida -->
+            <path d="M190,225 Q180,320 205,415 L235,420 Q210,320 215,225 Z" fill="#424242" />
+            
+            <!-- Ranhuras do carregador de metal (Ribs) -->
+            <path d="M175,240 Q160,320 190,400" fill="none" stroke="#262626" stroke-width="3" opacity="0.4" />
+            <path d="M185,240 Q170,320 200,405" fill="none" stroke="#262626" stroke-width="3" opacity="0.4" />
+            <path d="M195,240 Q180,320 210,410" fill="none" stroke="#1A1A1A" stroke-width="3" opacity="0.4" />
+            <path d="M205,240 Q190,320 220,415" fill="none" stroke="#1A1A1A" stroke-width="3" opacity="0.4" />
+
+            <!-- Detalhe Tático: Fita adesiva vermelha curva (Tailwind red-500 e red-700) -->
+            <polygon points="157,300 186,303 188,335 159,330" fill="#ef4444" />
+            <polygon points="186,303 216,307 220,340 188,335" fill="#b91c1c" />
+
+            <!-- ============================== -->
+            <!-- GUARDA-MÃO E TUBO DE GÁS       -->
+            <!-- ============================== -->
+            <!-- Bloco da Alça de Mira (Rear Sight Block) -->
+            <polygon points="230,155 250,150 240,185 230,185" fill="#424242" />
+            <polygon points="230,155 250,150 250,165 230,165" fill="#262626" />
+
+            <!-- Guarda-mão Superior (Gas Tube Cover) -->
+            <polygon points="240,165 310,165 320,185 240,185" fill="#707070" />
+            
+            <!-- Guarda-mão Inferior (Lower Handguard) -->
+            <polygon points="240,195 330,195 320,225 240,225" fill="#424242" />
+            
+            <!-- Relevo "Bulge" lateral do guarda-mão -->
+            <polygon points="260,195 300,195 300,225 260,230" fill="#262626" opacity="0.5" />
+
+            <!-- ============================== -->
+            <!-- CANO & SISTEMA DE GÁS (BARREL) -->
+            <!-- ============================== -->
+            <!-- Vareta de Limpeza (Cleaning Rod) -->
+            <rect x="240" y="198" width="190" height="3" fill="#262626" />
+
+            <!-- Cano Principal -->
+            <rect x="240" y="185" width="200" height="5" fill="#C2C2C2" />
+            <rect x="240" y="190" width="200" height="5" fill="#424242" />
+
+            <!-- Tubo de gás exposto -->
+            <rect x="310" y="170" width="20" height="15" fill="#707070" />
+            
+            <!-- Bloco de Gás (Gas Block) com corte angular típico AK-47 -->
+            <polygon points="330,180 345,180 325,170 310,170" fill="#424242" />
+            <rect x="330" y="180" width="20" height="10" fill="#424242" />
+
+            <!-- ============================== -->
+            <!-- MASSA DE MIRA (FRONT SIGHT)    -->
+            <!-- ============================== -->
+            <!-- Base da mira -->
+            <rect x="410" y="185" width="15" height="15" fill="#262626" />
+            
+            <!-- Anel protetor (Hood) -->
+            <circle cx="417" cy="170" r="10" fill="none" stroke="#424242" stroke-width="4" />
+            
+            <!-- Pino central da mira -->
+            <rect x="415" y="170" width="4" height="15" fill="#262626" />
+
+            <!-- ============================== -->
+            <!-- QUEBRA-CHAMAS (SLANT BRAKE)    -->
+            <!-- ============================== -->
+            <!-- Rosca / Porca de fixação -->
+            <rect x="440" y="185" width="10" height="10" fill="#707070" />
+            
+            <!-- Corte em bisel característico da AKM / AK-47 moderna -->
+            <polygon points="450,184 468,184 460,196 450,196" fill="#424242" />
+
+        </svg>

@@ -1,14 +1,78 @@
-<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px"
-     viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            
+            <!-- CHIN STRAP (Fita de queixo) -->
+            <polygon points="90,280 230,440 256,440 256,420 210,420 110,280" fill="#424242" />
+            <polygon points="422,280 282,440 256,440 256,420 302,420 402,280" fill="#262626" />
 
-<path style="fill:#1d4ed8;" d="M462.523,264.941c0-127.723-103.539-231.261-231.261-231.261S0,137.219,0,264.941V370.4h157.852
-    l29.928-47.741H512L462.523,264.941z"/>
-<path style="fill:#60a5fa;" d="M231.261,33.68C103.539,33.68,0,137.219,0,264.941V370.4h157.852l29.928-47.741h43.481L231.261,33.68
-    L231.261,33.68z"/>
-<rect x="157.85" y="264.946" style="fill:#424242;" width="48.882" height="213.374"/>
-<rect x="157.85" y="264.946" style="fill:#707070;" width="24.441" height="213.374"/>
-<path style="fill:#2563eb;" d="M462.523,264.941H105.458C105.458,323.184,58.244,370.4,0,370.4h157.852l29.928-47.741H512
-    L462.523,264.941z"/>
-<path style="fill:#60a5fa;" d="M231.261,264.941H105.458C105.458,323.184,58.244,370.4,0,370.4h157.852l29.928-47.741h43.481
-    V264.941z"/>
-</svg>
+            <!-- HEADSET PADS (Almofadas internas) -->
+            <rect x="80" y="275" width="10" height="80" rx="5" fill="#262626" />
+            <rect x="422" y="275" width="10" height="80" rx="5" fill="#1A1A1A" />
+
+            <!-- HEADSET CUPS (Conchas do abafador) -->
+            <rect x="45" y="260" width="35" height="110" rx="17" fill="#424242" />
+            <rect x="432" y="260" width="35" height="110" rx="17" fill="#262626" />
+            
+            <!-- EARCUP DETAILS (Linhas texturizadas do abafador) -->
+            <rect x="55" y="300" width="20" height="4" fill="#262626" />
+            <rect x="55" y="320" width="20" height="4" fill="#262626" />
+            <rect x="55" y="340" width="20" height="4" fill="#262626" />
+            <rect x="437" y="300" width="20" height="4" fill="#1A1A1A" />
+            <rect x="437" y="320" width="20" height="4" fill="#1A1A1A" />
+            <rect x="437" y="340" width="20" height="4" fill="#1A1A1A" />
+
+            <!-- MIC BOOM (Microfone tático - Apenas na esquerda) -->
+            <path d="M 60,350 L 150,420" stroke="#262626" stroke-width="6" />
+            <circle cx="150" cy="420" r="12" fill="#424242" />
+            <rect x="145" y="415" width="10" height="10" fill="#1A1A1A" />
+
+            <!-- HELMET DOME (Casco principal do capacete) -->
+            <!-- Esquerda (Iluminada) - AZUL CLARO -->
+            <path d="M 256,70 C 120,70 90,180 90,280 L 256,280 Z" fill="#3b82f6" />
+            <!-- Direita (Sombreada) - AZUL ESCURO -->
+            <path d="M 256,70 C 392,70 422,180 422,280 L 256,280 Z" fill="#1d4ed8" />
+
+            <!-- RIM (Aba frontal do capacete) -->
+            <polygon points="90,280 256,280 256,295 80,295" fill="#C2C2C2" />
+            <polygon points="256,280 422,280 432,295 256,295" fill="#707070" />
+
+            <!-- SIDE RAILS (Trilhos laterais ARC) -->
+            <polygon points="85,220 105,220 115,310 75,310" fill="#707070" />
+            <polygon points="427,220 407,220 397,310 437,310" fill="#424242" />
+
+            <!-- RAIL CUTOUTS (Recortes geométricos dos trilhos) -->
+            <polygon points="90,240 100,240 105,260 95,260" fill="#424242" />
+            <polygon points="95,270 105,270 110,290 100,290" fill="#424242" />
+            <polygon points="422,240 412,240 407,260 417,260" fill="#262626" />
+            <polygon points="417,270 407,270 402,290 412,290" fill="#262626" />
+
+            <!-- HEADSET ARMS (Hastes metálicas que seguram os abafadores) -->
+            <polygon points="105,250 70,270 70,285 110,265" fill="#262626" />
+            <polygon points="407,250 442,270 442,285 402,265" fill="#1A1A1A" />
+
+            <!-- VELCRO PATCHES -->
+            <polygon points="256,80 180,95 190,120 256,110" fill="#424242" />
+            <polygon points="256,80 332,95 322,120 256,110" fill="#262626" />
+            <polygon points="120,130 180,140 170,180 110,170" fill="#424242" />
+            <polygon points="392,130 332,140 342,180 402,170" fill="#262626" />
+
+            <!-- NVG MOUNT (Suporte frontal para visão noturna) -->
+            <!-- Base Maior -->
+            <polygon points="256,150 210,160 220,250 256,270" fill="#707070" />
+            <polygon points="256,150 302,160 292,250 256,270" fill="#424242" />
+            <!-- Placa Interna -->
+            <polygon points="256,170 230,175 235,240 256,250" fill="#424242" />
+            <polygon points="256,170 282,175 277,240 256,250" fill="#262626" />
+            <!-- Encaixes Inferiores -->
+            <rect x="235" y="250" width="21" height="15" fill="#C2C2C2" />
+            <rect x="256" y="250" width="21" height="15" fill="#707070" />
+            <!-- Parafusos Superiores -->
+            <circle cx="245" cy="165" r="3" fill="#C2C2C2" />
+            <circle cx="267" cy="165" r="3" fill="#707070" />
+
+            <!-- BUNGEE CORDS (Cordas tensoras táticas) -->
+            <path d="M 215,200 L 140,280" stroke="#424242" stroke-width="4" />
+            <circle cx="140" cy="280" r="6" fill="#424242" />
+            <path d="M 297,200 L 372,280" stroke="#262626" stroke-width="4" />
+            <circle cx="372" cy="280" r="6" fill="#262626" />
+
+        </svg>

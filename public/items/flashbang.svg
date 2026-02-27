@@ -1,0 +1,39 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Spoon (Alavanca) -->
+                <polygon points="115,20 125,20 135,140 125,140" fill="#1f2937" />
+                
+                <!-- Bloco do Detonador -->
+                <rect x="100" y="40" width="30" height="20" fill="#6b7280" />
+                <rect x="115" y="40" width="15" height="20" fill="#4b5563" />
+                <!-- Argola Geométrica -->
+                <rect x="130" y="30" width="15" height="15" fill="none" stroke="#d1d5db" stroke-width="4" />
+
+                <!-- Chanfro Superior -->
+                <polygon points="90,60 140,60 145,70 85,70" fill="#d1d5db" />
+                <polygon points="115,60 140,60 145,70 115,70" fill="#9ca3af" />
+
+                <!-- Cilindro Longo Metálico -->
+                <rect x="85" y="70" width="30" height="160" fill="#d1d5db" />
+                <rect x="115" y="70" width="30" height="160" fill="#9ca3af" />
+
+                <!-- Faixas Azuis (blue-500) -->
+                <rect x="85" y="85" width="30" height="15" fill="#3b82f6" />
+                <rect x="115" y="85" width="30" height="15" fill="#1d4ed8" />
+                
+                <rect x="85" y="200" width="30" height="15" fill="#3b82f6" />
+                <rect x="115" y="200" width="30" height="15" fill="#1d4ed8" />
+
+                <!-- Furos de Luz (Quadrados) -->
+                <rect x="95" y="115" width="8" height="8" fill="#374151" />
+                <rect x="125" y="115" width="8" height="8" fill="#111827" />
+                
+                <rect x="95" y="140" width="8" height="8" fill="#374151" />
+                <rect x="125" y="140" width="8" height="8" fill="#111827" />
+                
+                <rect x="95" y="165" width="8" height="8" fill="#374151" />
+                <rect x="125" y="165" width="8" height="8" fill="#111827" />
+
+                <!-- Chanfro Inferior -->
+                <polygon points="85,230 145,230 140,240 90,240" fill="#9ca3af" />
+                <polygon points="115,230 145,230 140,240 115,240" fill="#6b7280" />
+            </svg>
