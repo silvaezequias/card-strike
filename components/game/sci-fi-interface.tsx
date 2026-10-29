@@ -13,7 +13,8 @@ import { DeckPanel } from "@/components/game/deck-panel";
 import { InventoryPanel } from "@/components/game/inventory-panel";
 import { GameBoard } from "@/components/game/game-board";
 import { RoundCountdown } from "@/components/game/round-countdown";
-import { useEffect } from "react";
+import { CSSProperties, useRef } from "react";
+import { useFitScale } from "@/game/useFitScale";
 import { SetupSettings } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
 
@@ -26,9 +27,17 @@ export default function SciFiInterface({
 
   const theme = useGameTheme(game.state.currentTeam);
 
+  const stageRef = useRef<HTMLDivElement>(null);
+  const fit = useFitScale(stageRef, {
+    reserveTop: 64,
+    reserveBottom: 52,
+    reserveX: 32,
+  });
+
   return (
     <div
-      className={`min-h-screen ${theme.background}  flex flex-col items-center pt-14 p-4 overflow-hidden font-mono select-none relative transition-colors duration-700`}
+      style={{ "--fit": fit.scale } as CSSProperties}
+      className={`h-screen ${theme.background}  flex flex-col items-center pt-14 p-4 overflow-hidden font-mono select-none relative transition-colors duration-700`}
     >
       {/* Round Countdown Overlay */}
       {game.state.turnPhase === "COUNTDOWN" && <RoundCountdown game={game} />}
@@ -71,8 +80,18 @@ export default function SciFiInterface({
 
       {/* <BurnedCardEffect card={game.burnedCard} /> */}
 
+      {/* Palco: escala para caber na altura da tela */}
       <div
-        className={`relative z-10 w-full max-w-7xl mx-auto flex flex-row items-start justify-center gap-8 md:gap-12`} //  ${game.isSlotModalOpen ? "transform-none" : "scale-[0.8] md:scale-100 transition-transform duration-500"}`}
+        className="relative z-10 flex-shrink-0"
+        style={{
+          width: fit.width ? fit.width * fit.scale : undefined,
+          height: fit.height ? fit.height * fit.scale : undefined,
+        }}
+      >
+      <div
+        ref={stageRef}
+        className="w-max flex flex-row items-start justify-center gap-8 md:gap-12 origin-top-left"
+        style={{ transform: `scale(${fit.scale})` }}
       >
         {/* Left Column: Police + Mission */}
         <div className="order-1 flex-shrink-0 flex flex-col gap-4 mt-2">
@@ -91,6 +110,7 @@ export default function SciFiInterface({
           <BombPanel game={game} />
           <DeckPanel game={game} onDraw={() => {}} disabled={true} />
         </div>
+      </div>
       </div>
 
       <InventoryPanel game={game} />

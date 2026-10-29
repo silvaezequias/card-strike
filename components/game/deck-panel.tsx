@@ -1,9 +1,9 @@
 "use client";
 
 import { GameEngine } from "@/game/useGameEngine";
-import { useGameTheme } from "@/game/useGameTheme";
-import { Shield, Crosshair, Layers, SquarePlus } from "lucide-react";
+import { Layers } from "lucide-react";
 import { HUDPanel } from "../ui/hud-panel";
+import { NoirCardBack } from "@/components/art/noir-card";
 
 export const DeckPanel = ({
   onDraw,
@@ -14,12 +14,9 @@ export const DeckPanel = ({
   game: GameEngine;
   disabled?: boolean;
 }) => {
-  const theme = useGameTheme(game.state.currentTeam);
+  const team = game.state.currentTeam;
 
-  const title =
-    game.state.currentTeam === "faction"
-      ? "BARALHO DO CAOS"
-      : "DECK DE SUPRIMENTOS";
+  const title = team === "faction" ? "BARALHO DO CAOS" : "DECK DE SUPRIMENTOS";
 
   return (
     <HUDPanel
@@ -32,65 +29,18 @@ export const DeckPanel = ({
         onClick={onDraw}
         className={`relative w-[65%] aspect-[3/4] cursor-pointer group perspective-1000 ${!disabled ? "opacity-50 grayscale pointer-events-none" : ""}`}
       >
-        <div
-          className={`
-              absolute inset-0
-              ${theme.underlay}
-              rounded-lg
-              border
-              transform
-              translate-x-2 translate-y-3
-              rotate-[-2deg]
-              scale-95
-              shadow-md
-            `}
+        <NoirCardBack
+          team={team}
+          className="absolute inset-0 w-full h-full translate-x-2 translate-y-3 rotate-[-4deg] scale-95 brightness-50"
         />
-        <div
-          className={`
-              absolute inset-0
-              ${theme.underlay}
-              rounded-lg
-              border
-              transform
-              translate-x-1 translate-y-1.5
-              rotate-[-3deg]
-              scale-[0.97]
-              shadow-lg
-          `}
+        <NoirCardBack
+          team={team}
+          className="absolute inset-0 w-full h-full translate-x-1 translate-y-1.5 rotate-[-2deg] scale-[0.97] brightness-75"
         />
-
-        <div
-          className={`
-              group
-              absolute inset-0
-              ${theme.underlay}
-              rounded-lg
-              border
-              transform
-              translate-x-1 translate-y-1.5
-              rotate-[1deg]
-              scale-[0.97]
-              shadow-lg
-              flex
-              justify-center
-              items-center
-              group-hover:scale-110
-              group-hover:rotate-0
-              transition-all
-              duration-300
-            `}
-        >
-          {game.state.currentTeam === "faction" ? (
-            <Crosshair
-              className={`w-10 h-10 group-hover:hidden ${theme.text}`}
-            />
-          ) : (
-            <Shield className={`w-10 h-10 group-hover:hidden ${theme.text}`} />
-          )}
-          <SquarePlus
-            className={`w-10 h-10 hidden group-hover:block ${theme.text}`}
-          />
-        </div>
+        <NoirCardBack
+          team={team}
+          className="absolute inset-0 w-full h-full rotate-[1deg] drop-shadow-[0_10px_18px_rgba(0,0,0,0.7)] group-hover:scale-105 group-hover:rotate-0 transition-transform duration-300"
+        />
       </div>
     </HUDPanel>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { Shield, Crosshair } from "lucide-react";
 import type { Card } from "@/lib/types";
+import { Portrait } from "@/components/art/noir";
 import { GameEngine } from "@/game/useGameEngine";
 import { Bombsite } from "@/game/game-types";
 
@@ -58,15 +58,15 @@ const PlayerAvatar = ({
     <div className="relative flex-shrink-0">
       <div
         className={`
-          w-14 h-14 rounded-full flex items-center justify-center border-2
+          w-16 h-16 rounded-full overflow-hidden border-2
           ${getAvatarStyle(isRight)}
         `}
       >
-        {isRight ? (
-          <Crosshair className="w-7 h-7 text-red-500" />
-        ) : (
-          <Shield className="w-7 h-7 text-blue-400" />
-        )}
+        <Portrait
+          team={isRight ? "faction" : "police"}
+          crop="head"
+          className={`w-full h-full ${isRight ? "" : "-scale-x-100"}`}
+        />
       </div>
 
       {position && (

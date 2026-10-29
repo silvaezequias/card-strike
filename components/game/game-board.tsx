@@ -15,7 +15,7 @@ const WarZone = ({ game }: GameBoardProps) => {
   const theme = useGameTheme(game.state.currentTeam);
 
   return (
-    <div className="flex justify-between items-center gap-8 mb-6 relative z-10">
+    <div className="flex justify-between items-center gap-6 relative z-10">
       {/* LEFT WING - POLICE */}
       <div
         className={`flex flex-col gap-3 transform -skew-y-3 origin-right ${theme.slotBg} p-3 rounded-xl border ${theme.orbInner} shadow-lg transition-colors duration-700`}
@@ -23,7 +23,7 @@ const WarZone = ({ game }: GameBoardProps) => {
         {["A", "B", "C"].map((char) => (
           <div
             key={char}
-            className={`relative group w-16 h-16 bg-gradient-to-br ${theme.slotItem} rounded-lg border ${theme.orbInner} flex items-center justify-center`}
+            className={`relative group w-14 h-14 bg-gradient-to-br ${theme.slotItem} rounded-lg border ${theme.orbInner} flex items-center justify-center`}
           >
             {game.state.teams.police.position === char && (
               <div className="absolute inset-0 flex items-center justify-center z-20]">
@@ -38,7 +38,7 @@ const WarZone = ({ game }: GameBoardProps) => {
       </div>
 
       {/* Center */}
-      <div className="relative w-48 h-48 flex items-center justify-center">
+      <div className="relative w-44 h-44 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60 clip-octagon flex items-center justify-center border-4 border-slate-600"></div>
         {game.state.playedCards.map((card: Card, index: number) => (
           <div
@@ -60,7 +60,7 @@ const WarZone = ({ game }: GameBoardProps) => {
         {["A", "B", "C"].map((char) => (
           <div
             key={char}
-            className={`relative group w-16 h-16 bg-gradient-to-br ${theme.slotItem} rounded-lg border ${theme.orbInner} flex items-center justify-center`}
+            className={`relative group w-14 h-14 bg-gradient-to-br ${theme.slotItem} rounded-lg border ${theme.orbInner} flex items-center justify-center`}
           >
             {game.state.teams.faction.position === char && (
               <div className="absolute inset-0 flex items-center justify-center z-20">
@@ -85,7 +85,7 @@ export const GameBoard = ({ game }: GameBoardProps) => {
       className={`relative bg-gradient-to-b ${theme.frameGradient} p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.9)]  ${theme.orbInner} border-b-4 border-black transition-all duration-700`}
     >
       <div
-        className={`${theme.innerSurface} rounded-2xl flex flex-col gap-10 p-6 w-[500px] aspect-[3/4] border ${theme.orbInner} shadow-inner transition-colors duration-700`}
+        className={`${theme.innerSurface} rounded-2xl flex flex-col gap-5 p-5 w-[500px] h-[680px] border ${theme.orbInner} shadow-inner transition-colors duration-700`}
       >
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/brushed-alum.png')] rounded-2xl pointer-events-none"></div>
         {game.state.board.warZoneIsActive && <WarZone game={game} />}

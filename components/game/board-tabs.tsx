@@ -54,7 +54,7 @@ export default function BoardTabs({ game }: BoardTabsProps) {
         })}
       </div>
       {/* CONTEÚDO */}
-      <div className="mt-6 aspect-[4/3] max-w-[500px]">
+      <div className="mt-4 max-w-[500px]">
         {tabs.find((tab) => tab.id === game.state.board.activeTab)?.component}
       </div>
     </div>

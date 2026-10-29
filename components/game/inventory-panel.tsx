@@ -56,6 +56,8 @@ export const InventoryPanel = ({ game }: InventoryPanelProps) => {
 
   return (
     <div
+      // Mesma escala do palco (--fit); origem à esquerda mantém o -50% centralizado.
+      style={{ scale: "var(--fit, 1)", transformOrigin: "left bottom" }}
       className={`fixed bottom-0 left-1/2 -translate-x-1/2
       ${isOpen && isSelecting ? "z-[70]" : "z-40"}
       transition-transform duration-500

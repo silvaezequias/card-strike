@@ -37,7 +37,7 @@ export const getSpinnerRotation = (val: string): Rotation => {
    CARD POOLS
    ═══════════════════════════════════════════════ */
 
-const policeWeapons: Omit<Card, "id">[] = [
+export const policeWeapons: Omit<Card, "id">[] = [
   {
     type: "item",
     cardCategory: "BOMBA",
@@ -95,7 +95,7 @@ const policeWeapons: Omit<Card, "id">[] = [
   },
 ];
 
-const factionWeapons: Omit<Card, "id">[] = [
+export const factionWeapons: Omit<Card, "id">[] = [
   {
     type: "item",
     cardCategory: "ARMA",
@@ -153,7 +153,7 @@ const factionWeapons: Omit<Card, "id">[] = [
   },
 ];
 
-const sharedUtilities: Omit<Card, "id">[] = [
+export const sharedUtilities: Omit<Card, "id">[] = [
   {
     type: "utility",
     cardCategory: "DIVERSOS",

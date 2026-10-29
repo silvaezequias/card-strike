@@ -1,50 +1,13 @@
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
 import { Card } from "@/lib/types";
-import { Clock, Heart, Plus } from "lucide-react";
-import Image from "next/image";
+import { Plus } from "lucide-react";
+import { NoirCard } from "@/components/art/noir-card";
 
 type InventoryProps = {
   game: GameEngine;
   type: "hand" | "warZone";
   length?: number;
-};
-
-export const CardStats = ({ card }: { card: Card }) => {
-  const activeStats = [card.damage, card.healing, card.duration].filter(
-    (val) => val > 0,
-  ).length;
-
-  const justify = activeStats > 1 ? "justify-between" : "justify-center";
-
-  return (
-    <div className={`flex items-center gap-1.5 mt-0.5 w-full ${justify}`}>
-      {card.damage > 0 && (
-        <div className="flex items-center gap-0.5">
-          <Heart size={14} className="text-red-400" />
-          <span className="text-sm font-bold text-red-400">-{card.damage}</span>
-        </div>
-      )}
-
-      {card.healing > 0 && (
-        <div className="flex items-center gap-0.5">
-          <Heart size={14} className="text-green-400" />
-          <span className="text-sm font-bold text-green-400">
-            +{card.healing}
-          </span>
-        </div>
-      )}
-
-      {card.duration > 0 && (
-        <div className="flex items-center gap-0.5">
-          <Clock size={14} className="text-yellow-400" />
-          <span className="text-sm font-bold text-yellow-400">
-            {card.duration}
-          </span>
-        </div>
-      )}
-    </div>
-  );
 };
 
 export const CardComponent = ({
@@ -56,53 +19,18 @@ export const CardComponent = ({
   game: GameEngine;
   placed?: boolean;
 }) => {
-  const theme = useGameTheme(card.teamOwner || game.state.currentTeam);
-
-  const cardIcons = {
-    AWP: `/items/${card.teamOwner || game.state.currentTeam}/awp.svg`,
-    "DESERT EAGLE": `/items/desert-eagle.svg`,
-    GLOCK: `/items/faction/glock.svg`,
-    USP: `/items/police/usp.svg`,
-    "AK-47": `/items/faction/ak-47.svg`,
-    BOMBA: `/items/c4.svg`,
-    M4A1: `/items/police/m4a1.svg`,
-    Granada: `/items/granade.svg`,
-    Capacete: `/items/${card.teamOwner || game.state.currentTeam}/cap.svg`,
-    Colete: `/items/${card.teamOwner || game.state.currentTeam}/bulletproof.svg`,
-    Flashbang: `/items/flashbang.svg`,
-    "KIT DEFUSE": "/items/kit-defuse.svg",
-    Smoke: `/items/smoke.svg`,
-  };
-
-  const cardIcon = cardIcons[card.name as keyof typeof cardIcons];
-
   return (
     <div
-      className={`
-        ${theme.border} ${theme.background} border rounded-sm 
-        aspect-[3/4] h-full flex flex-col items-center
-        justify-center gap-1 p-4
-      `}
+      className={`aspect-[3/4] h-full max-w-full ${
+        placed ? "drop-shadow-[0_8px_14px_rgba(0,0,0,0.8)]" : ""
+      }`}
       style={card.style}
     >
-      {!placed && (
-        <span
-          className={`${theme.text} flex flex-col gap-5font-bold text-center mt-0.5 leading-tight text-base`}
-        >
-          {card.name}
-        </span>
-      )}
-
-      {cardIcon && (
-        <Image
-          src={cardIcon}
-          alt={card.name}
-          width={placed ? 180 : 80}
-          height={placed ? 80 : 40}
-          className="mb-1"
-        />
-      )}
-      {!placed && <CardStats card={card} />}
+      <NoirCard
+        card={card}
+        team={card.teamOwner || game.state.currentTeam}
+        className="block w-full h-full"
+      />
     </div>
   );
 };
@@ -227,7 +155,11 @@ export const InventorySlot = ({
 
 export const InventoryGrid = ({ game, type, length = 3 }: InventoryProps) => {
   return (
-    <div className="grid grid-cols-3 gap-4 w-full">
+    <div
+      className={`grid grid-cols-3 w-full ${
+        type === "warZone" ? "gap-3 max-w-[400px] mx-auto" : "gap-4"
+      }`}
+    >
       {Array.from({ length }).map((_, i) => (
         <InventorySlot key={`inv-${i}`} game={game} type={type} index={i} />
       ))}
