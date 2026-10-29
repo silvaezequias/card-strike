@@ -31,9 +31,8 @@ const MaleFace = ({ p }: ArtProps) => (
     <path d="M168,272 L166,352 Q200,374 238,352 L232,262 Z" fill={p.skin} />
     <path d="M204,290 L232,262 L238,352 Q220,362 204,364 Z" fill={p.skinShade} opacity={0.75} />
     <path d="M168,286 Q200,312 234,276 L235,302 Q200,330 168,308 Z" fill={p.skinShade} />
-    <path d="M190,318 Q196,336 194,352" stroke={p.skinShade} strokeWidth={3} fill="none" opacity={0.6} />
 
-    {/* Rosto */}
+    {/* Rosto (sem traços: coberto por óculos/máscara) */}
     <path
       d="M150,168 L148,204 L137,232 L150,240 L152,262 Q160,292 196,307 Q224,300 241,272 L253,230 L259,190 L251,148 Z"
       fill={p.skin}
@@ -43,34 +42,7 @@ const MaleFace = ({ p }: ArtProps) => (
       fill={p.skinShade}
       opacity={0.85}
     />
-    <path d="M156,214 L184,209 L178,234 L160,238 Z" fill={p.skinLight} opacity={0.7} />
     <path d="M152,170 L196,164 L192,176 L154,184 Z" fill={p.skinLight} opacity={0.35} />
-
-    {/* Barba por fazer */}
-    <path
-      d="M152,250 Q160,292 196,307 Q224,300 241,272 L238,254 Q216,286 196,289 Q170,283 160,250 Z"
-      fill={p.hair}
-      opacity={0.28}
-    />
-
-    {/* Nariz */}
-    <path d="M154,198 L140,231" stroke={p.skinLight} strokeWidth={2.5} strokeLinecap="round" />
-    <path d="M140,232 L150,240 L160,236" stroke={p.skinShade} strokeWidth={3} fill="none" strokeLinecap="round" />
-    <path d="M166,204 Q172,222 162,238" stroke={p.skinShade} strokeWidth={2} fill="none" opacity={0.6} />
-
-    {/* Sobrancelhas */}
-    <path d="M148,190 L188,182 L192,191 L151,198 Z" fill={p.hair} />
-    <path d="M206,183 L234,181 L236,188 L208,192 Z" fill={p.hair} />
-
-    {/* Olhos */}
-    <path d="M155,206 L170,200 L182,203 L178,209 L160,210 Z" fill={p.eye} />
-    <circle cx="172" cy="204" r="1.4" fill="#ffffff" opacity={0.85} />
-    <path d="M208,202 L218,199 L229,202 L226,208 L211,208 Z" fill={p.eye} />
-    <path d="M156,213 L178,212" stroke={p.skinShade} strokeWidth={1.6} opacity={0.7} />
-
-    {/* Boca */}
-    <path d="M156,262 L186,257" stroke={p.lip} strokeWidth={3.5} strokeLinecap="round" />
-    <path d="M160,268 L180,266" stroke={p.skinShade} strokeWidth={2} strokeLinecap="round" opacity={0.6} />
 
     <Rim p={p} d="M259,192 L253,230 L241,272 Q224,300 198,307" />
     <Rim p={p} d="M234,276 L238,352" w={2.5} />
@@ -84,7 +56,7 @@ const FemaleFace = ({ p }: ArtProps) => (
     <path d="M206,286 L230,258 L236,350 Q220,360 206,362 Z" fill={p.skinShade} opacity={0.75} />
     <path d="M172,282 Q202,304 232,272 L233,296 Q202,320 172,302 Z" fill={p.skinShade} />
 
-    {/* Rosto */}
+    {/* Rosto (sem traços: coberto por óculos/máscara) */}
     <path
       d="M156,176 L152,210 L143,232 L154,238 L156,256 Q166,284 196,296 Q221,290 237,266 L249,226 L253,190 L245,158 Z"
       fill={p.skin}
@@ -94,32 +66,133 @@ const FemaleFace = ({ p }: ArtProps) => (
       fill={p.skinShade}
       opacity={0.8}
     />
-    <path d="M160,216 L186,211 L180,234 L164,238 Z" fill={p.skinLight} opacity={0.75} />
-    <ellipse cx="170" cy="240" rx="10" ry="5" fill={p.lip} opacity={0.18} />
-
-    {/* Nariz */}
-    <path d="M158,202 L144,231" stroke={p.skinLight} strokeWidth={2.2} strokeLinecap="round" />
-    <path d="M144,232 L152,238 L160,235" stroke={p.skinShade} strokeWidth={2.5} fill="none" strokeLinecap="round" />
-
-    {/* Sobrancelhas */}
-    <path d="M154,192 Q170,184 190,186 L190,190 Q172,190 156,197 Z" fill={p.hair} />
-    <path d="M208,186 Q222,183 236,186 L235,190 Q222,188 209,191 Z" fill={p.hair} />
-
-    {/* Olhos com delineado */}
-    <path d="M158,207 Q170,198 184,203 L180,209 Q168,212 160,210 Z" fill={p.eye} />
-    <path d="M184,203 L193,197" stroke={p.eye} strokeWidth={2.5} strokeLinecap="round" />
-    <path d="M157,206 Q168,195 185,202" stroke={p.eye} strokeWidth={2.5} fill="none" />
-    <circle cx="173" cy="204" r="1.4" fill="#ffffff" opacity={0.9} />
-    <path d="M209,203 Q219,198 229,201 L227,207 Q217,209 211,207 Z" fill={p.eye} />
-    <path d="M229,201 L236,196" stroke={p.eye} strokeWidth={2.2} strokeLinecap="round" />
-
-    {/* Lábios */}
-    <path d="M158,256 Q166,250 174,253 Q180,250 188,254 Q174,258 158,256 Z" fill={p.lip} />
-    <path d="M160,257 Q174,268 188,255 Q176,260 160,257 Z" fill={p.lip} opacity={0.85} />
-    <path d="M166,262 Q174,264 182,260" stroke={p.skinLight} strokeWidth={1.4} fill="none" opacity={0.5} />
 
     <Rim p={p} d="M253,192 L249,226 L237,266 Q221,290 198,296" />
     <Rim p={p} d="M232,272 L236,350" w={2.5} />
+  </g>
+);
+
+/* ───────────── ÓCULOS E MÁSCARAS ───────────── */
+
+/** Reflexos da lente: faixa clara + faixa da cor da luz de recorte. */
+const LensGlare = ({ p, clip }: ArtProps & { clip: string }) => (
+  <g clipPath={`url(#${clip})`}>
+    <path d="M120,240 L190,160 L206,160 L136,240 Z" fill="#ffffff" opacity={0.28} />
+    <path d="M146,240 L216,160 L222,160 L152,240 Z" fill="#ffffff" opacity={0.18} />
+    <path d="M200,240 L270,160 L290,160 L220,240 Z" fill={p.rim} opacity={0.45} />
+  </g>
+);
+
+/** Óculos balísticos com tira elástica (operador e combatente). */
+const TacticalGoggles = ({ p, lens }: ArtProps & { lens: string }) => {
+  const lensPath =
+    "M148,196 Q152,190 196,189 L236,189 Q242,190 242,198 L240,212 Q237,218 228,218 L208,218 Q200,208 190,218 L162,219 Q149,219 147,210 Z";
+  const clip = `goggle-lens-${p.team}`;
+
+  return (
+    <g>
+      {/* Tira */}
+      <path d="M236,190 L266,186 L268,212 L240,216 Z" fill={p.clothDark} />
+      <path d="M246,192 L262,190 M247,206 L264,204" stroke={p.cloth} strokeWidth={1.5} />
+      {/* Armação */}
+      <path
+        d="M140,192 Q146,182 196,182 L238,182 Q250,184 250,198 L247,216 Q243,226 228,226 L208,226 Q200,216 190,226 L160,227 Q141,227 139,212 Z"
+        fill={p.metalDark}
+      />
+      <clipPath id={clip}>
+        <path d={lensPath} />
+      </clipPath>
+      <path d={lensPath} fill={lens} />
+      <path d={lensPath} fill={p.bg0} opacity={0.35} />
+      <LensGlare p={p} clip={clip} />
+      <Rim p={p} d="M238,183 Q250,184 250,198 L247,216" w={2.5} />
+      <path d="M142,191 Q150,183 196,183" stroke={p.metalLight} strokeWidth={1.5} fill="none" />
+    </g>
+  );
+};
+
+/** Óculos de tiro envolventes (atiradora). */
+const ShootingGlasses = ({ p }: ArtProps) => {
+  const lensPath =
+    "M150,198 Q190,189 242,193 L241,208 Q234,217 216,215 Q202,206 193,216 Q170,221 156,214 Z";
+  const clip = `shooting-lens-${p.team}`;
+
+  return (
+    <g>
+      <path d="M238,195 L262,197" stroke={p.metalDark} strokeWidth={4} strokeLinecap="round" />
+      <clipPath id={clip}>
+        <path d={lensPath} />
+      </clipPath>
+      <path d={lensPath} fill={p.bg2} />
+      <path d={lensPath} fill={p.accent} opacity={0.35} />
+      <LensGlare p={p} clip={clip} />
+      <path d={lensPath} fill="none" stroke={p.metalDark} strokeWidth={2.5} strokeLinejoin="round" />
+      <path d="M151,197 Q190,188 242,192" stroke={p.rim} strokeWidth={1.8} fill="none" opacity={0.8} />
+    </g>
+  );
+};
+
+/** Óculos escuros redondos (batedora). */
+const RoundShades = ({ p }: ArtProps) => {
+  const clip = `shades-lens-${p.team}`;
+
+  return (
+    <g>
+      <path d="M232,203 L262,200" stroke={p.metalLight} strokeWidth={2.5} strokeLinecap="round" />
+      <path d="M186,205 Q196,198 208,204" stroke={p.metalLight} strokeWidth={2.5} fill="none" />
+      <clipPath id={clip}>
+        <ellipse cx="168" cy="208" rx="20" ry="15" />
+        <ellipse cx="221" cy="205" rx="13" ry="14" />
+      </clipPath>
+      <ellipse cx="168" cy="208" rx="20" ry="15" fill={p.eye} />
+      <ellipse cx="221" cy="205" rx="13" ry="14" fill={p.eye} />
+      <g clipPath={`url(#${clip})`}>
+        <rect x="140" y="190" width="120" height="34" fill={p.streak} opacity={0.3} />
+      </g>
+      <LensGlare p={p} clip={clip} />
+      <ellipse cx="168" cy="208" rx="20" ry="15" fill="none" stroke={p.metalLight} strokeWidth={2.5} />
+      <ellipse cx="221" cy="205" rx="13" ry="14" fill="none" stroke={p.metalLight} strokeWidth={2.5} />
+      <path d="M221,191 A13,14 0 0 1 234,205" stroke={p.rim} strokeWidth={2} fill="none" />
+    </g>
+  );
+};
+
+/** Balaclava: cobre do nariz ao pescoço (operador). */
+const Balaclava = ({ p }: ArtProps) => (
+  <g>
+    <path
+      d="M136,222 L252,214 L258,226 L253,262 L243,282 L240,356 Q202,380 162,354 L164,302 Q151,282 149,258 L134,236 Z"
+      fill={p.cloth}
+    />
+    <path
+      d="M214,218 L252,214 L258,226 L253,262 L243,282 L240,356 Q222,368 204,370 Q216,300 214,218 Z"
+      fill={p.clothDark}
+      opacity={0.75}
+    />
+    <path d="M150,226 L196,222 L190,250 L156,254 Z" fill={p.clothLight} opacity={0.45} />
+    <path d="M140,236 Q196,228 252,232" stroke={p.clothDark} strokeWidth={2} fill="none" opacity={0.7} />
+    <path d="M152,262 Q170,272 190,266" stroke={p.clothDark} strokeWidth={2} fill="none" opacity={0.6} />
+    <path d="M166,302 Q200,318 240,300" stroke={p.clothDark} strokeWidth={2} fill="none" opacity={0.6} />
+    <Rim p={p} d="M258,226 L253,262 L243,282 L240,354" />
+  </g>
+);
+
+/** Gola tática puxada sobre o nariz (atiradora). */
+const NeckGaiter = ({ p }: ArtProps) => (
+  <g>
+    <path
+      d="M140,226 Q198,214 252,224 L250,266 L238,354 Q204,376 168,352 L170,302 Q151,284 146,252 Z"
+      fill={p.cloth}
+    />
+    <path
+      d="M210,218 Q234,219 252,224 L250,266 L238,354 Q222,366 206,368 Q220,300 210,218 Z"
+      fill={p.clothDark}
+      opacity={0.7}
+    />
+    <path d="M146,250 Q198,240 250,248" stroke={p.clothDark} strokeWidth={2.5} fill="none" opacity={0.7} />
+    <path d="M156,282 Q200,276 246,284" stroke={p.clothDark} strokeWidth={2.5} fill="none" opacity={0.6} />
+    <path d="M170,320 Q204,330 240,318" stroke={p.clothDark} strokeWidth={2.5} fill="none" opacity={0.6} />
+    <Rim p={p} d="M252,226 L250,266 L238,352" />
   </g>
 );
 
@@ -191,6 +264,8 @@ export const PoliceOperator = ({ p, flip }: CharacterProps) => (
     <circle cx="98" cy="270" r="3.5" fill={p.accent} />
 
     <MaleFace p={p} />
+    <Balaclava p={p} />
+    <TacticalGoggles p={p} lens={p.bg2} />
     <Headset p={p} cx={268} cy={224} />
 
     {/* Capacete */}
@@ -253,6 +328,8 @@ export const PoliceSniper = ({ p }: ArtProps) => (
     <path d="M114,424 L128,420 L130,438 L122,445 L113,439 Z" fill={p.bg1} opacity={0.5} />
 
     <FemaleFace p={p} />
+    <NeckGaiter p={p} />
+    <ShootingGlasses p={p} />
 
     {/* Mecha solta */}
     <path d="M154,190 Q146,214 150,236" stroke={p.hair} strokeWidth={4} fill="none" strokeLinecap="round" />
@@ -320,17 +397,14 @@ export const FactionRaider = ({ p }: ArtProps) => {
 
       <MaleFace p={p} />
 
-      {/* Olhos mais duros: sombra e cicatriz */}
-      <path d="M150,198 L190,190 L186,214 L152,216 Z" fill={p.eye} opacity={0.18} />
-      <path d="M214,174 L222,212" stroke={p.skinLight} strokeWidth={2.2} strokeLinecap="round" opacity={0.85} />
-      <path d="M150,188 L190,184 L192,193 L152,197 Z" fill={p.hair} />
-
       {/* Shemagh */}
       <Keffiyeh p={p} d={wrap} />
       <path d="M200,216 Q252,212 264,230 L268,292 Q252,334 200,340 Q236,300 232,248 Z" fill={p.cloth} opacity={0.6} />
       <path d="M144,248 Q200,236 258,250 M142,276 Q200,266 262,280 M152,306 Q200,300 254,310" stroke={p.cloth} strokeWidth={3} fill="none" />
       <path d="M140,296 Q118,344 126,404 L160,398 Q150,346 172,322 Z" fill={p.clothLight} />
       <path d="M126,404 L160,398" stroke={p.clothDark} strokeWidth={3} strokeDasharray="3 3" />
+
+      <TacticalGoggles p={p} lens={p.accent} />
 
       {/* Gorro */}
       <path d="M140,184 Q132,102 206,94 Q282,96 278,188 Q208,166 140,184 Z" fill={p.clothDark} />
@@ -399,6 +473,8 @@ export const FactionScout = ({ p }: ArtProps) => (
     ))}
     <path d="M146,252 Q200,240 256,254" stroke={p.woodDark} strokeWidth={2.5} fill="none" />
     <path d="M256,236 L282,238 L300,262 L280,256 L290,282 L268,258 Z" fill={p.wood} />
+
+    <RoundShades p={p} />
 
     {/* Franja */}
     <path d="M144,198 Q170,140 240,148 Q256,170 256,200 Q214,164 180,182 Q160,192 144,198 Z" fill={p.hair} />

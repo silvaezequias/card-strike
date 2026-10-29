@@ -38,8 +38,7 @@ const durationLabel = (card: CatalogEntry) =>
     : "Imediato";
 
 const CardEntry = ({ card, team }: { card: CatalogEntry; team: TeamName }) => {
-  const viewTeam = card.teams.includes(team) ? team : card.teams[0];
-  const p = getPalette(viewTeam);
+  const p = getPalette(team);
   const lifeColor =
     card.damage > 0 ? "#ff5c70" : card.healing > 0 ? "#5cffa8" : "#a1a1aa";
 
@@ -50,7 +49,7 @@ const CardEntry = ({ card, team }: { card: CatalogEntry; team: TeamName }) => {
     >
       <NoirCard
         card={{ ...card, id: card.id }}
-        team={viewTeam}
+        team={team}
         className="w-32 xl:w-36 flex-shrink-0 self-start drop-shadow-[0_10px_20px_rgba(0,0,0,0.7)]"
       />
 
@@ -239,7 +238,10 @@ export default function CardsPage() {
 
       <main className="mx-auto max-w-6xl space-y-12 px-6 py-10">
         {CATEGORIES.map((category) => {
-          const cards = CARD_CATALOG.filter((c) => c.cardCategory === category.id);
+          const cards = CARD_CATALOG.filter(
+            (c) => c.cardCategory === category.id && c.teams.includes(team),
+          );
+          if (cards.length === 0) return null;
           return (
             <section key={category.id} id={category.id} className="scroll-mt-6">
               <h2 className="mb-5 flex items-center gap-3 text-2xl font-black tracking-[0.25em]">
