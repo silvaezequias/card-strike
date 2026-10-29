@@ -142,3 +142,14 @@ body {
 .animate-draw-to-hand {
   animation: draw-to-hand 1s ease-in-out forwards;
 }
+
+/* Peão do tabuleiro pulando enquanto anda */
+@keyframes pawn-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
