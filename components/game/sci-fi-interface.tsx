@@ -143,14 +143,19 @@ export function GameScreen({
   // Tabuleiro em destaque; o outro fica no minimapa da coluna esquerda.
   const [mainView, setMainView] = useState<MainBoardView>("cards");
   const toggleView = () => setMainView((v) => (v === "cards" ? "map" : "cards"));
-  // Hora de mexer nos slots: volta para as cartas.
-  useEffect(() => {
-    if (turnPhase === "PLACING") setMainView("cards");
-  }, [turnPhase]);
-
   // Foco do tutorial: mostra o tabuleiro pedido e volta às cartas quando termina.
   const cameraBoard =
     tutorialCamera && tutorialCamera.board !== "hud" ? tutorialCamera.board : null;
+
+  // Cada ação foca o tabuleiro que usa: a roleta no mapa, o resto nas cartas.
+  // Em IDLE fica onde está, para ver o peão chegar depois da roleta.
+  const selectedTool = state.tool.selected;
+  useEffect(() => {
+    if (cameraBoard) return;
+    if (selectedTool === "spinner") setMainView("map");
+    else if (turnPhase !== "IDLE") setMainView("cards");
+  }, [selectedTool, turnPhase, cameraBoard]);
+
   const lastCameraBoard = useRef<string | null>(null);
   useEffect(() => {
     if (cameraBoard) setMainView(cameraBoard);
@@ -251,7 +256,7 @@ export function GameScreen({
       </div>
 
       <GameOverOverlay
-        visible={"gameOver" in game}
+        visible={game.gameOver}
         message="MISSAO FALHOU"
         subMessage={
           state.bomb.exploded
@@ -356,6 +361,15 @@ export function GameScreen({
                   ? "MÃO CHEIA · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"
                   : "COMPRE NO BARALHO · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"}
               </p>
+            </div>
+          )}
+
+          {/* Resultado da carta jogada */}
+          {!boardClear && turnPhase === "IDLE" && state.lastResult && (
+            <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex justify-center">
+              <h2 className={`text-2xl font-black tracking-widest drop-shadow-lg ${theme.text}`}>
+                {state.lastResult}
+              </h2>
             </div>
           )}
 

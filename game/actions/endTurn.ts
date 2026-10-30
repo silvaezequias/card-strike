@@ -1,8 +1,11 @@
 import { GameState } from "../game-types";
+import { opponentOf, resolveEndOfTurn } from "../card-effects";
 
 export const ActionEndTurn = (state: GameState): GameState => ({
   ...state,
-  currentTeam: state.currentTeam === "faction" ? "police" : "faction",
+  ...resolveEndOfTurn(state),
+  currentTeam: opponentOf(state.currentTeam),
+  lastResult: null,
   turnPhase: "COUNTDOWN",
   tool: {
     ...state.tool,

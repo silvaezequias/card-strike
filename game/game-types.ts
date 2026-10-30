@@ -28,6 +28,8 @@ export interface GameState {
   turnAction: TurnActionState;
 
   playedCards: Card[];
+  /** O que aconteceu com a última carta jogada neste turno. */
+  lastResult: string | null;
   bomb: BombData;
   countdown: {
     round: number;
@@ -77,8 +79,12 @@ export type Team = {
 
   inventory: {
     hand: Card[];
-    warZone: Card[];
+    /** Sempre 6 posições: a carta fica no slot sorteado. */
+    warZone: (Card | null)[];
   };
+
+  /** Efeitos ativos no time (Smoke, Molotov, Flashbang). */
+  effects: Card[];
 };
 
 export interface GameEngine {

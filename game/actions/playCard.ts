@@ -1,5 +1,6 @@
 import { GameAction } from "../game-actions";
 import { GameState } from "../game-types";
+import { resolveCard } from "../card-effects";
 
 export const ActionPlayCard = (
   state: GameState,
@@ -9,11 +10,12 @@ export const ActionPlayCard = (
   const randomX = Math.floor(Math.random() * 20) - 10;
   const randomY = Math.floor(Math.random() * 20) - 10;
 
-  const { teams, currentTeam } = state;
-  const { warZone: warZoneInventory } = teams[currentTeam].inventory;
+  const { currentTeam } = state;
+  const { teams, bomb, result } = resolveCard(state, action.payload.card);
 
-  const warZoneInventoryFilterd = warZoneInventory.filter(
-    (card) => card.id !== action.payload.card.id,
+  // Só esvazia o slot da carta: as outras continuam onde estão.
+  const warZoneWithoutCard = teams[currentTeam].inventory.warZone.map((card) =>
+    card?.id === action.payload.card.id ? null : card,
   );
 
   return {
@@ -38,13 +40,15 @@ export const ActionPlayCard = (
         battlefieldTab: true,
       },
     },
+    bomb,
+    lastResult: result,
     teams: {
-      ...state.teams,
+      ...teams,
       [currentTeam]: {
-        ...state.teams[currentTeam],
+        ...teams[currentTeam],
         inventory: {
-          ...state.teams[currentTeam].inventory,
-          warZone: warZoneInventoryFilterd,
+          ...teams[currentTeam].inventory,
+          warZone: warZoneWithoutCard,
         },
       },
     },

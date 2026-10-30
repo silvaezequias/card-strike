@@ -4,6 +4,7 @@ import { gameReducer } from "./game-reducer";
 import { createInitialGameState } from "./game-initital-state";
 import { getD6Rotation, getSpinnerRotation } from "@/lib/game-helpers";
 import { GameAction } from "./game-actions";
+import { isGameOver } from "./card-effects";
 
 /** Resultados forçados para as próximas jogadas (tutorial roteirizado). */
 export type ScriptedOutcomes = {
@@ -113,11 +114,12 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
         const d6Result = state.tool.result.d6;
         if (d6Result) {
           // Tempo esgotado: joga a carta do slot sorteado, se houver.
-          if (warZoneInventory[d6Result - 1]) {
+          const drawnCard = warZoneInventory[d6Result - 1];
+          if (drawnCard) {
             return dispatch({
               type: "PLAY_CARD",
               payload: {
-                card: warZoneInventory[d6Result - 1],
+                card: drawnCard,
               },
             });
           }
@@ -155,8 +157,10 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
     }
   };
 
+  const gameOver = isGameOver(state);
+
   useEffect(() => {
-    if (!timer) return;
+    if (!timer || gameOver) return;
     const interval = setInterval(() => {
       if (state.countdown.seconds === 0) handleEndTime();
 
@@ -164,11 +168,12 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [seconds, handInventory, isRolling, timer]);
+  }, [seconds, handInventory, isRolling, timer, gameOver]);
 
   return {
     state,
     dispatch,
+    gameOver,
     tool: {
       rotation: {
         d6: d6Rotation,

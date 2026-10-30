@@ -16,7 +16,7 @@ export const PlayerCard = ({
   const cardTeam = isRight ? "faction" : "police";
   const isActive = game.state.currentTeam === cardTeam;
 
-  const { health, inventory, position } = game.state.teams[cardTeam];
+  const { health, inventory, position, effects } = game.state.teams[cardTeam];
 
   return (
     <div
@@ -41,6 +41,7 @@ export const PlayerCard = ({
           playerName={game.state.teams[cardTeam].playerName}
           health={health}
           inventory={inventory}
+          effects={effects}
         />
       </div>
     </div>
@@ -97,12 +98,14 @@ const PlayerInfo = ({
   playerName,
   health,
   inventory,
+  effects,
 }: {
   isRight: boolean;
   teamName: string;
   playerName: string;
   health: number;
   inventory: any;
+  effects: Card[];
 }) => {
   return (
     <div
@@ -120,6 +123,8 @@ const PlayerInfo = ({
       <HealthBar isRight={isRight} health={health} />
 
       <UtilitySlots isRight={isRight} warZone={inventory.warZone} />
+
+      <ActiveEffects isRight={isRight} effects={effects} />
     </div>
   );
 };
@@ -247,6 +252,27 @@ const UtilitySlot = ({ card }: { card?: Card | null }) => {
           {card.name}
         </div>
       )}
+    </div>
+  );
+};
+
+/** Efeitos ativos no time, com os rounds restantes. */
+const ActiveEffects = ({
+  isRight,
+  effects,
+}: {
+  isRight: boolean;
+  effects: Card[];
+}) => {
+  if (effects.length === 0) return null;
+
+  return (
+    <div className={`flex flex-wrap gap-2 text-[10px] font-bold ${isRight ? "justify-end" : ""}`}>
+      {effects.map((effect) => (
+        <span key={effect.id} className={getUtilityColor(effect.name)}>
+          {effect.name} {effect.duration}
+        </span>
+      ))}
     </div>
   );
 };
