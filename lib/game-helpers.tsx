@@ -227,6 +227,13 @@ export const sharedUtilities: Omit<Card, "id">[] = [
    RANDOM CARD GENERATOR
    ═══════════════════════════════════════════════ */
 
+/** Carta do pool do time pelo nome, ou null se o time não tiver essa carta. */
+export const createCardByName = (team: TeamName, name: string): Card | null => {
+  const teamWeapons = team === "police" ? policeWeapons : factionWeapons;
+  const chosen = [...teamWeapons, ...sharedUtilities].find((c) => c.name === name);
+  return chosen ? { id: Date.now() + Math.random(), ...chosen } : null;
+};
+
 export const generateRandomCard = (team: TeamName): Card => {
   const teamWeapons = team === "police" ? policeWeapons : factionWeapons;
   const pool = [...teamWeapons, ...sharedUtilities];

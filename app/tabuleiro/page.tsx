@@ -2,9 +2,10 @@
 
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Eye, Footprints, Repeat, ScanLine } from "lucide-react";
+import { ArrowLeft, Bomb, Eye, Footprints, Repeat, ScanLine } from "lucide-react";
 import { BoardStage, CameraShot } from "@/components/game/board-stage";
-import { MapSpot } from "@/components/art/tactical-board";
+import { Bombsite, MapBoard, MapSpot } from "@/components/game/map-board";
+import { CardBoardPreview, MainBoardView, MinimapButton } from "@/components/game/minimap";
 import { getPalette } from "@/components/art/palette";
 import { CARD_CATALOG } from "@/lib/card-catalog";
 import { TeamName } from "@/game/game-types";
@@ -34,7 +35,15 @@ export default function BoardPreviewPage() {
     faction: "BASE",
   });
   const [busy, setBusy] = useState(false);
+  const [mainView, setMainView] = useState<MainBoardView>("cards");
+  const [bomb, setBomb] = useState<Bombsite | null>(null);
   const timers = useRef<number[]>([]);
+
+  // Trocar de tabuleiro remonta o mapa; libera os botões caso uma ficha esteja andando.
+  const toggleView = () => {
+    setMainView((v) => (v === "cards" ? "map" : "cards"));
+    setBusy(false);
+  };
 
   const schedule = (fn: () => void, ms: number) => {
     timers.current.push(window.setTimeout(fn, ms));
@@ -52,20 +61,14 @@ export default function BoardPreviewPage() {
     }, 2200);
   };
 
-  // Mover o peão: a câmera mostra o mapa e volta para os slots ao chegar.
+  // Mover o peão: a ficha anda no mapa tático; os botões voltam ao chegar.
   const move = (spot: MapSpot) => {
     if (busy || positions[turn] === spot) return;
     setBusy(true);
-    setShot("overview");
-    schedule(() => setPositions((prev) => ({ ...prev, [turn]: spot })), 700);
+    setPositions((prev) => ({ ...prev, [turn]: spot }));
   };
 
-  const handleArrive = useCallback(() => {
-    schedule(() => {
-      setShot("focus");
-      setBusy(false);
-    }, 600);
-  }, []);
+  const handleArrive = useCallback(() => setBusy(false), []);
 
   const p = getPalette(turn);
 
@@ -74,17 +77,38 @@ export default function BoardPreviewPage() {
 
   return (
     <div className="relative h-screen overflow-hidden bg-[radial-gradient(ellipse_at_center,#15121f_0%,#050408_70%)] font-mono text-white select-none">
-      <BoardStage
-        turn={turn}
-        shot={shot}
-        positions={positions}
-        slots={DEMO_SLOTS}
-        combatCard={{ card: card("Granada"), team: "police" }}
-        onPawnArrive={handleArrive}
-      />
+      {/* Tabuleiro de cartas: fica montado para não perder o estado */}
+      <div className={`absolute inset-0 ${mainView === "cards" ? "" : "invisible"}`}>
+        <BoardStage
+          turn={turn}
+          shot={shot}
+          slots={DEMO_SLOTS}
+          combatCard={{ card: card("Granada"), team: "police" }}
+        />
+      </div>
+
+      {/* Mapa em destaque */}
+      {mainView === "map" && (
+        <div className="absolute inset-0 flex items-center justify-center px-6 pb-16 pt-40 [container-type:size]">
+          <MapBoard positions={positions} bomb={bomb} onArrive={handleArrive} className="w-[min(92cqw,150cqh)]" />
+        </div>
+      )}
+
+      {/* Minimapa à esquerda: clicar troca com o tabuleiro principal */}
+      <div className="absolute bottom-14 left-4 z-10 w-[clamp(200px,22%,300px)]">
+        <MinimapButton label={mainView === "cards" ? "MAPA" : "CARTAS"} onClick={toggleView}>
+          {mainView === "cards" ? (
+            <MapBoard positions={positions} bomb={bomb} autoZoom onArrive={handleArrive} className="w-full" />
+          ) : (
+            <CardBoardPreview />
+          )}
+        </MinimapButton>
+      </div>
 
       <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-white/10 bg-black/60 px-4 py-1.5 text-[10px] font-bold tracking-[0.25em] text-zinc-400">
-        ARRASTE PARA GIRAR 360° · ARRASTE PARA CIMA/BAIXO PARA INCLINAR · ROLE PARA ZOOM
+        {mainView === "cards"
+          ? "ARRASTE PARA GIRAR 360° · ARRASTE PARA CIMA/BAIXO PARA INCLINAR · ROLE PARA ZOOM"
+          : "CLIQUE NO MINIMAPA PARA VOLTAR ÀS CARTAS"}
       </p>
 
       {/* Controles da demonstração */}
@@ -128,6 +152,20 @@ export default function BoardPreviewPage() {
                 style={positions[turn] === spot ? { borderColor: p.accent, color: p.rim } : undefined}
               >
                 {spot === "BASE" ? "BASE" : `SITE ${spot}`}
+              </button>
+            ))}
+          </div>
+          {/* Bomba: o minimapa dá zoom quando ela está plantada */}
+          <div className="flex items-center gap-2">
+            <Bomb size={13} className="text-zinc-500" />
+            {([null, "A", "B", "C"] as (Bombsite | null)[]).map((site) => (
+              <button
+                key={site ?? "none"}
+                className={button}
+                onClick={() => setBomb(site)}
+                style={bomb === site ? { borderColor: "#ff5a5a", color: "#ff9a9a" } : undefined}
+              >
+                {site ? `BOMBA ${site}` : "SEM BOMBA"}
               </button>
             ))}
           </div>

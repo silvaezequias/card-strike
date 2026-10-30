@@ -4,6 +4,7 @@ import { ChevronUp, ChevronDown, Ban, Hand } from "lucide-react";
 import { InventoryGrid } from "./card";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
+import { useGate } from "./tutorial-gate";
 
 interface InventoryPanelProps {
   game: GameEngine;
@@ -14,12 +15,16 @@ export const InventoryPanel = ({ game }: InventoryPanelProps) => {
   const isOpen = game.state.hud.inventory.isOpen;
 
   const theme = useGameTheme(game.state.currentTeam);
+  const inventoryGate = useGate("inventory");
+  const keepGate = useGate("keep");
 
   const handleToggle = () => {
+    if (!inventoryGate.allowed) return;
     game.dispatch({ type: "TOGGLE_INVENTORY" });
   };
 
   const handleKeepInHand = () => {
+    if (!keepGate.allowed) return;
     game.dispatch({ type: "KEEP_IN_HAND" });
   };
 
@@ -64,7 +69,7 @@ export const InventoryPanel = ({ game }: InventoryPanelProps) => {
       ${isOpen ? "translate-y-0" : "translate-y-[calc(100%-40px)]"}`}
     >
       <div className="flex flex-col items-center">
-        {isSelecting ? <KeepInHandButton /> : <ToggleButton />}
+        {isSelecting ? keepGate.allowed ? <KeepInHandButton /> : <div className="h-8" /> : <ToggleButton />}
         <div
           className={`w-[350px] md:w-[500px]
           ${theme.underlay}

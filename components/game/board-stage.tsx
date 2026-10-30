@@ -4,22 +4,20 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
 import { NoirCard } from "@/components/art/noir-card";
-import { Portrait } from "@/components/art/noir";
 import { getPalette } from "@/components/art/palette";
 import {
   BOARD_H,
   BOARD_W,
+  BOMB_BOX,
   COMBAT_CARD,
   MAP_CENTER,
-  MapSpot,
   Point,
   Rect,
   TEAM_CARD_ROTATION,
   TacticalBoard,
+  deckRect,
   gridFrame,
-  routeBetween,
   slotRect,
-  spotPoint,
 } from "@/components/art/tactical-board";
 
 /* ═══════════════════════════════════════════════
@@ -45,6 +43,44 @@ const ZOOM_RANGE = [0.5, 2.6] as const;
 
 const clamp = (v: number, [min, max]: readonly [number, number]) => Math.min(max, Math.max(min, v));
 
+/** Parte do tabuleiro de cartas que o tutorial pede para focar. */
+export type CardCameraFocus = {
+  area: "overview" | "grid" | "slot" | "deck" | "combat" | "bomb";
+  team?: TeamName;
+  slot?: number;
+};
+
+const rectCenterOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
+
+/**
+ * Enquadramento de uma parte do tabuleiro: centro, tamanho visto pelo
+ * jogador (largura x profundidade), giro e o retângulo destacado.
+ */
+const focusTarget = (focus: CardCameraFocus) => {
+  const team = focus.team ?? "police";
+  switch (focus.area) {
+    case "grid": {
+      const g = gridFrame(team);
+      const spot = { x: g.center.x - g.h / 2, y: g.center.y - g.w / 2, w: g.h, h: g.w };
+      return { center: g.center, w: g.w, h: g.h, rotate: TEAM_VIEW_ROTATION[team], spotlight: spot };
+    }
+    case "slot": {
+      const r = slotRect(team, Math.min(5, Math.max(0, (focus.slot ?? 1) - 1)));
+      return { center: rectCenterOf(r), w: r.h * 2.4, h: r.w * 2.4, rotate: TEAM_VIEW_ROTATION[team], spotlight: r };
+    }
+    case "deck": {
+      const r = deckRect(team);
+      return { center: rectCenterOf(r), w: r.h * 3, h: r.w * 3, rotate: TEAM_VIEW_ROTATION[team], spotlight: r };
+    }
+    case "combat":
+      return { center: rectCenterOf(COMBAT_CARD), w: COMBAT_CARD.w * 3.4, h: COMBAT_CARD.h * 2.6, rotate: 0, spotlight: COMBAT_CARD };
+    case "bomb":
+      return { center: rectCenterOf(BOMB_BOX), w: BOMB_BOX.w * 2.6, h: BOMB_BOX.h * 3.4, rotate: 0, spotlight: BOMB_BOX };
+    default:
+      return null;
+  }
+};
+
 const getPose = (
   shot: CameraShot,
   team: TeamName,
@@ -66,139 +102,6 @@ const getPose = (
     (viewport.h * 0.76) / (BOARD_H * Math.cos((tilt * Math.PI) / 180)),
   );
   return { focus: MAP_CENTER, tilt, rotate: 0, scale };
-};
-
-/* ═══════════════════════════════════════════════
-   PEÃO — personagem em pé sobre uma base redonda,
-   sempre virado para a câmera.
-   ═══════════════════════════════════════════════ */
-
-const PAWN_SPEED = 0.42; // px do tabuleiro por ms
-
-const Pawn = ({
-  team,
-  spot,
-  cameraRotate,
-  instant,
-  onArrive,
-}: {
-  team: TeamName;
-  spot: MapSpot;
-  cameraRotate: number;
-  instant: boolean;
-  onArrive?: () => void;
-}) => {
-  const ref = useRef<HTMLDivElement>(null);
-  const current = useRef<MapSpot>(spot);
-  const [walking, setWalking] = useState(false);
-  const arriveRef = useRef(onArrive);
-  arriveRef.current = onArrive;
-  const p = getPalette(team);
-  const start = spotPoint(team, spot);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || current.current === spot) return;
-
-    const route = routeBetween(team, current.current, spot);
-    current.current = spot;
-
-    // Duração proporcional ao caminho, com cada trecho na mesma velocidade.
-    const lengths = route.slice(1).map((pt, i) => Math.hypot(pt.x - route[i].x, pt.y - route[i].y));
-    const total = lengths.reduce((a, b) => a + b, 0) || 1;
-    let walked = 0;
-    const keyframes = route.map((pt, i) => {
-      if (i > 0) walked += lengths[i - 1];
-      return { transform: `translate(${pt.x}px, ${pt.y}px)`, offset: walked / total };
-    });
-
-    setWalking(true);
-    const duration = Math.max(700, total / PAWN_SPEED);
-    const animation = el.animate(keyframes, { duration, easing: "ease-in-out", fill: "forwards" });
-
-    // O estilo inline já aponta para o destino (render do React); ao terminar
-    // basta soltar a animação. O timer cobre abas em segundo plano, onde o
-    // navegador pode não disparar `onfinish`.
-    let arrived = false;
-    const finish = () => {
-      if (arrived) return;
-      arrived = true;
-      animation.cancel();
-      setWalking(false);
-      arriveRef.current?.();
-    };
-    animation.onfinish = finish;
-    window.setTimeout(finish, duration + 80);
-  }, [spot, team]);
-
-  const face = (back: boolean) => (
-    <div
-      className="absolute inset-0 overflow-hidden rounded-t-[36px] rounded-b-md"
-      style={{
-        border: `3px solid ${p.accent}`,
-        boxShadow: `0 0 18px ${p.glow}88`,
-        backfaceVisibility: "hidden",
-        transform: back ? "rotateY(180deg)" : undefined,
-      }}
-    >
-      <Portrait team={team} crop="bust" className="block h-full w-full" />
-    </div>
-  );
-
-  return (
-    <div
-      ref={ref}
-      className="absolute left-0 top-0"
-      style={{ transform: `translate(${start.x}px, ${start.y}px)`, transformStyle: "preserve-3d" }}
-    >
-      {/* Base no chão do tabuleiro */}
-      <div
-        className="absolute rounded-full"
-        style={{
-          width: 64,
-          height: 64,
-          left: -32,
-          top: -32,
-          background: `radial-gradient(circle, ${p.accent} 0 38%, ${p.bg2} 40% 100%)`,
-          boxShadow: `0 0 0 3px ${p.rim}, 0 0 24px ${p.glow}`,
-        }}
-      />
-      {/* Gira junto com a câmera para a figura ficar sempre de frente */}
-      <div
-        className="absolute left-0 top-0"
-        style={{
-          transformStyle: "preserve-3d",
-          transform: `rotateZ(${-cameraRotate}deg)`,
-          transition: instant ? "none" : "transform 1200ms cubic-bezier(0.65, 0.05, 0.36, 1)",
-        }}
-      >
-        {/* Figura em pé (gira 90° para sair do plano) */}
-        <div
-          className="absolute"
-          style={{
-            width: 74,
-            height: 96,
-            left: -37,
-            top: -96,
-            transformOrigin: "50% 100%",
-            transform: "rotateX(-90deg)",
-            transformStyle: "preserve-3d",
-          }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              transformStyle: "preserve-3d",
-              animation: walking ? "pawn-hop 340ms ease-in-out infinite" : undefined,
-            }}
-          >
-            {face(false)}
-            {face(true)}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 /* ═══════════════════════════════════════════════
@@ -295,6 +198,21 @@ const CardOnBoard = ({
   );
 };
 
+/** Contorno da parte focada pelo tutorial. */
+const FocusRing = ({ rect }: { rect: Rect }) => (
+  <div
+    className="pointer-events-none absolute animate-pulse rounded-2xl"
+    style={{
+      left: rect.x - 14,
+      top: rect.y - 14,
+      width: rect.w + 28,
+      height: rect.h + 28,
+      border: "5px solid #ffd45c",
+      boxShadow: "0 0 30px rgba(255, 212, 92, 0.55)",
+    }}
+  />
+);
+
 /** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 const SlotHighlight = ({
   rect,
@@ -339,14 +257,66 @@ const SlotHighlight = ({
         boxShadow: `0 0 ${over ? 70 : 40}px ${p.glow}, inset 0 0 30px ${p.glow}88`,
       }}
     >
-      {empty && (
+      {empty ? (
         <span
           className="whitespace-nowrap text-2xl font-black tracking-[0.2em]"
           style={{ color: p.rim, transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
         >
           POSICIONE AQUI
         </span>
+      ) : (
+        // Carta já no slot sorteado: dá para jogá-la.
+        <span
+          className="pointer-events-none whitespace-nowrap rounded-md px-3 py-1 text-xl font-black tracking-[0.15em]"
+          style={{
+            color: p.bg0,
+            background: p.rim,
+            transform: `rotate(${TEAM_CARD_ROTATION[team]}deg) translateY(110px)`,
+          }}
+        >
+          CLIQUE PARA JOGAR
+        </span>
       )}
+    </div>
+  );
+};
+
+/** Baralho do time: destaque suave para indicar que dá para comprar. */
+const DeckHighlight = ({
+  team,
+  canBuy,
+  strong,
+  onClick,
+}: {
+  team: TeamName;
+  canBuy: boolean;
+  strong: boolean;
+  onClick?: () => void;
+}) => {
+  const p = getPalette(team);
+  const rect = deckRect(team);
+  return (
+    <div
+      className={`absolute flex items-center justify-center rounded-xl ${
+        canBuy ? "cursor-pointer transition-[filter] hover:brightness-150" : ""
+      } ${strong ? "animate-pulse" : ""}`}
+      onClick={canBuy ? onClick : undefined}
+      style={{
+        left: rect.x - 10,
+        top: rect.y - 10,
+        width: rect.w + 20,
+        height: rect.h + 20,
+        border: `${strong ? 5 : 3}px solid ${canBuy ? p.rim : "#ffffff22"}`,
+        opacity: canBuy ? (strong ? 1 : 0.65) : 0.8,
+        boxShadow: canBuy ? `0 0 ${strong ? 40 : 18}px ${p.glow}` : undefined,
+      }}
+    >
+      <span
+        className="whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-lg font-black tracking-[0.2em]"
+        style={{ color: canBuy ? p.rim : "#a1a1aa", transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
+      >
+        {canBuy ? "COMPRAR" : "MÃO CHEIA"}
+      </span>
     </div>
   );
 };
@@ -354,17 +324,20 @@ const SlotHighlight = ({
 export type BoardStageProps = {
   turn: TeamName;
   shot: CameraShot;
-  positions: Record<TeamName, MapSpot>;
   slots: Record<TeamName, (Card | null)[]>;
   combatCard?: { card: Card; team: TeamName } | null;
   /** Slot em destaque (ex.: sorteado pelo dado). */
   highlight?: { team: TeamName; index: number } | null;
   /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
   bottomInset?: number;
+  /** Foco pedido pelo tutorial; substitui a tomada normal. */
+  cameraFocus?: CardCameraFocus | null;
   onSlotClick?: (team: TeamName, index: number) => void;
   /** Carta da mão (índice) solta sobre o slot em destaque. */
   onHandCardDrop?: (handIndex: number) => void;
-  onPawnArrive?: (team: TeamName) => void;
+  /** Baralho em destaque (hora de posicionar) e se dá para comprar. */
+  deck?: { team: TeamName; canBuy: boolean; strong?: boolean } | null;
+  onDeckClick?: () => void;
 };
 
 type CardLocation = { team: TeamName; index: number };
@@ -375,14 +348,15 @@ const DROP_WINDOW_MS = 1500;
 export const BoardStage = ({
   turn,
   shot,
-  positions,
   slots,
   combatCard,
   highlight,
   bottomInset = 0,
+  cameraFocus = null,
   onSlotClick,
   onHandCardDrop,
-  onPawnArrive,
+  deck,
+  onDeckClick,
 }: BoardStageProps) => {
   /* ───────── Rastreio das cartas para animar de onde vieram ───────── */
 
@@ -494,7 +468,8 @@ export const BoardStage = ({
   }, []);
 
   // Nova tomada: a câmera volta ao enquadramento planejado.
-  useEffect(() => setOrbit(NO_ORBIT), [shot, turn]);
+  const focusKey = cameraFocus ? `${cameraFocus.area}-${cameraFocus.team}-${cameraFocus.slot}` : "";
+  useEffect(() => setOrbit(NO_ORBIT), [shot, turn, focusKey]);
 
   // Roda do mouse aproxima/afasta (precisa de listener não passivo).
   useEffect(() => {
@@ -547,7 +522,16 @@ export const BoardStage = ({
     e.stopPropagation();
   };
 
-  const pose = getPose(shot, turn, framed);
+  // Foco do tutorial: enquadra só a parte pedida.
+  const target = cameraFocus ? focusTarget(cameraFocus) : null;
+  const pose: CameraPose = target
+    ? {
+        focus: target.center,
+        tilt: 30,
+        rotate: target.rotate,
+        scale: Math.min((framed.w * 0.84) / target.w, (framed.h * 0.76) / (target.h * Math.cos(Math.PI / 6))),
+      }
+    : getPose(cameraFocus?.area === "overview" ? "overview" : shot, turn, framed);
   const rotate = pose.rotate + orbit.rotate;
   const transform = [
     // Sobe o enquadramento acima da área coberta no rodapé.
@@ -598,6 +582,12 @@ export const BoardStage = ({
           ),
         )}
 
+        {deck && (
+          <DeckHighlight team={deck.team} canBuy={deck.canBuy} strong={!!deck.strong} onClick={onDeckClick} />
+        )}
+
+        {target && <FocusRing rect={target.spotlight} />}
+
         {highlight && (
           <SlotHighlight
             team={highlight.team}
@@ -619,16 +609,6 @@ export const BoardStage = ({
           />
         )}
 
-        {(["faction", "police"] as TeamName[]).map((team) => (
-          <Pawn
-            key={team}
-            team={team}
-            spot={positions[team]}
-            cameraRotate={rotate}
-            instant={dragging}
-            onArrive={() => onPawnArrive?.(team)}
-          />
-        ))}
       </div>
     </div>
   );

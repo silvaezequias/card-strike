@@ -1,8 +1,9 @@
-import { generateRandomCard } from "@/lib/game-helpers";
+import { createCardByName, generateRandomCard } from "@/lib/game-helpers";
 import { GameState } from "../game-types";
 
-export const ActionBuyCard = (state: GameState): GameState => {
+export const ActionBuyCard = (state: GameState, cardName?: string): GameState => {
   const team = state.currentTeam;
+  const card = (cardName && createCardByName(team, cardName)) || generateRandomCard(team);
 
   return {
     ...state,
@@ -13,7 +14,7 @@ export const ActionBuyCard = (state: GameState): GameState => {
         ...state.teams[team],
         inventory: {
           ...state.teams[team].inventory,
-          hand: [...state.teams[team].inventory.hand, generateRandomCard(team)],
+          hand: [...state.teams[team].inventory.hand, card],
         },
       },
     },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Shield, Crosshair, Shuffle, Play, BookOpen } from "lucide-react";
+import { Shield, Crosshair, Shuffle, Play, BookOpen, GraduationCap } from "lucide-react";
 import { Portrait } from "@/components/art/noir";
 import { SetupSettings } from "@/game/game-types";
 import { useGameSetup } from "@/game/useSetupGame";
@@ -190,6 +190,14 @@ export const GameMenu = ({
           <Play size={18} />
           Iniciar partida
         </button>
+
+        <Link
+          href="/tutorial"
+          className="mt-3 w-full flex items-center justify-center gap-3 px-6 py-3 rounded-lg border border-sky-500/40 bg-sky-950/40 text-sky-200 text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-sky-900/50 hover:border-sky-400/70"
+        >
+          <GraduationCap size={18} />
+          Tutorial
+        </Link>
 
         <Link
           href="/cartas"

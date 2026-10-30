@@ -4,6 +4,7 @@ import { Card } from "@/lib/types";
 import { Plus } from "lucide-react";
 import { NoirCard } from "@/components/art/noir-card";
 import { HAND_CARD_DRAG } from "@/components/game/board-stage";
+import { HIGHLIGHT_CLASS, useGate } from "@/components/game/tutorial-gate";
 
 type InventoryProps = {
   game: GameEngine;
@@ -46,6 +47,8 @@ export const InventorySlot = ({
   type: "hand" | "warZone";
 }) => {
   const theme = useGameTheme(game.state.currentTeam);
+  const buyGate = useGate("buy");
+  const placeGate = useGate("place");
 
   const { currentTeam, turnPhase, tool, teams } = game.state;
   const inventory = teams[currentTeam].inventory[type];
@@ -53,13 +56,16 @@ export const InventorySlot = ({
 
   const d6 = tool.result.d6 || -1;
 
+  // Compra opcional na hora de posicionar, só com espaço livre na mão.
   const canBuy =
-    turnPhase === "BUYING" &&
+    buyGate.allowed &&
+    (turnPhase === "BUYING" || turnPhase === "PLACING") &&
     type === "hand" &&
-    (inventory[index - 1] || index === 0) &&
+    inventory.length < 3 &&
+    index === inventory.length &&
     !card;
 
-  const isPlacing = turnPhase === "PLACING" && type === "hand";
+  const isPlacing = turnPhase === "PLACING" && type === "hand" && placeGate.allowed;
 
   const focused =
     d6 === index + 1 && type === "warZone" && turnPhase === "PLACING";
@@ -72,7 +78,7 @@ export const InventorySlot = ({
   const handleSelectCard = () => {
     if (!card && d6 >= 0) return;
 
-    if (turnPhase === "PLACING") {
+    if (isPlacing) {
       game.dispatch({
         type: "PLACE_CARD",
         payload: {
@@ -116,6 +122,10 @@ export const InventorySlot = ({
         ? "ring-2 ring-white/90"
         : "";
 
+  // Destaque do tutorial: o "+" na compra, as cartas na hora de posicionar.
+  const tutorialHighlight =
+    (buyGate.highlighted && canBuy) || (placeGate.highlighted && isPlacing && card) ? HIGHLIGHT_CLASS : "";
+
   const animatedRingStyle =
     focused || isPlacing
       ? "animate-pulse"
@@ -126,7 +136,7 @@ export const InventorySlot = ({
   return (
     <button
       onClick={handleBuy}
-      className={`group ${animatedRingStyle} ${
+      className={`group ${tutorialHighlight} ${animatedRingStyle} ${
         canBuy ? "cursor-pointer" : "cursor-default animate-accordion-down"
       } ${theme.background}`}
     >

@@ -1,17 +1,47 @@
-import { useEffect, useReducer, useState } from "react";
+import { MutableRefObject, useCallback, useEffect, useReducer, useState } from "react";
 import { Bombsite, SetupSettings } from "./game-types";
 import { gameReducer } from "./game-reducer";
 import { createInitialGameState } from "./game-initital-state";
 import { getD6Rotation, getSpinnerRotation } from "@/lib/game-helpers";
+import { GameAction } from "./game-actions";
 
-export const useGameEngine = (setup: SetupSettings) => {
+/** Resultados forçados para as próximas jogadas (tutorial roteirizado). */
+export type ScriptedOutcomes = {
+  d6?: number | null;
+  spinner?: Bombsite | null;
+  /** Nome da carta entregue na próxima compra. */
+  card?: string | null;
+};
+
+export type GameEngineOptions = {
+  /** false desliga o relógio: nada acontece sozinho quando o tempo acaba. */
+  timer?: boolean;
+  /** Quando presente, dado, roleta e compra usam estes resultados. */
+  script?: MutableRefObject<ScriptedOutcomes>;
+};
+
+export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions = {}) => {
+  const { timer = true, script } = options;
   const startRotation = { x: 0, y: 0, z: 0 };
   const [d6Rotation, setD6Rotation] = useState(startRotation);
   const [spinnerRotation, setSpinnerRotation] = useState(startRotation);
 
-  const [state, dispatch] = useReducer(
+  const [state, rawDispatch] = useReducer(
     gameReducer,
     createInitialGameState(setup),
+  );
+
+  // Com roteiro, a compra entrega a carta definida em vez de uma aleatória.
+  const dispatch = useCallback(
+    (action: GameAction) => {
+      const cardName = script?.current.card;
+      if (action.type === "BUY_CARD" && cardName) {
+        rawDispatch({ type: "BUY_SCRIPTED_CARD", payload: { cardName } });
+        return;
+      }
+      rawDispatch(action);
+    },
+    [script],
   );
 
   const currentTeam = state.currentTeam;
@@ -21,10 +51,10 @@ export const useGameEngine = (setup: SetupSettings) => {
   const rollTool = (props: { timerAfter?: number } = {}) => {
     dispatch({ type: "ROLL_TOOL_START" });
 
-    const d6Result = Math.floor(Math.random() * 6) + 1;
-    const spinnerResult = ["A", "B", "C"][
-      Math.floor(Math.random() * 3)
-    ] as Bombsite;
+    const d6Result = script?.current.d6 ?? Math.floor(Math.random() * 6) + 1;
+    const spinnerResult =
+      script?.current.spinner ??
+      (["A", "B", "C"][Math.floor(Math.random() * 3)] as Bombsite);
 
     const d6Spins = 3 + Math.floor(Math.random() * 4);
     const spinnerSpins = 5 + Math.floor(Math.random() * 6);
@@ -82,14 +112,18 @@ export const useGameEngine = (setup: SetupSettings) => {
 
         const d6Result = state.tool.result.d6;
         if (d6Result) {
+          // Tempo esgotado: joga a carta do slot sorteado, se houver.
           if (warZoneInventory[d6Result - 1]) {
-            dispatch({
+            return dispatch({
               type: "PLAY_CARD",
               payload: {
                 card: warZoneInventory[d6Result - 1],
               },
             });
           }
+
+          // Mão vazia: compra agora e posiciona no próximo tique.
+          if (handInventory.length === 0) return dispatch({ type: "BUY_CARD" });
 
           dispatch({
             type: "PLACE_CARD",
@@ -122,14 +156,15 @@ export const useGameEngine = (setup: SetupSettings) => {
   };
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    if (!timer) return;
+    const interval = setInterval(() => {
       if (state.countdown.seconds === 0) handleEndTime();
 
       dispatch({ type: "TIMER" });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [seconds, handInventory, isRolling]);
+    return () => clearInterval(interval);
+  }, [seconds, handInventory, isRolling, timer]);
 
   return {
     state,
