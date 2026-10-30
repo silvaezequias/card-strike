@@ -3,7 +3,7 @@ import { Bombsite, TeamName } from "@/game/game-types";
 /** Partes do tabuleiro de cartas que a câmera pode focar. */
 export type CardFocusArea = "overview" | "side" | "grid" | "slot" | "deck" | "combat" | "bomb";
 /** Partes do mapa que a câmera pode focar. */
-export type MapFocusArea = "full" | "side" | "A" | "B" | "C" | "base";
+export type MapFocusArea = "full" | "side" | "sites" | "A" | "B" | "C" | "base";
 
 /** `dim`: foco total — escurece o que estiver fora da seleção. */
 export type CameraFocus =

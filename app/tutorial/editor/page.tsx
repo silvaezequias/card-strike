@@ -81,6 +81,7 @@ const CARD_AREAS: [CardFocusArea, string][] = [
 const MAP_AREAS: [MapFocusArea, string][] = [
   ["full", "Mapa inteiro"],
   ["side", "Campo da equipe (base, corredores e bombsites)"],
+  ["sites", "Os 3 bombsites"],
   ["A", "Bombsite A"],
   ["B", "Bombsite B"],
   ["C", "Bombsite C"],
@@ -94,6 +95,7 @@ const describeCamera = (a: Extract<TutorialAction, { kind: "camera" }>) => {
     if (a.area === "full") return "O mapa vai para o centro, sem zoom.";
     if (a.area === "side") return `O mapa vai para o centro destacando o campo ${team}: base, corredores e bombsites.`;
     if (a.area === "base") return `O mapa vai para o centro com zoom na base ${team}.`;
+    if (a.area === "sites") return "O mapa vai para o centro destacando os bombsites A, B e C juntos.";
     return `O mapa vai para o centro com zoom no bombsite ${a.area}.`;
   }
   switch (a.area) {

@@ -10,7 +10,8 @@
         "kind": "camera",
         "board": "cards",
         "area": "overview",
-        "team": "police"
+        "team": "police",
+        "dim": false
       },
       "advance": "click",
       "audioUrl": "/tutorial/audio/intro-mvuu5lul.mp3"
@@ -25,7 +26,8 @@
         "board": "cards",
         "area": "side",
         "team": "police",
-        "slot": 6
+        "slot": 6,
+        "dim": true
       },
       "advance": "auto",
       "audioUrl": "/tutorial/audio/times-mvuu8coj.mp3"
@@ -39,29 +41,31 @@
         "kind": "camera",
         "board": "cards",
         "area": "side",
-        "team": "faction"
+        "team": "faction",
+        "dim": true
       },
       "advance": "click",
       "audioUrl": "/tutorial/audio/step-mvuuep20xi48-mvuugjk0.mp3"
     },
     {
       "id": "camera-slots",
-      "label": "Foco: seus slots",
+      "label": "Seu inventário",
       "speaker": "Sargento Vega",
-      "text": "Esses aqui são os seus seis slots. É onde você vai montar o seu arsenal.",
+      "text": "Aqui é o seu inventário, onde você vai guardar tudo o que vai usar no campo de batalha",
       "action": {
         "kind": "camera",
         "board": "cards",
         "area": "grid",
         "team": "police"
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/camera-slots-mvuv14vx.mp3"
     },
     {
       "id": "camera-mapa",
-      "label": "Foco: o mapa",
+      "label": "Campo de Batalha",
       "speaker": "Sargento Vega",
-      "text": "E esse é o mapa tático. Cada time começa na sua base e corre pros bombsites A, B e C.",
+      "text": "Esse aqui é o campo de batalha, onde as coisas começam a esquentar.",
       "action": {
         "kind": "camera",
         "board": "map",

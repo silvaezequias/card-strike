@@ -403,7 +403,7 @@ const zoomTransform = (frame: ReturnType<typeof zoomFrame>) => {
 
 /** Parte do mapa que o tutorial pede para focar. */
 export type MapCameraFocus = {
-  area: "full" | "side" | "A" | "B" | "C" | "base";
+  area: "full" | "side" | "sites" | "A" | "B" | "C" | "base";
   team?: TeamName;
   /** Foco total: escurece o que estiver fora da seleção. */
   dim?: boolean;
@@ -415,6 +415,10 @@ const focusRect = (focus: MapCameraFocus) => {
     // Campo do time: base, corredores e os bombsites inteiros.
     const w = SITE.x + SITE.w + 12;
     return { x: focus.team === "faction" ? MAP_W - w - 14 : 14, y: 18, w, h: MAP_H - 36 };
+  }
+  if (focus.area === "sites") {
+    // Os três bombsites juntos (coluna central).
+    return { x: SITE.x, y: SITE_Y.A, w: SITE.w, h: SITE_Y.C + SITE.h - SITE_Y.A };
   }
   if (focus.area === "base") {
     const x = focus.team === "faction" ? MAP_W - BASE.x - BASE.w : BASE.x;
