@@ -71,7 +71,7 @@
         "board": "cards",
         "area": "combat",
         "team": "police",
-        "dim": true
+        "dim": false
       },
       "advance": "click",
       "audioUrl": "/tutorial/audio/step-mvuvhg95mbk7-mvuvmjmw.mp3"
@@ -97,10 +97,26 @@
       "action": {
         "kind": "camera",
         "board": "map",
-        "area": "sites"
+        "area": "sites",
+        "dim": false
       },
       "advance": "click",
       "audioUrl": "/tutorial/audio/step-mvuvb9xgcvwz-mvuve601.mp3"
+    },
+    {
+      "id": "step-mvuvst8t7j4i",
+      "label": "Novo passo",
+      "speaker": "Sargento Vega",
+      "text": "",
+      "action": {
+        "kind": "camera",
+        "board": "hud",
+        "hud": [
+          "player-police",
+          "minimap"
+        ]
+      },
+      "advance": "click"
     },
     {
       "id": "observar",

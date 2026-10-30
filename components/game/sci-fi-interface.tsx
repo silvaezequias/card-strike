@@ -19,7 +19,8 @@ import { MapBoard, MapSpot } from "@/components/game/map-board";
 import { CardBoardPreview, MainBoardView, MinimapButton } from "@/components/game/minimap";
 import { Card } from "@/lib/types";
 import { useGate } from "./tutorial-gate";
-import { CameraFocus } from "@/lib/tutorial/types";
+import { CameraFocus, HudElement } from "@/lib/tutorial/types";
+import { HIGHLIGHT_CLASS } from "./tutorial-gate";
 
 /** Coluna lateral que encolhe para caber na altura da tela. */
 const FitColumn = ({
@@ -148,7 +149,8 @@ export function GameScreen({
   }, [turnPhase]);
 
   // Foco do tutorial: mostra o tabuleiro pedido e volta às cartas quando termina.
-  const cameraBoard = tutorialCamera?.board ?? null;
+  const cameraBoard =
+    tutorialCamera && tutorialCamera.board !== "hud" ? tutorialCamera.board : null;
   const lastCameraBoard = useRef<string | null>(null);
   useEffect(() => {
     if (cameraBoard) setMainView(cameraBoard);
@@ -205,6 +207,20 @@ export function GameScreen({
 
   // Foco de câmera do tutorial: nada por cima do tabuleiro e o resto apagado.
   const focusMode = !!tutorialCamera;
+  const hudFocus = tutorialCamera?.board === "hud" ? tutorialCamera : null;
+
+  /**
+   * Classe de cada elemento da HUD durante o foco: destacado se o tutorial
+   * pediu; apagado no foco de tabuleiro ou no foco total da HUD.
+   */
+  const hudClass = (key: HudElement) => {
+    const base = "transition-opacity duration-500";
+    if (hudFocus) {
+      if (hudFocus.hud.includes(key)) return `${base} relative z-30 rounded-xl ${HIGHLIGHT_CLASS}`;
+      return hudFocus.dim ? `${base} ${DIMMED}` : base;
+    }
+    return focusMode ? `${base} ${DIMMED}` : base;
+  };
   const boardClear = focusMode || hideBoardOverlays;
 
   return (
@@ -220,7 +236,7 @@ export function GameScreen({
         </div>
       )}
 
-      <div className={`fixed top-0 left-0 right-0 z-50 transition-opacity duration-500 ${focusMode ? DIMMED : ""}`}>
+      <div className={`fixed top-0 left-0 right-0 z-50 ${hudClass("turn-bar")}`}>
         <div
           className={`flex items-center justify-center gap-3 py-2 px-4 transition-all duration-700 ${
             theme.overlayScrim
@@ -249,9 +265,11 @@ export function GameScreen({
 
       <div className="flex min-h-0 flex-1 items-start gap-4 px-4 pt-12 pb-12">
         {/* Polícia (esquerda, como no tabuleiro) */}
-        <FitColumn onScale={setFit} dimmed={focusMode}>
-          <PlayerCard game={game} alignment="left" />
-          <div className="w-[256px]">
+        <FitColumn onScale={setFit}>
+          <div className={hudClass("player-police")}>
+            <PlayerCard game={game} alignment="left" />
+          </div>
+          <div className={`w-[256px] ${hudClass("minimap")}`}>
             <MinimapButton label={mainView === "cards" ? "MAPA" : "CARTAS"} onClick={toggleView}>
               {mainView === "cards" ? (
                 <MapBoard positions={positions} bomb={plantedSite} autoZoom className="w-full" />
@@ -260,11 +278,17 @@ export function GameScreen({
               )}
             </MinimapButton>
           </div>
-          <MissionStatus game={game} />
+          <div className={hudClass("mission")}>
+            <MissionStatus game={game} />
+          </div>
         </FitColumn>
 
         {/* Tabuleiro 3D */}
-        <div className="relative h-full min-w-0 flex-1 overflow-hidden">
+        <div
+          className={`relative h-full min-w-0 flex-1 overflow-hidden transition-opacity duration-500 ${
+            hudFocus?.dim ? DIMMED : ""
+          }`}
+        >
           {/* Os dois tabuleiros ficam lado a lado e a câmera desliza de um para o
               outro; o que sai se afasta. Ambos seguem montados (estado e animações). */}
           <div className="absolute inset-0" style={boardLayer(mainView === "cards", -1)}>
@@ -346,14 +370,18 @@ export function GameScreen({
         </div>
 
         {/* Facção (direita) */}
-        <FitColumn dimmed={focusMode}>
-          <PlayerCard game={game} alignment="right" />
-          <BombPanel game={game} />
+        <FitColumn>
+          <div className={hudClass("player-faction")}>
+            <PlayerCard game={game} alignment="right" />
+          </div>
+          <div className={hudClass("bomb")}>
+            <BombPanel game={game} />
+          </div>
         </FitColumn>
       </div>
 
-      <div className={`transition-opacity duration-500 ${focusMode ? DIMMED : ""}`}>
-        <InventoryPanel game={game} />
+      <div className={hudFocus?.hud.includes("inventory") ? "" : hudClass("inventory")}>
+        <InventoryPanel game={game} spotlight={!!hudFocus?.hud.includes("inventory")} />
       </div>
 
       {overlay}

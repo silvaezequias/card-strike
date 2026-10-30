@@ -28,6 +28,8 @@ import {
 import {
   ACTION_LABELS,
   CardFocusArea,
+  HUD_LABELS,
+  HudElement,
   MapFocusArea,
   TutorialAction,
   TutorialActionKind,
@@ -90,6 +92,11 @@ const MAP_AREAS: [MapFocusArea, string][] = [
 
 /** Texto da regra do passo de câmera. */
 const describeCamera = (a: Extract<TutorialAction, { kind: "camera" }>) => {
+  if (a.board === "hud") {
+    return a.hud.length
+      ? `Destaca na HUD: ${a.hud.map((k) => HUD_LABELS[k]).join(", ")}.`
+      : "Nenhum elemento da HUD marcado.";
+  }
   const team = a.team === "faction" ? "da Facção" : "da Polícia";
   if (a.board === "map") {
     if (a.area === "full") return "O mapa vai para o centro, sem zoom.";
@@ -438,26 +445,28 @@ export default function TutorialEditorPage() {
                   {a.kind === "camera" && (
                     <>
                       <div className="sm:col-span-2">
-                        <span className={label}>Tabuleiro</span>
+                        <span className={label}>Tipo de foco</span>
                         <div className="flex gap-2">
                           {(
                             [
-                              ["cards", "Tabuleiro de cartas"],
-                              ["map", "Mapa tático"],
+                              ["board", "Foco em tabuleiro"],
+                              ["hud", "Foco na HUD"],
                             ] as const
-                          ).map(([board, text]) => (
+                          ).map(([type, text]) => (
                             <button
-                              key={board}
+                              key={type}
                               onClick={() =>
                                 updateStep({
                                   action:
-                                    board === "cards"
-                                      ? { kind: "camera", board, area: "grid", team: a.team ?? "police" }
-                                      : { kind: "camera", board, area: "full" },
+                                    type === "hud"
+                                      ? { kind: "camera", board: "hud", hud: ["player-police"], dim: a.dim }
+                                      : { kind: "camera", board: "cards", area: "grid", team: "police", dim: a.dim },
                                 })
                               }
                               className={`flex-1 rounded-lg border px-3 py-2 text-xs font-bold ${
-                                a.board === board ? "border-sky-400 bg-sky-400/15 text-white" : "border-white/15 text-zinc-400 hover:border-white/40"
+                                (a.board === "hud") === (type === "hud")
+                                  ? "border-sky-400 bg-sky-400/15 text-white"
+                                  : "border-white/15 text-zinc-400 hover:border-white/40"
                               }`}
                             >
                               {text}
@@ -466,52 +475,114 @@ export default function TutorialEditorPage() {
                         </div>
                       </div>
 
-                      <div>
-                        <span className={label}>Focar em</span>
-                        <select
-                          className={field}
-                          value={a.area}
-                          onChange={(e) => updateAction({ area: e.target.value } as Partial<TutorialAction>)}
-                        >
-                          {(a.board === "cards" ? CARD_AREAS : MAP_AREAS).map(([value, text]) => (
-                            <option key={value} value={value}>
-                              {text}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {["side", "grid", "slot", "deck", "base"].includes(a.area) && (
-                        <div>
-                          <span className={label}>Time</span>
-                          <select
-                            className={field}
-                            value={a.team ?? "police"}
-                            onChange={(e) => updateAction({ team: e.target.value as TeamName })}
-                          >
-                            <option value="police">Polícia (jogador)</option>
-                            <option value="faction">Facção (bot)</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {a.board === "cards" && a.area === "slot" && (
+                      {a.board === "hud" ? (
                         <div className="sm:col-span-2">
-                          <span className={label}>Slot</span>
-                          <div className="flex flex-wrap gap-2">
-                            {[1, 2, 3, 4, 5, 6].map((n) => (
+                          <span className={label}>Elementos da HUD para deixar visíveis e focar</span>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {(Object.entries(HUD_LABELS) as [HudElement, string][]).map(([key, text]) => {
+                              const on = a.hud.includes(key);
+                              return (
+                                <label
+                                  key={key}
+                                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs ${
+                                    on ? "border-sky-400 bg-sky-400/15 text-white" : "border-white/15 text-zinc-400 hover:border-white/40"
+                                  }`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="accent-sky-400"
+                                    checked={on}
+                                    onChange={() =>
+                                      updateAction({
+                                        hud: on ? a.hud.filter((k) => k !== key) : [...a.hud, key],
+                                      } as Partial<TutorialAction>)
+                                    }
+                                  />
+                                  {text}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                        <div className="sm:col-span-2">
+                          <span className={label}>Tabuleiro</span>
+                          <div className="flex gap-2">
+                            {(
+                              [
+                                ["cards", "Tabuleiro de cartas"],
+                                ["map", "Mapa tático"],
+                              ] as const
+                            ).map(([board, text]) => (
                               <button
-                                key={n}
-                                onClick={() => updateAction({ slot: n } as Partial<TutorialAction>)}
-                                className={`h-12 w-12 rounded-lg border text-lg font-black ${
-                                  (a.slot ?? 1) === n ? "border-sky-400 bg-sky-400/20 text-white" : "border-white/15 text-zinc-400 hover:border-white/40"
+                                key={board}
+                                onClick={() =>
+                                  updateStep({
+                                    action:
+                                      board === "cards"
+                                        ? { kind: "camera", board, area: "grid", team: a.team ?? "police", dim: a.dim }
+                                        : { kind: "camera", board, area: "full", dim: a.dim },
+                                  })
+                                }
+                                className={`flex-1 rounded-lg border px-3 py-2 text-xs font-bold ${
+                                  a.board === board ? "border-sky-400 bg-sky-400/15 text-white" : "border-white/15 text-zinc-400 hover:border-white/40"
                                 }`}
                               >
-                                {n}
+                                {text}
                               </button>
                             ))}
                           </div>
                         </div>
+
+                        <div>
+                          <span className={label}>Focar em</span>
+                          <select
+                            className={field}
+                            value={a.area}
+                            onChange={(e) => updateAction({ area: e.target.value } as Partial<TutorialAction>)}
+                          >
+                            {(a.board === "cards" ? CARD_AREAS : MAP_AREAS).map(([value, text]) => (
+                              <option key={value} value={value}>
+                                {text}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {["side", "grid", "slot", "deck", "base"].includes(a.area) && (
+                          <div>
+                            <span className={label}>Time</span>
+                            <select
+                              className={field}
+                              value={a.team ?? "police"}
+                              onChange={(e) => updateAction({ team: e.target.value as TeamName })}
+                            >
+                              <option value="police">Polícia (jogador)</option>
+                              <option value="faction">Facção (bot)</option>
+                            </select>
+                          </div>
+                        )}
+
+                        {a.board === "cards" && a.area === "slot" && (
+                          <div className="sm:col-span-2">
+                            <span className={label}>Slot</span>
+                            <div className="flex flex-wrap gap-2">
+                              {[1, 2, 3, 4, 5, 6].map((n) => (
+                                <button
+                                  key={n}
+                                  onClick={() => updateAction({ slot: n } as Partial<TutorialAction>)}
+                                  className={`h-12 w-12 rounded-lg border text-lg font-black ${
+                                    (a.slot ?? 1) === n ? "border-sky-400 bg-sky-400/20 text-white" : "border-white/15 text-zinc-400 hover:border-white/40"
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        </>
                       )}
                     </>
                   )}
@@ -542,7 +613,7 @@ export default function TutorialEditorPage() {
                 <p className="mt-4 text-xs leading-relaxed text-zinc-500">
                   {a.kind === "narration" && "Nada acontece no jogo: o jogador só lê/ouve e continua."}
                   {a.kind === "camera" &&
-                    `${describeCamera(a)}${a.dim ? " O resto do tabuleiro escurece." : ""} Nada mais acontece no jogo.`}
+                    `${describeCamera(a)}${a.dim ? (a.board === "hud" ? " O resto da tela escurece." : " O resto do tabuleiro escurece.") : ""} Nada mais acontece no jogo.`}
                   {a.kind === "finish" && "Mostra os botões Jogar e Repetir."}
                   {a.kind === "opponent-move" && `O bot escolhe Se Posicionar e a roleta cai no bombsite ${a.site}.`}
                   {a.kind === "opponent-place" &&

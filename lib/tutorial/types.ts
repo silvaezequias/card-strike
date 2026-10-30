@@ -5,10 +5,34 @@ export type CardFocusArea = "overview" | "side" | "grid" | "slot" | "deck" | "co
 /** Partes do mapa que a câmera pode focar. */
 export type MapFocusArea = "full" | "side" | "sites" | "A" | "B" | "C" | "base";
 
-/** `dim`: foco total — escurece o que estiver fora da seleção. */
+/** Elementos da HUD que o tutorial pode destacar. */
+export type HudElement =
+  | "player-police"
+  | "player-faction"
+  | "mission"
+  | "minimap"
+  | "bomb"
+  | "inventory"
+  | "turn-bar";
+
+export const HUD_LABELS: Record<HudElement, string> = {
+  "player-police": "Painel da Polícia",
+  "player-faction": "Painel da Facção",
+  mission: "Status da missão",
+  minimap: "Minimapa",
+  bomb: "Carga C4",
+  inventory: "Inventário (abre)",
+  "turn-bar": "Barra de turno",
+};
+
+/**
+ * Foco do passo de câmera: uma parte de um tabuleiro ou elementos da HUD.
+ * `dim`: foco total — escurece o que estiver fora da seleção.
+ */
 export type CameraFocus =
   | { board: "cards"; area: CardFocusArea; team?: TeamName; slot?: number; dim?: boolean }
-  | { board: "map"; area: MapFocusArea; team?: TeamName; dim?: boolean };
+  | { board: "map"; area: MapFocusArea; team?: TeamName; dim?: boolean }
+  | { board: "hud"; hud: HudElement[]; dim?: boolean };
 
 /* ═══════════════════════════════════════════════
    ROTEIRO DO TUTORIAL

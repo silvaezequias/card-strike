@@ -8,11 +8,13 @@ import { useGate } from "./tutorial-gate";
 
 interface InventoryPanelProps {
   game: GameEngine;
+  /** Tutorial: mostra o inventário aberto e destacado, sem mudar o jogo. */
+  spotlight?: boolean;
 }
 
-export const InventoryPanel = ({ game }: InventoryPanelProps) => {
+export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps) => {
   const isSelecting = game.state.turnPhase === "PLACING";
-  const isOpen = game.state.hud.inventory.isOpen;
+  const isOpen = game.state.hud.inventory.isOpen || spotlight;
 
   const theme = useGameTheme(game.state.currentTeam);
   const inventoryGate = useGate("inventory");
@@ -71,7 +73,7 @@ export const InventoryPanel = ({ game }: InventoryPanelProps) => {
       <div className="flex flex-col items-center">
         {isSelecting ? keepGate.allowed ? <KeepInHandButton /> : <div className="h-8" /> : <ToggleButton />}
         <div
-          className={`w-[350px] md:w-[500px]
+          className={`${spotlight ? "tutorial-highlight" : ""} w-[350px] md:w-[500px]
           ${theme.underlay}
           border-t-2 border-x-2 rounded-t-sm shadow-[0_-10px_40px_rgba(0,0,0,0.8)] p-4`}
         >
