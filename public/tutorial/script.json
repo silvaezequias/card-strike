@@ -58,20 +58,49 @@
         "area": "grid",
         "team": "police"
       },
-      "advance": "click",
+      "advance": "auto",
       "audioUrl": "/tutorial/audio/camera-slots-mvuv14vx.mp3"
+    },
+    {
+      "id": "step-mvuvhg95mbk7",
+      "label": "Zona de Combate",
+      "speaker": "Sargento Vega",
+      "text": "Quando o jogo começar, você deve colocar jogar cartas na Zona de Combate para atacar ou se defender",
+      "action": {
+        "kind": "camera",
+        "board": "cards",
+        "area": "combat",
+        "team": "police",
+        "dim": true
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuvhg95mbk7-mvuvmjmw.mp3"
     },
     {
       "id": "camera-mapa",
       "label": "Campo de Batalha",
       "speaker": "Sargento Vega",
-      "text": "Esse aqui é o campo de batalha, onde as coisas começam a esquentar.",
+      "text": "Este é o campo de batalha, onde a trocação de tiro acontece de verdade. Aqui, você precisa de muita estratégia para se posicionar e defender as nossas bases.",
       "action": {
         "kind": "camera",
         "board": "map",
         "area": "full"
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/camera-mapa-mvuv9j83.mp3"
+    },
+    {
+      "id": "step-mvuvb9xgcvwz",
+      "label": "Bombsites",
+      "speaker": "Sargento Vega",
+      "text": "Você precisa defender as bases A, B e C a todo o custo, impedindo que os terroristas plantem a bomba.",
+      "action": {
+        "kind": "camera",
+        "board": "map",
+        "area": "sites"
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuvb9xgcvwz-mvuve601.mp3"
     },
     {
       "id": "observar",

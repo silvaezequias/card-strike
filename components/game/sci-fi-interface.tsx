@@ -60,6 +60,19 @@ const FitColumn = ({
 const INVENTORY_OPEN_HEIGHT = 258;
 const BOARD_BOTTOM_GAP = 48;
 
+/**
+ * Camada de um tabuleiro na troca cartas ↔ mapa: o ativo fica no centro; o
+ * outro fica fora da tela, do lado `side` (-1 esquerda, 1 direita), menor e
+ * apagado. A transição dá a sensação da câmera indo de um para o outro.
+ */
+const boardLayer = (active: boolean, side: -1 | 1): CSSProperties => ({
+  transform: active ? "translateX(0) scale(1)" : `translateX(${side * 115}%) scale(0.75)`,
+  opacity: active ? 1 : 0,
+  pointerEvents: active ? "auto" : "none",
+  transition:
+    "transform 900ms cubic-bezier(0.65, 0, 0.35, 1), opacity 700ms ease",
+});
+
 /** Interface apagada (e sem clique) durante o foco de câmera do tutorial. */
 const DIMMED = "pointer-events-none opacity-20";
 
@@ -251,9 +264,10 @@ export function GameScreen({
         </FitColumn>
 
         {/* Tabuleiro 3D */}
-        <div className="relative h-full min-w-0 flex-1">
-          {/* Cartas: ficam montadas mesmo com o mapa em destaque, para não perder o estado */}
-          <div className={`absolute inset-0 ${mainView === "cards" ? "" : "invisible"}`}>
+        <div className="relative h-full min-w-0 flex-1 overflow-hidden">
+          {/* Os dois tabuleiros ficam lado a lado e a câmera desliza de um para o
+              outro; o que sai se afasta. Ambos seguem montados (estado e animações). */}
+          <div className="absolute inset-0" style={boardLayer(mainView === "cards", -1)}>
             <BoardStage
               turn={currentTeam}
               shot={shot}
@@ -270,16 +284,17 @@ export function GameScreen({
           </div>
 
           {/* Mapa tático em destaque */}
-          {mainView === "map" && (
-            <div className="absolute inset-0 flex items-center justify-center px-4 pb-6 pt-14 [container-type:size]">
-              <MapBoard
-                positions={positions}
-                bomb={plantedSite}
-                focus={tutorialCamera?.board === "map" ? tutorialCamera : null}
-                className="w-[min(96cqw,150cqh)]"
-              />
-            </div>
-          )}
+          <div
+            className="absolute inset-0 flex items-center justify-center px-4 pb-6 pt-14 [container-type:size]"
+            style={boardLayer(mainView === "map", 1)}
+          >
+            <MapBoard
+              positions={positions}
+              bomb={plantedSite}
+              focus={tutorialCamera?.board === "map" ? tutorialCamera : null}
+              className="w-[min(96cqw,150cqh)]"
+            />
+          </div>
 
           {/* Abas: campo de batalha / ação */}
           {!boardClear && (
