@@ -3,6 +3,7 @@ import { useGameTheme } from "@/game/useGameTheme";
 import { Card } from "@/lib/types";
 import { Plus } from "lucide-react";
 import { NoirCard } from "@/components/art/noir-card";
+import { HAND_CARD_DRAG } from "@/components/game/board-stage";
 
 type InventoryProps = {
   game: GameEngine;
@@ -131,7 +132,15 @@ export const InventorySlot = ({
     >
       <div
         onClick={type === "hand" ? handleSelectCard : handlePlayCard}
-        className={` ${baseSlotStyle} ${interactionStyle} ${ringStyle} `}
+        // Na hora de posicionar, a carta pode ser arrastada até o slot no tabuleiro.
+        draggable={isPlacing && !!card}
+        onDragStart={(e) => {
+          e.dataTransfer.setData(HAND_CARD_DRAG, String(index));
+          e.dataTransfer.effectAllowed = "move";
+        }}
+        className={` ${baseSlotStyle} ${interactionStyle} ${ringStyle} ${
+          isPlacing && card ? "cursor-grab active:cursor-grabbing" : ""
+        }`}
       >
         {card ? (
           <CardComponent card={card} game={game} />

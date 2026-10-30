@@ -94,7 +94,22 @@ export default function SciFiInterface({
     window.setTimeout(() => setPawnWalking(false), 500);
   }, []);
 
-  const shot = pawnWalking || turnPhase === "COUNTDOWN" ? "overview" : "focus";
+  // Carta jogada: a câmera abre para mostrar o voo até a zona de combate.
+  const [cardFlying, setCardFlying] = useState(false);
+  const playedCount = state.playedCards.length;
+  const lastPlayedCount = useRef(playedCount);
+  useEffect(() => {
+    if (playedCount <= lastPlayedCount.current) {
+      lastPlayedCount.current = playedCount;
+      return;
+    }
+    lastPlayedCount.current = playedCount;
+    setCardFlying(true);
+    const timer = window.setTimeout(() => setCardFlying(false), 1900);
+    return () => window.clearTimeout(timer);
+  }, [playedCount]);
+
+  const shot = pawnWalking || cardFlying || turnPhase === "COUNTDOWN" ? "overview" : "focus";
 
   const slots: Record<TeamName, (Card | null)[]> = {
     police: teams.police.inventory.warZone,
@@ -115,6 +130,12 @@ export default function SciFiInterface({
     const card = slots[team][index];
     if (!highlight || team !== highlight.team || index !== highlight.index || !card) return;
     dispatch({ type: "PLAY_CARD", payload: { card } });
+  };
+
+  // Carta da mão arrastada até o slot sorteado.
+  const handleHandCardDrop = (handIndex: number) => {
+    if (!highlight || !teams[currentTeam].inventory.hand[handIndex]) return;
+    dispatch({ type: "PLACE_CARD", payload: { cardIndex: handIndex, positionIndex: highlight.index } });
   };
 
   const showAction = board.activeTab === "actionTab";
@@ -172,6 +193,7 @@ export default function SciFiInterface({
             highlight={highlight}
             bottomInset={state.hud.inventory.isOpen ? INVENTORY_OPEN_HEIGHT * fit - BOARD_BOTTOM_GAP : 0}
             onSlotClick={handleSlotClick}
+            onHandCardDrop={handleHandCardDrop}
             onPawnArrive={handlePawnArrive}
           />
 
@@ -203,7 +225,7 @@ export default function SciFiInterface({
                 POSICIONE UMA CARTA NO SLOT {d6}
               </h2>
               <p className="text-xs font-bold tracking-wider text-zinc-300 drop-shadow">
-                ESCOLHA NO INVENTÁRIO · CLIQUE NA CARTA DO SLOT PARA JOGÁ-LA
+                ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO · CLIQUE NA CARTA DO SLOT PARA JOGÁ-LA
               </p>
             </div>
           )}

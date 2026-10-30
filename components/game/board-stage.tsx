@@ -205,26 +205,80 @@ const Pawn = ({
    PALCO
    ═══════════════════════════════════════════════ */
 
+/** Tipo de dado do arrasto de uma carta da mão (valor: índice na mão). */
+export const HAND_CARD_DRAG = "application/x-card-strike-hand";
+
+/** Tamanho da carta (em pé, 3:4) dentro de uma área com um giro. */
+const cardBox = (rect: Rect, rotate: number) => {
+  // Girada ±90° a carta ocupa o retângulo deitado.
+  const sideways = Math.abs(rotate % 180) === 90;
+  return { w: (sideways ? rect.h : rect.w) * 0.9, h: (sideways ? rect.w : rect.h) * 0.9 };
+};
+
+const rectCenter = (rect: Rect): Point => ({ x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 });
+
+/** De onde a carta vem ao aparecer, relativo à posição final. */
+type CardEntrance = {
+  dx: number;
+  dy: number;
+  /** Altura sobre a mesa no começo e no meio do voo. */
+  z: number;
+  arc: number;
+  rotate: number;
+  scale: number;
+  duration: number;
+  delay?: number;
+};
+
 /** Carta numa área do tabuleiro, girada para o seu jogador. */
 const CardOnBoard = ({
   card,
   rect,
   team,
   rotate,
+  entrance,
   onClick,
 }: {
   card: Card;
   rect: Rect;
   team: TeamName;
   rotate: number;
+  entrance?: CardEntrance | null;
   onClick?: () => void;
 }) => {
-  // Em retrato a carta tem 3:4; girada ±90° ela ocupa o retângulo deitado.
-  const sideways = Math.abs(rotate % 180) === 90;
-  const w = (sideways ? rect.h : rect.w) * 0.9;
-  const h = (sideways ? rect.w : rect.h) * 0.9;
+  const ref = useRef<HTMLDivElement>(null);
+  const { w, h } = cardBox(rect, rotate);
+
+  // Voo de entrada só na montagem: sobe, faz um arco e pousa no lugar.
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !entrance) return;
+    const e = entrance;
+    const midRotate = (e.rotate + rotate) / 2;
+    const midScale = (e.scale + 1) / 2 + 0.08;
+    el.animate(
+      [
+        { transform: `translate3d(${e.dx}px, ${e.dy}px, ${e.z}px) rotate(${e.rotate}deg) scale(${e.scale})` },
+        {
+          transform: `translate3d(${e.dx * 0.4}px, ${e.dy * 0.4}px, ${e.arc}px) rotate(${midRotate}deg) scale(${midScale})`,
+          offset: 0.55,
+        },
+        { transform: `translate3d(0px, 0px, 0px) rotate(${rotate}deg) scale(1)` },
+      ],
+      {
+        duration: e.duration,
+        delay: e.delay ?? 0,
+        easing: "cubic-bezier(0.25, 0.7, 0.3, 1)",
+        fill: "backwards",
+      },
+    );
+    // Só na montagem: mudanças depois não refazem o voo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div
+      ref={ref}
       className={`absolute ${onClick ? "cursor-pointer transition-[filter] hover:brightness-125" : ""}`}
       onClick={onClick}
       style={{
@@ -241,19 +295,48 @@ const CardOnBoard = ({
   );
 };
 
-/** Contorno pulsante no slot sorteado pelo dado. */
-const SlotHighlight = ({ rect, team, empty }: { rect: Rect; team: TeamName; empty: boolean }) => {
+/** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
+const SlotHighlight = ({
+  rect,
+  team,
+  empty,
+  acceptingDrop,
+  onDropHandCard,
+}: {
+  rect: Rect;
+  team: TeamName;
+  empty: boolean;
+  acceptingDrop: boolean;
+  onDropHandCard?: (handIndex: number) => void;
+}) => {
   const p = getPalette(team);
+  const [over, setOver] = useState(false);
   return (
     <div
-      className="pointer-events-none absolute flex items-center justify-center rounded-2xl animate-pulse"
+      className={`absolute flex items-center justify-center rounded-2xl ${over ? "" : "animate-pulse"}`}
+      onDragOver={(e) => {
+        if (!e.dataTransfer.types.includes(HAND_CARD_DRAG)) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const index = Number(e.dataTransfer.getData(HAND_CARD_DRAG));
+        if (!Number.isNaN(index)) onDropHandCard?.(index);
+      }}
       style={{
         left: rect.x - 8,
         top: rect.y - 8,
         width: rect.w + 16,
         height: rect.h + 16,
+        // Só captura o mouse durante o arrasto, para não bloquear o clique na carta.
+        pointerEvents: acceptingDrop ? "auto" : "none",
         border: `5px solid ${p.rim}`,
-        boxShadow: `0 0 40px ${p.glow}, inset 0 0 30px ${p.glow}88`,
+        background: over ? `${p.accent}33` : undefined,
+        boxShadow: `0 0 ${over ? 70 : 40}px ${p.glow}, inset 0 0 30px ${p.glow}88`,
       }}
     >
       {empty && (
@@ -279,8 +362,15 @@ export type BoardStageProps = {
   /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
   bottomInset?: number;
   onSlotClick?: (team: TeamName, index: number) => void;
+  /** Carta da mão (índice) solta sobre o slot em destaque. */
+  onHandCardDrop?: (handIndex: number) => void;
   onPawnArrive?: (team: TeamName) => void;
 };
+
+type CardLocation = { team: TeamName; index: number };
+
+const HAND_DISTANCE = 300; // px do tabuleiro além da borda do jogador
+const DROP_WINDOW_MS = 1500;
 
 export const BoardStage = ({
   turn,
@@ -291,8 +381,101 @@ export const BoardStage = ({
   highlight,
   bottomInset = 0,
   onSlotClick,
+  onHandCardDrop,
   onPawnArrive,
 }: BoardStageProps) => {
+  /* ───────── Rastreio das cartas para animar de onde vieram ───────── */
+
+  const locations = useRef<Map<string, CardLocation> | null>(null);
+  const lastDrop = useRef<{ team: TeamName; at: number } | null>(null);
+  const [handDrag, setHandDrag] = useState(false);
+
+  // Depois de cada render, guarda em que slot cada carta está.
+  useEffect(() => {
+    const map = new Map<string, CardLocation>();
+    (["police", "faction"] as TeamName[]).forEach((team) =>
+      slots[team].forEach((card, index) => card && map.set(String(card.id), { team, index })),
+    );
+    locations.current = map;
+  });
+
+  // Arrasto de carta da mão: libera o slot em destaque para receber o drop.
+  useEffect(() => {
+    const start = (e: DragEvent) => {
+      if (e.dataTransfer?.types.includes(HAND_CARD_DRAG)) setHandDrag(true);
+    };
+    const end = () => setHandDrag(false);
+    document.addEventListener("dragstart", start);
+    document.addEventListener("dragend", end);
+    document.addEventListener("drop", end);
+    return () => {
+      document.removeEventListener("dragstart", start);
+      document.removeEventListener("dragend", end);
+      document.removeEventListener("drop", end);
+    };
+  }, []);
+
+  const slotEntrance = (team: TeamName, index: number, card: Card): CardEntrance | null => {
+    const known = locations.current;
+    if (!known) return null; // primeiro render: nada voa
+    const rect = slotRect(team, index);
+    const center = rectCenter(rect);
+    const prev = known.get(String(card.id));
+    const rotate = TEAM_CARD_ROTATION[team];
+
+    // Mudou de slot (ex.: o campo se reorganizou): desliza do slot antigo.
+    if (prev) {
+      if (prev.index === index && prev.team === team) return null;
+      const from = rectCenter(slotRect(prev.team, prev.index));
+      return { dx: from.x - center.x, dy: from.y - center.y, z: 0, arc: 60, rotate, scale: 1, duration: 600 };
+    }
+
+    // Acabou de ser solta aqui pelo arrasto: só assenta na mesa.
+    const drop = lastDrop.current;
+    if (drop && drop.team === team && Date.now() - drop.at < DROP_WINDOW_MS) {
+      return { dx: 0, dy: 0, z: 160, arc: 60, rotate, scale: 1.08, duration: 450 };
+    }
+
+    // Veio da mão: sai da borda do jogador, sobe e pousa no slot.
+    const handX = team === "police" ? -HAND_DISTANCE : BOARD_W + HAND_DISTANCE;
+    return {
+      dx: handX - center.x,
+      dy: 0,
+      z: 260,
+      arc: 340,
+      rotate: rotate + (team === "police" ? -20 : 20),
+      scale: 1.15,
+      duration: 950,
+    };
+  };
+
+  const combatEntrance = (card: Card, team: TeamName): CardEntrance | null => {
+    const prev = locations.current?.get(String(card.id));
+    if (!prev) return null;
+    const fromRect = slotRect(prev.team, prev.index);
+    const from = rectCenter(fromRect);
+    const to = rectCenter(COMBAT_CARD);
+    const fromBox = cardBox(fromRect, TEAM_CARD_ROTATION[team]);
+    const toBox = cardBox(COMBAT_CARD, -6);
+    // Sai do slot no tamanho dele e voa em arco até a zona de combate.
+    return {
+      dx: from.x - to.x,
+      dy: from.y - to.y,
+      z: 0,
+      arc: 420,
+      rotate: TEAM_CARD_ROTATION[team],
+      scale: fromBox.w / toBox.w,
+      duration: 1100,
+      delay: 300,
+    };
+  };
+
+  const handleDrop = (handIndex: number) => {
+    if (highlight) lastDrop.current = { team: highlight.team, at: Date.now() };
+    setHandDrag(false);
+    onHandCardDrop?.(handIndex);
+  };
+
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 1280, h: 720 });
   const [orbit, setOrbit] = useState<Orbit>(NO_ORBIT);
@@ -403,11 +586,12 @@ export const BoardStage = ({
           slots[team].map((card, i) =>
             card ? (
               <CardOnBoard
-                key={`${team}-${i}`}
+                key={`${team}-${card.id}-${i}`}
                 card={card}
                 team={team}
                 rect={slotRect(team, i)}
                 rotate={TEAM_CARD_ROTATION[team]}
+                entrance={slotEntrance(team, i, card)}
                 onClick={onSlotClick ? () => onSlotClick(team, i) : undefined}
               />
             ) : null,
@@ -419,11 +603,20 @@ export const BoardStage = ({
             team={highlight.team}
             rect={slotRect(highlight.team, highlight.index)}
             empty={!slots[highlight.team][highlight.index]}
+            acceptingDrop={handDrag}
+            onDropHandCard={handleDrop}
           />
         )}
 
         {combatCard && (
-          <CardOnBoard card={combatCard.card} team={combatCard.team} rect={COMBAT_CARD} rotate={-6} />
+          <CardOnBoard
+            key={`combat-${combatCard.card.id}`}
+            card={combatCard.card}
+            team={combatCard.team}
+            rect={COMBAT_CARD}
+            rotate={-6}
+            entrance={combatEntrance(combatCard.card, combatCard.team)}
+          />
         )}
 
         {(["faction", "police"] as TeamName[]).map((team) => (
