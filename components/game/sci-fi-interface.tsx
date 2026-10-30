@@ -25,9 +25,12 @@ import { CameraFocus } from "@/lib/tutorial/types";
 const FitColumn = ({
   children,
   onScale,
+  dimmed = false,
 }: {
   children: ReactNode;
   onScale?: (scale: number) => void;
+  /** Apagada enquanto a câmera do tutorial foca o tabuleiro. */
+  dimmed?: boolean;
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const fit = useFitScale(ref, { reserveTop: 56, reserveBottom: 56, reserveX: 0, minScale: 0.45 });
@@ -36,7 +39,7 @@ const FitColumn = ({
 
   return (
     <div
-      className="relative z-20 flex-shrink-0"
+      className={`relative z-20 flex-shrink-0 transition-opacity duration-500 ${dimmed ? DIMMED : ""}`}
       style={{
         width: fit.width ? fit.width * fit.scale : undefined,
         height: fit.height ? fit.height * fit.scale : undefined,
@@ -56,6 +59,9 @@ const FitColumn = ({
 /** Altura do inventário aberto (antes da escala) e folga sob o tabuleiro. */
 const INVENTORY_OPEN_HEIGHT = 258;
 const BOARD_BOTTOM_GAP = 48;
+
+/** Interface apagada (e sem clique) durante o foco de câmera do tutorial. */
+const DIMMED = "pointer-events-none opacity-20";
 
 const TABS: { id: TBoardTabs; label: string }[] = [
   { id: "battlefieldTab", label: "Campo de Batalha" },
@@ -79,11 +85,14 @@ export function GameScreen({
   game,
   overlay,
   tutorialCamera = null,
+  hideBoardOverlays = false,
 }: {
   game: GameEngine;
   overlay?: ReactNode;
   /** Foco de câmera pedido pelo tutorial (cartas ou mapa). */
   tutorialCamera?: CameraFocus | null;
+  /** Esconde painel de ação, abas e avisos de cima do tabuleiro (falas do tutorial). */
+  hideBoardOverlays?: boolean;
 }) {
   const { state, dispatch } = game;
   const { currentTeam, turnPhase, teams, board } = state;
@@ -181,15 +190,24 @@ export function GameScreen({
 
   const showAction = board.activeTab === "actionTab";
 
+  // Foco de câmera do tutorial: nada por cima do tabuleiro e o resto apagado.
+  const focusMode = !!tutorialCamera;
+  const boardClear = focusMode || hideBoardOverlays;
+
   return (
     <div
       style={{ "--fit": fit } as CSSProperties}
       className={`h-screen ${theme.background} flex flex-col overflow-hidden font-mono select-none relative transition-colors duration-700`}
     >
       {/* Round Countdown Overlay */}
-      {turnPhase === "COUNTDOWN" && <RoundCountdown game={game} />}
+      {turnPhase === "COUNTDOWN" && (
+        // Continua contando por trás do foco, só fica invisível.
+        <div className={focusMode ? "opacity-0" : ""}>
+          <RoundCountdown game={game} />
+        </div>
+      )}
 
-      <div className="fixed top-0 left-0 right-0 z-50">
+      <div className={`fixed top-0 left-0 right-0 z-50 transition-opacity duration-500 ${focusMode ? DIMMED : ""}`}>
         <div
           className={`flex items-center justify-center gap-3 py-2 px-4 transition-all duration-700 ${
             theme.overlayScrim
@@ -218,7 +236,7 @@ export function GameScreen({
 
       <div className="flex min-h-0 flex-1 items-start gap-4 px-4 pt-12 pb-12">
         {/* Polícia (esquerda, como no tabuleiro) */}
-        <FitColumn onScale={setFit}>
+        <FitColumn onScale={setFit} dimmed={focusMode}>
           <PlayerCard game={game} alignment="left" />
           <div className="w-[256px]">
             <MinimapButton label={mainView === "cards" ? "MAPA" : "CARTAS"} onClick={toggleView}>
@@ -264,6 +282,7 @@ export function GameScreen({
           )}
 
           {/* Abas: campo de batalha / ação */}
+          {!boardClear && (
           <div className="absolute left-1/2 top-2 z-10 flex -translate-x-1/2 overflow-hidden rounded-lg border border-white/10 bg-black/60 backdrop-blur">
             {TABS.map((tab) => {
               const enabled = board.enabledTabs[tab.id] && tabsGate.allowed;
@@ -283,9 +302,10 @@ export function GameScreen({
               );
             })}
           </div>
+          )}
 
           {/* Aviso do slot sorteado */}
-          {turnPhase === "PLACING" && d6 && (
+          {!boardClear && turnPhase === "PLACING" && d6 && (
             <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex flex-col items-center gap-1">
               <h2 className={`text-2xl font-black tracking-widest drop-shadow-lg ${theme.text}`}>
                 {slots[currentTeam][d6 - 1]
@@ -301,7 +321,7 @@ export function GameScreen({
           )}
 
           {/* Painel de ação (dado / roleta) sobre o tabuleiro */}
-          {showAction && (
+          {!boardClear && showAction && (
             <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
               <div className="w-full max-w-xl rounded-2xl border border-white/10 bg-black/75 p-4 shadow-2xl">
                 <Action game={game} />
@@ -311,13 +331,15 @@ export function GameScreen({
         </div>
 
         {/* Facção (direita) */}
-        <FitColumn>
+        <FitColumn dimmed={focusMode}>
           <PlayerCard game={game} alignment="right" />
           <BombPanel game={game} />
         </FitColumn>
       </div>
 
-      <InventoryPanel game={game} />
+      <div className={`transition-opacity duration-500 ${focusMode ? DIMMED : ""}`}>
+        <InventoryPanel game={game} />
+      </div>
 
       {overlay}
     </div>

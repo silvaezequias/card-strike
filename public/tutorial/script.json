@@ -5,21 +5,44 @@
       "id": "intro",
       "label": "Boas-vindas",
       "speaker": "Sargento Vega",
-      "text": "E aí, recruta! Eu sou a Sargento Vega e vou te mostrar como funciona o Card Strike. Relaxa, é rapidinho!",
+      "text": "E aí, recruta. Eu sou a Sargento Vega, e vou te mostrar como este jogo funciona.",
       "action": {
-        "kind": "narration"
+        "kind": "camera",
+        "board": "cards",
+        "area": "overview",
+        "team": "police"
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/intro-mvuu5lul.mp3"
     },
     {
       "id": "times",
-      "label": "Os times",
+      "label": "Você é CT",
       "speaker": "Sargento Vega",
-      "text": "Você joga de CT, a Polícia, do lado esquerdo da mesa. Lá do outro lado tá a Facção. Cada time tem seus bombsites A, B e C, e seis slots de cartas no meio do tabuleiro.",
+      "text": "Você agora faz parte da equipe militar, o lado azul da mesa. Você está contra os terroristas. Eles são do lado vermelho.",
       "action": {
-        "kind": "narration"
+        "kind": "camera",
+        "board": "cards",
+        "area": "side",
+        "team": "police",
+        "slot": 6
       },
-      "advance": "click"
+      "advance": "auto",
+      "audioUrl": "/tutorial/audio/times-mvuu8coj.mp3"
+    },
+    {
+      "id": "step-mvuuep20xi48",
+      "label": "Eles são TR",
+      "speaker": "Sargento Vega",
+      "text": "A sua função é impedir que esses filhos da mãe explodam nossas bases.",
+      "action": {
+        "kind": "camera",
+        "board": "cards",
+        "area": "side",
+        "team": "faction"
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuuep20xi48-mvuugjk0.mp3"
     },
     {
       "id": "camera-slots",

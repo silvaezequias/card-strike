@@ -12,7 +12,7 @@ import { Portrait } from "@/components/art/noir";
 import { ScriptedOutcomes, useGameEngine } from "@/game/useGameEngine";
 import { SetupSettings } from "@/game/game-types";
 import { loadScript } from "@/lib/tutorial/storage";
-import { TutorialStep } from "@/lib/tutorial/types";
+import { TutorialStep, actionTeam } from "@/lib/tutorial/types";
 
 /* Tutorial guiado: você joga de CT contra um bot, sem relógio e sem sorte. */
 
@@ -58,6 +58,8 @@ export default function TutorialPage() {
       <GameScreen
         game={game}
         tutorialCamera={runner.camera}
+        // Em falas e câmera ninguém está jogando: tabuleiro livre de painéis.
+        hideBoardOverlays={!!runner.step && actionTeam(runner.step.action) === null}
         overlay={
           started && runner.step ? (
             <TutorialDialog

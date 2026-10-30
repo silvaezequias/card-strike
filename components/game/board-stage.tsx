@@ -45,9 +45,11 @@ const clamp = (v: number, [min, max]: readonly [number, number]) => Math.min(max
 
 /** Parte do tabuleiro de cartas que o tutorial pede para focar. */
 export type CardCameraFocus = {
-  area: "overview" | "grid" | "slot" | "deck" | "combat" | "bomb";
+  area: "overview" | "side" | "grid" | "slot" | "deck" | "combat" | "bomb";
   team?: TeamName;
   slot?: number;
+  /** Foco total: escurece o que estiver fora da seleção. */
+  dim?: boolean;
 };
 
 const rectCenterOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
@@ -59,6 +61,12 @@ const rectCenterOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 }
 const focusTarget = (focus: CardCameraFocus) => {
   const team = focus.team ?? "police";
   switch (focus.area) {
+    case "side": {
+      // Metade da mesa do time: grade, baralho e faixa com o nome.
+      const half = BOARD_W / 2;
+      const spot = { x: team === "police" ? 24 : half + 4, y: 24, w: half - 28, h: BOARD_H - 48 };
+      return { center: rectCenterOf(spot), w: spot.h, h: spot.w, rotate: TEAM_VIEW_ROTATION[team], spotlight: spot };
+    }
     case "grid": {
       const g = gridFrame(team);
       const spot = { x: g.center.x - g.h / 2, y: g.center.y - g.w / 2, w: g.h, h: g.w };
@@ -209,6 +217,20 @@ const FocusRing = ({ rect }: { rect: Rect }) => (
       height: rect.h + 28,
       border: "5px solid #ffd45c",
       boxShadow: "0 0 30px rgba(255, 212, 92, 0.55)",
+    }}
+  />
+);
+
+/** Escurece a mesa fora da seleção (foco total): sombra enorme em volta do recorte. */
+const FocusDim = ({ rect }: { rect: Rect }) => (
+  <div
+    className="pointer-events-none absolute rounded-2xl"
+    style={{
+      left: rect.x - 14,
+      top: rect.y - 14,
+      width: rect.w + 28,
+      height: rect.h + 28,
+      boxShadow: "0 0 0 3200px rgba(0, 0, 0, 0.5)",
     }}
   />
 );
@@ -586,6 +608,7 @@ export const BoardStage = ({
           <DeckHighlight team={deck.team} canBuy={deck.canBuy} strong={!!deck.strong} onClick={onDeckClick} />
         )}
 
+        {target && cameraFocus?.dim && <FocusDim rect={target.spotlight} />}
         {target && <FocusRing rect={target.spotlight} />}
 
         {highlight && (

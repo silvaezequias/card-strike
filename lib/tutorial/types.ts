@@ -1,13 +1,14 @@
 import { Bombsite, TeamName } from "@/game/game-types";
 
 /** Partes do tabuleiro de cartas que a câmera pode focar. */
-export type CardFocusArea = "overview" | "grid" | "slot" | "deck" | "combat" | "bomb";
+export type CardFocusArea = "overview" | "side" | "grid" | "slot" | "deck" | "combat" | "bomb";
 /** Partes do mapa que a câmera pode focar. */
-export type MapFocusArea = "full" | "A" | "B" | "C" | "base";
+export type MapFocusArea = "full" | "side" | "A" | "B" | "C" | "base";
 
+/** `dim`: foco total — escurece o que estiver fora da seleção. */
 export type CameraFocus =
-  | { board: "cards"; area: CardFocusArea; team?: TeamName; slot?: number }
-  | { board: "map"; area: MapFocusArea; team?: TeamName };
+  | { board: "cards"; area: CardFocusArea; team?: TeamName; slot?: number; dim?: boolean }
+  | { board: "map"; area: MapFocusArea; team?: TeamName; dim?: boolean };
 
 /* ═══════════════════════════════════════════════
    ROTEIRO DO TUTORIAL
@@ -56,7 +57,7 @@ export type TutorialScript = { version: 1; steps: TutorialStep[] };
 
 export const ACTION_LABELS: Record<TutorialActionKind, string> = {
   narration: "Só fala",
-  camera: "Câmera (só fala, com foco)",
+  camera: "Câmera com foco",
   "opponent-move": "Bot se posiciona",
   "opponent-place": "Bot posiciona carta",
   "opponent-play": "Bot joga carta",

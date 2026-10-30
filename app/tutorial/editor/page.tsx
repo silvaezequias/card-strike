@@ -65,8 +65,12 @@ const lintSteps = (steps: TutorialStep[]) => {
   });
 };
 
+/** Opção do seletor para a câmera com foco total (`dim: true`). */
+const CAMERA_TOTAL = "camera-total";
+
 const CARD_AREAS: [CardFocusArea, string][] = [
   ["overview", "Visão geral da mesa"],
+  ["side", "Campo da equipe (metade do tabuleiro)"],
   ["grid", "Grade de slots de um time"],
   ["slot", "Um slot específico"],
   ["deck", "Baralho de um time"],
@@ -76,6 +80,7 @@ const CARD_AREAS: [CardFocusArea, string][] = [
 
 const MAP_AREAS: [MapFocusArea, string][] = [
   ["full", "Mapa inteiro"],
+  ["side", "Campo da equipe (base, corredores e bombsites)"],
   ["A", "Bombsite A"],
   ["B", "Bombsite B"],
   ["C", "Bombsite C"],
@@ -87,12 +92,15 @@ const describeCamera = (a: Extract<TutorialAction, { kind: "camera" }>) => {
   const team = a.team === "faction" ? "da Facção" : "da Polícia";
   if (a.board === "map") {
     if (a.area === "full") return "O mapa vai para o centro, sem zoom.";
+    if (a.area === "side") return `O mapa vai para o centro destacando o campo ${team}: base, corredores e bombsites.`;
     if (a.area === "base") return `O mapa vai para o centro com zoom na base ${team}.`;
     return `O mapa vai para o centro com zoom no bombsite ${a.area}.`;
   }
   switch (a.area) {
     case "overview":
       return "A câmera mostra a mesa inteira.";
+    case "side":
+      return `A câmera mostra o campo ${team}: grade de slots, baralho de compra e faixa do time.`;
     case "grid":
       return `A câmera foca a grade de slots ${team}.`;
     case "slot":
@@ -106,7 +114,8 @@ const describeCamera = (a: Extract<TutorialAction, { kind: "camera" }>) => {
   }
 };
 
-const field = "w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/60";
+const field =
+  "w-full rounded-md border border-white/15 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-sky-400/60 [color-scheme:dark] [&_option]:bg-neutral-900 [&_option]:text-zinc-100";
 const label = "mb-1.5 block text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500";
 const smallButton =
   "flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-1.5 text-[11px] font-bold tracking-widest text-zinc-300 transition-colors hover:border-white/40 hover:text-white disabled:opacity-40";
@@ -275,7 +284,10 @@ export default function TutorialEditorPage() {
                         t === "police" ? "text-sky-300" : t === "faction" ? "text-red-300" : "text-zinc-500"
                       }`}
                     >
-                      {ACTION_LABELS[s.action.kind].toUpperCase()}
+                      {(s.action.kind === "camera" && s.action.dim
+                        ? "Câmera com foco total"
+                        : ACTION_LABELS[s.action.kind]
+                      ).toUpperCase()}
                     </span>
                   </span>
                   {s.audioUrl && <Music size={13} className="mt-1 text-emerald-300" />}
@@ -341,20 +353,32 @@ export default function TutorialEditorPage() {
                     <span className={label}>O que acontece</span>
                     <select
                       className={field}
-                      value={a.kind}
+                      value={a.kind === "camera" && a.dim ? CAMERA_TOTAL : a.kind}
                       onChange={(e) => {
-                        const kind = e.target.value as TutorialActionKind;
+                        const value = e.target.value;
+                        // Foco total é a câmera com foco escurecendo o resto: só muda a opção.
+                        if (a.kind === "camera" && (value === "camera" || value === CAMERA_TOTAL)) {
+                          updateAction({ dim: value === CAMERA_TOTAL } as Partial<TutorialAction>);
+                          return;
+                        }
+                        const kind = (value === CAMERA_TOTAL ? "camera" : value) as TutorialActionKind;
+                        const action = defaultAction(kind);
                         updateStep({
-                          action: defaultAction(kind),
+                          action: kind === "camera" ? ({ ...action, dim: value === CAMERA_TOTAL } as TutorialAction) : action,
                           advance: kind === "narration" || kind === "camera" || kind === "finish" ? "click" : "auto",
                         });
                       }}
                     >
-                      {Object.entries(ACTION_LABELS).map(([kind, text]) => (
+                      {Object.entries(ACTION_LABELS).map(([kind, text]) => [
                         <option key={kind} value={kind}>
                           {text}
-                        </option>
-                      ))}
+                        </option>,
+                        kind === "camera" && (
+                          <option key={CAMERA_TOTAL} value={CAMERA_TOTAL}>
+                            Câmera com foco total
+                          </option>
+                        ),
+                      ])}
                     </select>
                   </div>
 
@@ -455,7 +479,7 @@ export default function TutorialEditorPage() {
                         </select>
                       </div>
 
-                      {["grid", "slot", "deck", "base"].includes(a.area) && (
+                      {["side", "grid", "slot", "deck", "base"].includes(a.area) && (
                         <div>
                           <span className={label}>Time</span>
                           <select
@@ -515,7 +539,8 @@ export default function TutorialEditorPage() {
 
                 <p className="mt-4 text-xs leading-relaxed text-zinc-500">
                   {a.kind === "narration" && "Nada acontece no jogo: o jogador só lê/ouve e continua."}
-                  {a.kind === "camera" && `${describeCamera(a)} Nada mais acontece no jogo.`}
+                  {a.kind === "camera" &&
+                    `${describeCamera(a)}${a.dim ? " O resto do tabuleiro escurece." : ""} Nada mais acontece no jogo.`}
                   {a.kind === "finish" && "Mostra os botões Jogar e Repetir."}
                   {a.kind === "opponent-move" && `O bot escolhe Se Posicionar e a roleta cai no bombsite ${a.site}.`}
                   {a.kind === "opponent-place" &&

@@ -402,10 +402,20 @@ const zoomTransform = (frame: ReturnType<typeof zoomFrame>) => {
 };
 
 /** Parte do mapa que o tutorial pede para focar. */
-export type MapCameraFocus = { area: "full" | "A" | "B" | "C" | "base"; team?: TeamName };
+export type MapCameraFocus = {
+  area: "full" | "side" | "A" | "B" | "C" | "base";
+  team?: TeamName;
+  /** Foco total: escurece o que estiver fora da seleção. */
+  dim?: boolean;
+};
 
 const focusRect = (focus: MapCameraFocus) => {
   if (focus.area === "full") return null;
+  if (focus.area === "side") {
+    // Campo do time: base, corredores e os bombsites inteiros.
+    const w = SITE.x + SITE.w + 12;
+    return { x: focus.team === "faction" ? MAP_W - w - 14 : 14, y: 18, w, h: MAP_H - 36 };
+  }
   if (focus.area === "base") {
     const x = focus.team === "faction" ? MAP_W - BASE.x - BASE.w : BASE.x;
     return { x, y: BASE.y, w: BASE.w, h: BASE.h };
@@ -418,6 +428,8 @@ const focusFrame = (focus: MapCameraFocus) => {
   const r = focusRect(focus);
   if (!r) return null;
   const scale = Math.min(MAP_W / (r.w + 160), MAP_H / (r.h + 140), 2.6);
+  // Áreas da altura do mapa (campo da equipe): só o contorno, sem zoom.
+  if (scale <= 1) return null;
   return { scale, cx: r.x + r.w / 2, cy: r.y + r.h / 2 };
 };
 
@@ -476,6 +488,19 @@ export const MapBoard = ({
             {(["faction", "police"] as TeamName[]).map((team) => (
               <Token key={team} team={team} spot={positions[team]} onArrive={() => onArrive?.(team)} />
             ))}
+            {ring && focus?.dim && (
+              // Foco total: tudo fora da seleção escurece (fichas inclusive).
+              <div
+                className="pointer-events-none absolute rounded-xl"
+                style={{
+                  left: `${((ring.x - 10) / MAP_W) * 100}%`,
+                  top: `${((ring.y - 10) / MAP_H) * 100}%`,
+                  width: `${((ring.w + 20) / MAP_W) * 100}%`,
+                  height: `${((ring.h + 20) / MAP_H) * 100}%`,
+                  boxShadow: "0 0 0 2000px rgba(0, 0, 0, 0.5)",
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
