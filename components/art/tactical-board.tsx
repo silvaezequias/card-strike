@@ -6,8 +6,8 @@ import { factionPalette, getPalette, policePalette, type ArtPalette } from "./pa
    viewBox 0 0 1940 1300 (paisagem)
 
    O desenho é feito "em pé" (retrato, 1300x1940) e
-   girado -90° no SVG: a facção fica à esquerda, o mapa
-   no meio e a polícia à direita. A geometria exportada
+   girado 90° no SVG: a polícia fica à esquerda, o mapa
+   no meio e a facção à direita. A geometria exportada
    já vem convertida para a paisagem.
 
    ┌────────────────────────────────┐  y 0
@@ -73,9 +73,9 @@ export type Point = { x: number; y: number };
 export type Bombsite = "A" | "B" | "C";
 export type MapSpot = "BASE" | Bombsite;
 
-/** Retrato -> paisagem: (x, y) vira (y, P_W - x). */
-const toL = (p: Point): Point => ({ x: p.y, y: P_W - p.x });
-const toLRect = (r: Rect): Rect => ({ x: r.y, y: P_W - r.x - r.w, w: r.h, h: r.w });
+/** Retrato -> paisagem: (x, y) vira (P_H - y, x). */
+const toL = (p: Point): Point => ({ x: P_H - p.y, y: p.x });
+const toLRect = (r: Rect): Rect => ({ x: P_H - r.y - r.h, y: r.x, w: r.h, h: r.w });
 
 const pSlot = (team: TeamName, index: number): Rect => {
   const col = index % 3;
@@ -94,7 +94,7 @@ const pGrid = (team: TeamName): Rect =>
     : { x: GRID_X, y: ZONE_H - GRID_Y - GRID_H, w: GRID_W, h: GRID_H };
 
 /** Giro da carta na paisagem para ficar de frente para o seu jogador. */
-export const TEAM_CARD_ROTATION: Record<TeamName, number> = { police: -90, faction: 90 };
+export const TEAM_CARD_ROTATION: Record<TeamName, number> = { police: 90, faction: -90 };
 
 /** Retângulo do slot `index` (0–5) na paisagem. */
 export const slotRect = (team: TeamName, index: number): Rect => toLRect(pSlot(team, index));
@@ -111,8 +111,8 @@ export const gridFrame = (team: TeamName) => {
 const SITE_W = 220;
 const SITE_H = 220;
 const SITE_Y = MAP_CY - SITE_H / 2;
-// Na paisagem, x pequeno vai para baixo: A fica no topo.
-const SITE_CX: Record<Bombsite, number> = { A: 1015, B: 650, C: 285 };
+// Na paisagem, x do retrato vira y: A (x pequeno) fica no topo.
+const SITE_CX: Record<Bombsite, number> = { A: 285, B: 650, C: 1015 };
 
 const BASE = { x: P_W / 2 - 100, w: 200, h: 78, y: MAP_Y + 12 };
 const BASE_SPOT_Y = BASE.y + 46;
@@ -121,7 +121,7 @@ const LANE_Y = MAP_Y + 120;
 export const MAP_CENTER: Point = toL({ x: P_W / 2, y: MAP_CY });
 
 /** Carta jogada na zona de combate (embaixo do mapa, já na paisagem). */
-export const COMBAT_CARD: Rect = { x: MAP_CENTER.x - 96, y: P_W - 136, w: 78, h: 104 };
+export const COMBAT_CARD: Rect = { x: MAP_CENTER.x - 96, y: BOARD_H - 136, w: 78, h: 104 };
 const BOMB_BOX: Rect = { x: MAP_CENTER.x - 110, y: 30, w: 220, h: 112 };
 
 /** Ponto (retrato) onde o peão de um time fica parado. */
@@ -345,7 +345,7 @@ const Base = ({ team }: { team: TeamName }) => {
         fill={p.rim}
         fontFamily={MONO_FONT}
         letterSpacing="4"
-        transform={`rotate(90 ${P_W / 2 + 66} ${y + BASE.h / 2})`}
+        transform={`rotate(-90 ${P_W / 2 + 66} ${y + BASE.h / 2})`}
       >
         BASE
       </text>
@@ -391,7 +391,7 @@ const Site = ({ site }: { site: Bombsite }) => {
         fontWeight={900}
         fill="#ffffff"
         fontFamily={TITLE_FONT}
-        transform={`rotate(90 ${SITE_CX[site] - 50} ${y + half})`}
+        transform={`rotate(-90 ${SITE_CX[site] - 50} ${y + half})`}
       >
         {site}
       </text>
@@ -578,9 +578,9 @@ export const TacticalBoard = ({
         <stop offset="1" stopColor={policePalette.rim} />
       </linearGradient>
       <linearGradient id="rim-split-x" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stopColor={factionPalette.rim} />
+        <stop offset="0" stopColor={policePalette.rim} />
         <stop offset="0.5" stopColor={NEUTRAL.rim} />
-        <stop offset="1" stopColor={policePalette.rim} />
+        <stop offset="1" stopColor={factionPalette.rim} />
       </linearGradient>
       {(["police", "faction"] as TeamName[]).map((team) => {
         const p = getPalette(team);
@@ -613,7 +613,7 @@ export const TacticalBoard = ({
       </clipPath>
     </defs>
 
-    <g transform={`translate(0 ${P_W}) rotate(-90)`}>
+    <g transform={`translate(${P_H} 0) rotate(90)`}>
     <path d={chamfer(0, 0, P_W, P_H, 48)} fill="url(#plate)" />
     <path d={chamfer(2, 2, P_W - 4, P_H - 4, 47)} fill="none" stroke="url(#rim-split)" strokeOpacity={0.6} strokeWidth={4} />
 

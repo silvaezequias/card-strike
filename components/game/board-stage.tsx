@@ -34,7 +34,7 @@ import {
 export type CameraShot = "overview" | "focus";
 
 /** Giro da mesa para cada jogador ver seu lado de frente. */
-const TEAM_VIEW_ROTATION: Record<TeamName, number> = { police: 90, faction: -90 };
+const TEAM_VIEW_ROTATION: Record<TeamName, number> = { police: -90, faction: 90 };
 
 type CameraPose = { focus: Point; tilt: number; rotate: number; scale: number };
 type Orbit = { rotate: number; tilt: number; zoom: number };
@@ -211,11 +211,13 @@ const CardOnBoard = ({
   rect,
   team,
   rotate,
+  onClick,
 }: {
   card: Card;
   rect: Rect;
   team: TeamName;
   rotate: number;
+  onClick?: () => void;
 }) => {
   // Em retrato a carta tem 3:4; girada ±90° ela ocupa o retângulo deitado.
   const sideways = Math.abs(rotate % 180) === 90;
@@ -223,7 +225,8 @@ const CardOnBoard = ({
   const h = (sideways ? rect.w : rect.h) * 0.9;
   return (
     <div
-      className="absolute"
+      className={`absolute ${onClick ? "cursor-pointer transition-[filter] hover:brightness-125" : ""}`}
+      onClick={onClick}
       style={{
         left: rect.x + rect.w / 2 - w / 2,
         top: rect.y + rect.h / 2 - h / 2,
@@ -238,12 +241,44 @@ const CardOnBoard = ({
   );
 };
 
+/** Contorno pulsante no slot sorteado pelo dado. */
+const SlotHighlight = ({ rect, team, empty }: { rect: Rect; team: TeamName; empty: boolean }) => {
+  const p = getPalette(team);
+  return (
+    <div
+      className="pointer-events-none absolute flex items-center justify-center rounded-2xl animate-pulse"
+      style={{
+        left: rect.x - 8,
+        top: rect.y - 8,
+        width: rect.w + 16,
+        height: rect.h + 16,
+        border: `5px solid ${p.rim}`,
+        boxShadow: `0 0 40px ${p.glow}, inset 0 0 30px ${p.glow}88`,
+      }}
+    >
+      {empty && (
+        <span
+          className="whitespace-nowrap text-2xl font-black tracking-[0.2em]"
+          style={{ color: p.rim, transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
+        >
+          POSICIONE AQUI
+        </span>
+      )}
+    </div>
+  );
+};
+
 export type BoardStageProps = {
   turn: TeamName;
   shot: CameraShot;
   positions: Record<TeamName, MapSpot>;
   slots: Record<TeamName, (Card | null)[]>;
   combatCard?: { card: Card; team: TeamName } | null;
+  /** Slot em destaque (ex.: sorteado pelo dado). */
+  highlight?: { team: TeamName; index: number } | null;
+  /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
+  bottomInset?: number;
+  onSlotClick?: (team: TeamName, index: number) => void;
   onPawnArrive?: (team: TeamName) => void;
 };
 
@@ -253,13 +288,17 @@ export const BoardStage = ({
   positions,
   slots,
   combatCard,
+  highlight,
+  bottomInset = 0,
+  onSlotClick,
   onPawnArrive,
 }: BoardStageProps) => {
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 1280, h: 720 });
   const [orbit, setOrbit] = useState<Orbit>(NO_ORBIT);
   const [dragging, setDragging] = useState(false);
-  const drag = useRef<{ x: number; y: number; orbit: Orbit } | null>(null);
+  const drag = useRef<{ x: number; y: number; orbit: Orbit; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
 
   useLayoutEffect(() => {
     const el = viewportRef.current;
@@ -286,17 +325,24 @@ export const BoardStage = ({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
+  const framed = { w: viewport.w, h: Math.max(200, viewport.h - bottomInset) };
+
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
-    (e.target as Element).setPointerCapture?.(e.pointerId);
-    drag.current = { x: e.clientX, y: e.clientY, orbit };
-    setDragging(true);
+    drag.current = { x: e.clientX, y: e.clientY, orbit, moved: false };
   };
 
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
     if (!d) return;
-    const pose = getPose(shot, turn, viewport);
+    // Só vira arrasto depois de alguns pixels, para não engolir cliques.
+    if (!d.moved) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < 6) return;
+      d.moved = true;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setDragging(true);
+    }
+    const pose = getPose(shot, turn, framed);
     setOrbit({
       ...d.orbit,
       // Arrastar para os lados gira em volta da mesa (360° livres).
@@ -307,13 +353,22 @@ export const BoardStage = ({
   };
 
   const endDrag = () => {
+    suppressClick.current = drag.current?.moved ?? false;
     drag.current = null;
     setDragging(false);
   };
 
-  const pose = getPose(shot, turn, viewport);
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (!suppressClick.current) return;
+    suppressClick.current = false;
+    e.stopPropagation();
+  };
+
+  const pose = getPose(shot, turn, framed);
   const rotate = pose.rotate + orbit.rotate;
   const transform = [
+    // Sobe o enquadramento acima da área coberta no rodapé.
+    `translateY(${-bottomInset / 2}px)`,
     `rotateX(${pose.tilt + orbit.tilt}deg)`,
     `rotateZ(${rotate}deg)`,
     `scale(${pose.scale * orbit.zoom})`,
@@ -329,6 +384,7 @@ export const BoardStage = ({
       onPointerMove={onPointerMove}
       onPointerUp={endDrag}
       onPointerCancel={endDrag}
+      onClickCapture={onClickCapture}
     >
       <div
         className="absolute left-1/2 top-1/2"
@@ -352,9 +408,18 @@ export const BoardStage = ({
                 team={team}
                 rect={slotRect(team, i)}
                 rotate={TEAM_CARD_ROTATION[team]}
+                onClick={onSlotClick ? () => onSlotClick(team, i) : undefined}
               />
             ) : null,
           ),
+        )}
+
+        {highlight && (
+          <SlotHighlight
+            team={highlight.team}
+            rect={slotRect(highlight.team, highlight.index)}
+            empty={!slots[highlight.team][highlight.index]}
+          />
         )}
 
         {combatCard && (
