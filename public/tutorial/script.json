@@ -104,35 +104,120 @@
       "audioUrl": "/tutorial/audio/step-mvuvb9xgcvwz-mvuve601.mp3"
     },
     {
-      "id": "step-mvuvst8t7j4i",
-      "label": "Novo passo",
+      "id": "step-mvuyysruxac0",
+      "label": "Hud",
       "speaker": "Sargento Vega",
-      "text": "",
+      "text": "Presta atenção. Agora vou te mostrar tudo o que você precisa saber sobre a sua interface digital.",
+      "action": {
+        "kind": "camera",
+        "board": "hud",
+        "hud": [],
+        "dim": false
+      },
+      "advance": "auto",
+      "audioUrl": "/tutorial/audio/step-mvuyysruxac0-mvuz39t1.mp3"
+    },
+    {
+      "id": "step-mvuvst8t7j4i",
+      "label": "Minimapa",
+      "speaker": "Sargento Vega",
+      "text": "Esse é o seu minimapa. Você pode alternar entre os tabuleiros quando quiser apenas clicando aqui.",
+      "action": {
+        "kind": "camera",
+        "board": "hud",
+        "hud": [
+          "minimap"
+        ],
+        "dim": true
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuvst8t7j4i-mvuyqz6y.mp3"
+    },
+    {
+      "id": "step-mvuzfcjo0wfo",
+      "label": "Cronometro",
+      "speaker": "Sargento Vega",
+      "text": "E aqui é o cronômetro. Ele vai contar o tempo total do jogo, marcar o seu turno e o tempo que ainda resta para jogar. Fique atento.",
+      "action": {
+        "kind": "camera",
+        "board": "hud",
+        "hud": [
+          "mission"
+        ],
+        "dim": true
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuzfcjo0wfo-mvuzis8r.mp3"
+    },
+    {
+      "id": "step-mvuzk3x74udl",
+      "label": "Health",
+      "speaker": "Sargento Vega",
+      "text": "Essas são as barras de vida, sua e do seu oponente. Fique de olho aqui para montar suas estratégias com sabedoria.",
       "action": {
         "kind": "camera",
         "board": "hud",
         "hud": [
           "player-police",
-          "minimap"
-        ]
+          "player-faction"
+        ],
+        "dim": true
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuzk3x74udl-mvuzmtg2.mp3"
     },
     {
-      "id": "observar",
-      "label": "Observar o bot",
+      "id": "step-mvuzocru79fl",
+      "label": "Painel da Bomba",
       "speaker": "Sargento Vega",
-      "text": "Primeiro, bora só observar. A Facção começa jogando. Fica de olho!",
+      "text": "Esse, provavelmente, é o painel mais importante pra você! Ele vai te avisar se os terroristas plantaram a bomba e te falar quanto tempo você ainda tem para localiza-la e desarma-la.",
       "action": {
-        "kind": "narration"
+        "kind": "camera",
+        "board": "hud",
+        "hud": [
+          "bomb"
+        ],
+        "dim": true
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuzocru79fl-mvuzrfxz.mp3"
+    },
+    {
+      "id": "step-mvuzukzzm55s",
+      "label": "Mão",
+      "speaker": "Sargento Vega",
+      "text": "Para finalizar, esta é a sua mão. Você pode segurar até três cartas simultaneamente. As cartas que estiverem na sua mão não podem ser jogadas diretamente na zona de combate; elas primeiro precisam ser posicionadas no seu inventário. Você pode manter cartas na mão para momentos oportunos e estratégicos.",
+      "action": {
+        "kind": "camera",
+        "board": "hud",
+        "hud": [
+          "inventory"
+        ],
+        "dim": true
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvuzukzzm55s-mvv0ocql.mp3"
+    },
+    {
+      "id": "step-mvv0s8ua88zr",
+      "label": "Prática Guiada",
+      "speaker": "Sargento Vega",
+      "text": "Agora que você entendeu tudo, vamos à pratica! Nesse jogo, o time dos terroristas é como as peças brancas de um xadrez, eles sempre começam com a primeira ação. Então vamos observar o que a equipe do oponente vai fazer.",
+      "action": {
+        "kind": "camera",
+        "board": "cards",
+        "area": "overview",
+        "team": "police",
+        "dim": false
+      },
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/step-mvv0s8ua88zr-mvv0vh4b.mp3"
     },
     {
       "id": "bot-vai-c",
       "label": "Bot vai para o C",
       "speaker": "Sargento Vega",
-      "text": "Olha lá: a Facção girou a roleta e foi direto pro bombsite C.",
+      "text": "",
       "action": {
         "kind": "opponent-move",
         "site": "C"
@@ -140,41 +225,36 @@
       "advance": "auto"
     },
     {
-      "id": "ct-primeiro",
-      "label": "CT se posiciona primeiro",
+      "id": "step-mvv0ybu0lej5",
+      "label": "Se posicionar",
       "speaker": "Sargento Vega",
-      "text": "Agora é contigo! Sendo CT, sua prioridade é se posicionar primeiro. Nada de carta por enquanto.",
-      "action": {
-        "kind": "narration"
-      },
-      "advance": "click"
-    },
-    {
-      "id": "jogador-vai-a",
-      "label": "Jogador cai no A",
-      "speaker": "Sargento Vega",
-      "text": "Clica em Se Posicionar e depois gira a roleta.",
+      "text": "Eles foram estratégicos, se posicionaram e tomaram conta da nossa base C. Precisamos agir rápido e torcer para que não plantem a bomba. Então, você deve se posicionar e tentar recuperar a base C. ",
       "action": {
         "kind": "player-move",
         "site": "A"
       },
-      "advance": "auto"
+      "advance": "auto",
+      "audioUrl": "/tutorial/audio/step-mvv0ybu0lej5-mvv130bq.mp3"
     },
     {
-      "id": "sem-conflito",
-      "label": "Sites diferentes",
+      "id": "ct-primeiro",
+      "label": "Se posicionou errado",
       "speaker": "Sargento Vega",
-      "text": "Você caiu no bombsite A, e o inimigo tá no C. Sites diferentes: sem conflito por enquanto. No próximo round você vai precisar se posicionar de novo.",
+      "text": "Droga! Você foi pra base errada. Isso dá uma vantagem pra eles! Más sem pânico, a bomba ainda não foi plantada e isso te dá tempo! Aguarde a eles jogarem pra você tomar sua proxima decisão.",
       "action": {
-        "kind": "narration"
+        "kind": "camera",
+        "board": "map",
+        "area": "full",
+        "dim": false
       },
-      "advance": "click"
+      "advance": "click",
+      "audioUrl": "/tutorial/audio/ct-primeiro-mvv19p3a.mp3"
     },
     {
       "id": "bot-ak",
       "label": "Bot posiciona AK-47",
       "speaker": "Sargento Vega",
-      "text": "Enquanto isso, a Facção rolou o dado e deu 2. Ela comprou uma AK-47 e deixou no slot 2.",
+      "text": "",
       "action": {
         "kind": "opponent-place",
         "slot": 2,
@@ -183,10 +263,25 @@
       "advance": "auto"
     },
     {
+      "id": "step-mvv1fcplsopo",
+      "label": "Compraram AK",
+      "speaker": "Sargento Vega",
+      "text": "Pelo jeito a sorte deles continua, dessa vez rolaram os dados e conseguiram uma AK-47. Como vocês não estão na mesma base, não se preocupe, ele não consegue te atingir dessa distancia. Mas de qualquer jeito você precisa ir lá e impedir que ele plante a bomba. Então tente se posicionar mais uma vez, boa sorte.",
+      "action": {
+        "kind": "camera",
+        "board": "cards",
+        "area": "grid",
+        "team": "faction",
+        "dim": false
+      },
+      "advance": "auto",
+      "audioUrl": "/tutorial/audio/step-mvv1fcplsopo-mvv1l6c1.mp3"
+    },
+    {
       "id": "jogador-vai-c",
       "label": "Jogador cai no C",
       "speaker": "Sargento Vega",
-      "text": "Sua vez! Bora caçar esse inimigo: se posiciona de novo.",
+      "text": "",
       "action": {
         "kind": "player-move",
         "site": "C"
