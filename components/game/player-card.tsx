@@ -4,6 +4,7 @@ import type { Card } from "@/lib/types";
 import { Portrait } from "@/components/art/noir";
 import { GameEngine } from "@/game/useGameEngine";
 import { Bombsite } from "@/game/game-types";
+import { MAX_HEALTH } from "@/game/card-effects";
 
 export const PlayerCard = ({
   game,
@@ -16,7 +17,7 @@ export const PlayerCard = ({
   const cardTeam = isRight ? "faction" : "police";
   const isActive = game.state.currentTeam === cardTeam;
 
-  const { health, inventory, position, effects } = game.state.teams[cardTeam];
+  const { health, position, effects } = game.state.teams[cardTeam];
 
   return (
     <div
@@ -40,7 +41,6 @@ export const PlayerCard = ({
           teamName={game.teamNames[cardTeam]}
           playerName={game.state.teams[cardTeam].playerName}
           health={health}
-          inventory={inventory}
           effects={effects}
         />
       </div>
@@ -97,14 +97,12 @@ const PlayerInfo = ({
   teamName,
   playerName,
   health,
-  inventory,
   effects,
 }: {
   isRight: boolean;
   teamName: string;
   playerName: string;
   health: number;
-  inventory: any;
   effects: Card[];
 }) => {
   return (
@@ -121,8 +119,6 @@ const PlayerInfo = ({
       />
 
       <HealthBar isRight={isRight} health={health} />
-
-      <UtilitySlots isRight={isRight} warZone={inventory.warZone} />
 
       <ActiveEffects isRight={isRight} effects={effects} />
     </div>
@@ -189,69 +185,24 @@ const HealthBar = ({
   isRight: boolean;
   health: number;
 }) => {
-  return (
-    <div className="w-full flex gap-[3px]">
-      {Array.from({ length: 20 }).map((_, i) => (
-        <HealthSegment key={i} index={i} health={health} isRight={isRight} />
-      ))}
-    </div>
-  );
-};
-
-const HealthSegment = ({
-  index,
-  health,
-  isRight,
-}: {
-  index: number;
-  health: number;
-  isRight: boolean;
-}) => {
-  const isFilled = index < health;
   const isLow = health <= 3;
   const isMid = health <= 6 && health > 3;
 
-  const filledClass = getHealthColor(isRight, isLow, isMid);
-
   return (
-    <div
-      className={`
-        h-3 flex-1 rounded-sm transition-all duration-500
-        ${isFilled ? filledClass : "bg-slate-800/80 border border-slate-700/40"}
-        ${isLow && isFilled ? "animate-pulse" : ""}
-      `}
-    />
-  );
-};
+    <div className="relative h-3 w-full overflow-hidden rounded-sm border border-slate-700/40 bg-slate-800/80">
+      <div
+        className={`h-full transition-all duration-500 ${getHealthColor(isRight, isLow, isMid)} ${
+          isLow ? "animate-pulse" : ""
+        }`}
+        style={{ width: `${(health / MAX_HEALTH) * 100}%` }}
+      />
 
-/* =========================================================
-   UTILITY SLOTS
-========================================================= */
-
-const UtilitySlots = ({
-  isRight,
-  warZone,
-}: {
-  isRight: boolean;
-  warZone: (Card | null)[];
-}) => {
-  return (
-    <div className={`flex gap-1 mt-1 ${isRight ? "flex-row-reverse" : ""}`}>
-      {Array.from({ length: 6 }).map((_, i) => (
-        <UtilitySlot key={i} card={warZone[i]} />
-      ))}
-    </div>
-  );
-};
-
-const UtilitySlot = ({ card }: { card?: Card | null }) => {
-  return (
-    <div className="w-5 h-5 bg-slate-800 border border-slate-600 rounded flex items-center justify-center relative overflow-hidden">
-      {card && (
-        <div className={`scale-[0.6] ${getUtilityColor(card.name)}`}>
-          {card.name}
-        </div>
-      )}
+      {/* Divisões internas: uma por ponto de vida */}
+      <div className="absolute inset-0 flex">
+        {Array.from({ length: MAX_HEALTH }).map((_, i) => (
+          <div key={i} className="flex-1 border-r border-black/50 last:border-r-0" />
+        ))}
+      </div>
     </div>
   );
 };

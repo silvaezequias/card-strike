@@ -1,6 +1,15 @@
-import { GameState, SetupSettings } from "./game-types";
+import { generateRandomCard } from "@/lib/game-helpers";
+import { GameState, SetupSettings, TeamName } from "./game-types";
 
-export const createInitialGameState = (setup: SetupSettings): GameState => ({
+const STARTING_CARDS = 3;
+
+const dealHand = (team: TeamName, size: number) =>
+  Array.from({ length: size }, () => generateRandomCard(team));
+
+export const createInitialGameState = (
+  setup: SetupSettings,
+  startingCards = STARTING_CARDS,
+): GameState => ({
   currentTeam: "faction",
   turnPhase: "COUNTDOWN",
   turnAction: "SELECTING_ACTION",
@@ -38,14 +47,14 @@ export const createInitialGameState = (setup: SetupSettings): GameState => ({
       playerName: setup.faction.playerName,
       health: 20,
       position: null,
-      inventory: { hand: [], warZone: Array(6).fill(null) },
+      inventory: { hand: dealHand("faction", startingCards), warZone: Array(6).fill(null) },
       effects: [],
     },
     police: {
       playerName: setup.police.playerName,
       health: 20,
       position: null,
-      inventory: { hand: [], warZone: Array(6).fill(null) },
+      inventory: { hand: dealHand("police", startingCards), warZone: Array(6).fill(null) },
       effects: [],
     },
   },

@@ -8,7 +8,7 @@ import { BombData, GameState, Team, TeamName } from "./game-types";
    vêm das próprias cartas (game-helpers).
    ═══════════════════════════════════════════════ */
 
-const MAX_HEALTH = 20;
+export const MAX_HEALTH = 20;
 const BOMB_EXPLOSION_DAMAGE = 10;
 
 const hasEffect = (team: Team, name: string) =>
@@ -38,6 +38,13 @@ export const opponentOf = (team: TeamName): TeamName =>
   team === "faction" ? "police" : "faction";
 
 export const isFlashed = (team: Team) => hasEffect(team, "Flashbang");
+
+/** Cartas que só atingem o oponente no mesmo bombsite. */
+export const isAttackCard = (card: Card) =>
+  !!card.isOffensive && card.name !== "BOMBA";
+
+export const inConfrontation = ({ teams }: GameState) =>
+  !!teams.police.position && teams.police.position === teams.faction.position;
 
 export const isGameOver = ({ bomb, teams }: GameState) =>
   bomb.exploded || teams.police.health <= 0 || teams.faction.health <= 0;
@@ -90,8 +97,8 @@ export const resolveCard = (state: GameState, card: Card) => {
   }
 
   // Ataques só alcançam quem está no mesmo bombsite.
-  const inRange = !!me.position && me.position === enemy.position;
-  if (card.isOffensive && !inRange) return outcome("ALVO FORA DE ALCANCE");
+  if (isAttackCard(card) && !inConfrontation(state))
+    return outcome("ALVO FORA DE ALCANCE");
 
   const enemyHasSmoke = hasEffect(enemy, "Smoke");
 

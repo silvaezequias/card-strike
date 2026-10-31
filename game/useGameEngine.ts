@@ -19,17 +19,18 @@ export type GameEngineOptions = {
   timer?: boolean;
   /** Quando presente, dado, roleta e compra usam estes resultados. */
   script?: MutableRefObject<ScriptedOutcomes>;
+  /** Cartas na mão de cada time no início; o tutorial começa sem nenhuma. */
+  startingCards?: number;
 };
 
 export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions = {}) => {
-  const { timer = true, script } = options;
+  const { timer = true, script, startingCards } = options;
   const startRotation = { x: 0, y: 0, z: 0 };
   const [d6Rotation, setD6Rotation] = useState(startRotation);
   const [spinnerRotation, setSpinnerRotation] = useState(startRotation);
 
-  const [state, rawDispatch] = useReducer(
-    gameReducer,
-    createInitialGameState(setup),
+  const [state, rawDispatch] = useReducer(gameReducer, undefined, () =>
+    createInitialGameState(setup, startingCards),
   );
 
   // Com roteiro, a compra entrega a carta definida em vez de uma aleatória.

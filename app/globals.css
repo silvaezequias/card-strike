@@ -180,6 +180,16 @@ body {
 }
 
 /* Opção destacada pelo tutorial */
+@keyframes range-warning {
+  0%, 100% { opacity: 0; }
+  15%, 70% { opacity: 1; }
+}
+
+.range-warning {
+  opacity: 0;
+  animation: range-warning 1.2s ease-out;
+}
+
 @keyframes tutorial-glow {
   0%,
   100% {

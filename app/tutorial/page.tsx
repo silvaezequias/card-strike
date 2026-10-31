@@ -30,7 +30,7 @@ export default function TutorialPage() {
     loadScript().then((script) => setSteps(script.steps));
   }, []);
 
-  const game = useGameEngine(SETUP, { timer: false, script: outcomes });
+  const game = useGameEngine(SETUP, { timer: false, script: outcomes, startingCards: 0 });
   const runner = useTutorialRunner({ game, steps, outcomes, active: started });
   const narrator = useNarrator();
   const { speak } = narrator;
