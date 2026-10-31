@@ -52,6 +52,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case "BUY_CARD":
       return ActionBuyCard(state);
 
+    case "BUY_SCRIPTED_CARD":
+      return ActionBuyCard(state, action.payload.cardName);
+
     case "PLACE_CARD":
       return ActionPlaceCard(state, action);
 

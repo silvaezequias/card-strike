@@ -6,6 +6,7 @@ export const createInitialGameState = (setup: SetupSettings): GameState => ({
   turnAction: "SELECTING_ACTION",
 
   playedCards: [],
+  lastResult: null,
 
   countdown: {
     gameTime: 0,
@@ -37,13 +38,15 @@ export const createInitialGameState = (setup: SetupSettings): GameState => ({
       playerName: setup.faction.playerName,
       health: 20,
       position: null,
-      inventory: { hand: [], warZone: [] },
+      inventory: { hand: [], warZone: Array(6).fill(null) },
+      effects: [],
     },
     police: {
       playerName: setup.police.playerName,
       health: 20,
       position: null,
-      inventory: { hand: [], warZone: [] },
+      inventory: { hand: [], warZone: Array(6).fill(null) },
+      effects: [],
     },
   },
 

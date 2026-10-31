@@ -1,6 +1,8 @@
 "use client";
 
-import { Shield, Crosshair, Shuffle, Play } from "lucide-react";
+import Link from "next/link";
+import { Shield, Crosshair, Shuffle, Play, BookOpen, GraduationCap } from "lucide-react";
+import { Portrait } from "@/components/art/noir";
 import { SetupSettings } from "@/game/game-types";
 import { useGameSetup } from "@/game/useSetupGame";
 
@@ -21,11 +23,21 @@ export const GameMenu = ({
   const [player1, player2] = state.players;
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4 font-mono select-none">
+    <div className="relative min-h-screen overflow-hidden bg-neutral-950 flex items-center justify-center p-4 font-mono select-none">
       {/* Ambient glow */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-600/5 rounded-full blur-3xl" />
+      </div>
+
+      {/* Personagens */}
+      <div className="absolute inset-y-0 left-0 w-[calc(50vw-18rem)] hidden lg:flex items-end justify-end overflow-hidden pointer-events-none [mask-image:linear-gradient(to_right,transparent,black_25%,black_70%,transparent)]">
+        <Portrait team="police" variant={1} flip backdrop={false} className="h-[58vh] w-auto flex-shrink-0 -mr-28 opacity-70" />
+        <Portrait team="police" variant={0} flip backdrop={false} className="h-[68vh] w-auto flex-shrink-0" />
+      </div>
+      <div className="absolute inset-y-0 right-0 w-[calc(50vw-18rem)] hidden lg:flex items-end justify-start overflow-hidden pointer-events-none [mask-image:linear-gradient(to_left,transparent,black_25%,black_70%,transparent)]">
+        <Portrait team="faction" variant={0} backdrop={false} className="h-[68vh] w-auto flex-shrink-0 relative z-10" />
+        <Portrait team="faction" variant={1} backdrop={false} className="h-[58vh] w-auto flex-shrink-0 -ml-28 opacity-70" />
       </div>
 
       <div className="relative z-10 w-full max-w-lg">
@@ -178,6 +190,22 @@ export const GameMenu = ({
           <Play size={18} />
           Iniciar partida
         </button>
+
+        <Link
+          href="/tutorial"
+          className="mt-3 w-full flex items-center justify-center gap-3 px-6 py-3 rounded-lg border border-sky-500/40 bg-sky-950/40 text-sky-200 text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-sky-900/50 hover:border-sky-400/70"
+        >
+          <GraduationCap size={18} />
+          Tutorial
+        </Link>
+
+        <Link
+          href="/cartas"
+          className="mt-4 flex items-center justify-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-slate-500 hover:text-white transition-colors"
+        >
+          <BookOpen size={14} />
+          Cartas e regras
+        </Link>
       </div>
     </div>
   );

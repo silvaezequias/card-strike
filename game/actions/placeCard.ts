@@ -14,9 +14,11 @@ export const ActionPlaceCard = (
   const handInventoryFiltered = handInventory.filter(
     (_, index) => index !== cardIndex,
   );
-  warZoneInventory[positionIndex] = cardToPlace;
 
   if (!cardToPlace) return state;
+
+  const warZoneUpdated = [...warZoneInventory];
+  warZoneUpdated[positionIndex] = cardToPlace;
 
   return {
     ...state,
@@ -28,7 +30,7 @@ export const ActionPlaceCard = (
         ...state.teams[currentTeam],
         inventory: {
           hand: handInventoryFiltered,
-          warZone: warZoneInventory,
+          warZone: warZoneUpdated,
         },
       },
     },

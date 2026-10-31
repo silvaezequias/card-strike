@@ -6,15 +6,12 @@ export const ActionRollToolComplete = (
   action: GameAction<"ROLL_TOOL_COMPLETE">,
 ): GameState => {
   const isD6 = state.tool.selected === "d6";
-  const { hand: handInventory } = state.teams[state.currentTeam].inventory;
 
   return {
     ...state,
-    turnPhase: isD6
-      ? handInventory.length < 3
-        ? "BUYING"
-        : "PLACING"
-      : "IDLE",
+    // Depois do dado o jogador decide: jogar a carta do slot sorteado,
+    // comprar (se tiver espaço na mão) ou posicionar uma carta da mão.
+    turnPhase: isD6 ? "PLACING" : "IDLE",
     turnAction: "NONE",
 
     hud: {

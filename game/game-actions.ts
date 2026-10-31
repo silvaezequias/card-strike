@@ -34,6 +34,9 @@ export type ActionMap = {
   };
 
   SWITCH_TAB: "battlefieldTab" | "actionTab";
+
+  /** Compra uma carta específica (tutorial roteirizado). */
+  BUY_SCRIPTED_CARD: { cardName: string };
 };
 
 export type GameAction<
@@ -61,6 +64,7 @@ export type GameActionObject =
   // Cards
   | { type: "PLAY_CARD"; payload: { card: Card } }
   | { type: "BUY_CARD" }
+  | { type: "BUY_SCRIPTED_CARD"; payload: { cardName: string } }
   | { type: "KEEP_IN_HAND" }
   | {
       type: "PLACE_CARD";

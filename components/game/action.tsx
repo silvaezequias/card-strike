@@ -2,6 +2,7 @@ import { Tool } from "@/game/game-types";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
 import { ArrowLeft, Dices, MapPin, Sun } from "lucide-react";
+import { HIGHLIGHT_CLASS, useGate } from "./tutorial-gate";
 
 type ActionProps = {
   game: GameEngine;
@@ -22,6 +23,8 @@ type SpinnerProps = {
 
 export const Action = ({ game }: ActionProps) => {
   const theme = useGameTheme(game.state.currentTeam);
+  const rollGate = useGate("roll");
+  const backGate = useGate("back");
 
   if (!game.state.tool.selected)
     return (
@@ -61,7 +64,7 @@ export const Action = ({ game }: ActionProps) => {
 
       <div className="flex items-center justify-center gap-4">
         <button
-          disabled={game.state.tool.isRolling}
+          disabled={game.state.tool.isRolling || !backGate.allowed}
           onClick={() => game.dispatch({ type: "SELECT_ACTION" })}
           className={`p-3 disabled:hidden rounded-lg text-sm font-bold text-white tracking-wider disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg`}
         >
@@ -71,9 +74,9 @@ export const Action = ({ game }: ActionProps) => {
 
         {/* Roll button */}
         <button
-          onClick={game.tool.roll}
-          disabled={game.state.tool.isRolling}
-          className={`p-3 ${theme.overlayScrim} rounded-lg text-sm font-bold text-white tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg`}
+          onClick={() => game.tool.roll()}
+          disabled={game.state.tool.isRolling || !rollGate.allowed}
+          className={`${rollGate.highlighted ? HIGHLIGHT_CLASS : ""} p-3 ${theme.overlayScrim} rounded-lg text-sm font-bold text-white tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg`}
         >
           {game.state.tool.isRolling ? (
             "ROLANDO..."
@@ -190,6 +193,8 @@ const RollDice = ({ game }: RollDiceProps) => {
 
 const ChoiceButton = ({ onChoose, game }: ChoiceButtonProps) => {
   const theme = useGameTheme(game.state.currentTeam);
+  const d6Gate = useGate("choose.d6");
+  const spinnerGate = useGate("choose.spinner");
 
   return (
     <div className="flex items-center justify-center animate-in fade-in duration-300">
@@ -206,7 +211,8 @@ const ChoiceButton = ({ onChoose, game }: ChoiceButtonProps) => {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={() => onChoose("d6")}
-            className={`group p-3 rounded-xl aspect-square max-w-52 justify-center transition-all duration-300 hover:scale-105 active:scale-95 flex flex-col items-center gap-4 ${theme.overlayScrim}`}
+            disabled={!d6Gate.allowed}
+            className={`${d6Gate.highlighted ? HIGHLIGHT_CLASS : ""} disabled:opacity-30 disabled:pointer-events-none group p-3 rounded-xl aspect-square max-w-52 justify-center transition-all duration-300 hover:scale-105 active:scale-95 flex flex-col items-center gap-4 ${theme.overlayScrim}`}
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/50 border-2 ${theme.text} ${theme.border}`}
@@ -227,7 +233,8 @@ const ChoiceButton = ({ onChoose, game }: ChoiceButtonProps) => {
 
           <button
             onClick={() => onChoose("spinner")}
-            className={`group relative p-3 aspect-square max-w-52 justify-center rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 flex flex-col items-center gap-4 ${theme.overlayScrimSecondary}`}
+            disabled={!spinnerGate.allowed}
+            className={`${spinnerGate.highlighted ? HIGHLIGHT_CLASS : ""} disabled:opacity-30 disabled:pointer-events-none group relative p-3 aspect-square max-w-52 justify-center rounded-xl transition-all duration-300 hover:scale-105 active:scale-95 flex flex-col items-center gap-4 ${theme.overlayScrimSecondary}`}
           >
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center bg-black/50 border-2 ${theme.textSecondary} ${theme.borderSecondary}`}
