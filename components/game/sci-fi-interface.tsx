@@ -15,6 +15,7 @@ import { Ban } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
 import { SetupSettings, TBoardTabs, TeamName } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
+import { inConfrontation, isAttackCard } from "@/game/card-effects";
 import { MapBoard, MapSpot } from "@/components/game/map-board";
 import { CardBoardPreview, MainBoardView, MinimapButton } from "@/components/game/minimap";
 import { Card } from "@/lib/types";
@@ -174,8 +175,17 @@ export function GameScreen({
     : null;
 
   const d6 = state.tool.result.d6;
+
+  // Ataque fora de confronto: o 1º clique só avisa, o 2º joga a carta.
+  const [warnedCardId, setWarnedCardId] = useState<Card["id"] | null>(null);
+  useEffect(() => setWarnedCardId(null), [turnPhase]);
+  const drawnCard = d6 ? slots[currentTeam][d6 - 1] : null;
+  const rangeWarning = !!drawnCard && drawnCard.id === warnedCardId;
+
   const highlight =
-    turnPhase === "PLACING" && d6 ? { team: currentTeam, index: d6 - 1 } : null;
+    turnPhase === "PLACING" && d6
+      ? { team: currentTeam, index: d6 - 1, warning: rangeWarning }
+      : null;
 
   const playGate = useGate("play");
   const placeGate = useGate("place");
@@ -187,6 +197,10 @@ export function GameScreen({
     const card = slots[team][index];
     if (!playGate.allowed) return;
     if (!highlight || team !== highlight.team || index !== highlight.index || !card) return;
+    if (isAttackCard(card) && !inConfrontation(state) && !rangeWarning) {
+      setWarnedCardId(card.id);
+      return;
+    }
     dispatch({ type: "PLAY_CARD", payload: { card } });
   };
 
@@ -349,7 +363,18 @@ export function GameScreen({
           )}
 
           {/* Aviso do slot sorteado */}
-          {!boardClear && turnPhase === "PLACING" && d6 && (
+          {!boardClear && turnPhase === "PLACING" && rangeWarning && (
+            <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex flex-col items-center gap-1 text-center">
+              <h2 className="text-2xl font-black tracking-widest text-red-500 drop-shadow-lg">
+                VOCÊS NÃO ESTÃO EM CONFRONTO
+              </h2>
+              <p className="text-xs font-bold tracking-wider text-zinc-300 drop-shadow">
+                VOCÊS NÃO ESTÃO NO MESMO BOMBSITE. QUER JOGAR A CARTA MESMO ASSIM? CLIQUE NELA DE NOVO.
+              </p>
+            </div>
+          )}
+
+          {!boardClear && turnPhase === "PLACING" && d6 && !rangeWarning && (
             <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex flex-col items-center gap-1">
               <h2 className={`text-2xl font-black tracking-widest drop-shadow-lg ${theme.text}`}>
                 {slots[currentTeam][d6 - 1]

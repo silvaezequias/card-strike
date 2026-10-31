@@ -236,6 +236,21 @@ const FocusDim = ({ rect }: { rect: Rect }) => (
 );
 
 /** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
+/** Contorno vermelho que pisca uma vez: carta de ataque fora de confronto. */
+const RangeWarning = ({ rect }: { rect: Rect }) => (
+  <div
+    className="range-warning pointer-events-none absolute rounded-2xl"
+    style={{
+      left: rect.x - 8,
+      top: rect.y - 8,
+      width: rect.w + 16,
+      height: rect.h + 16,
+      border: "6px solid #ef4444",
+      boxShadow: "0 0 45px #ef4444, inset 0 0 30px #ef444488",
+    }}
+  />
+);
+
 const SlotHighlight = ({
   rect,
   team,
@@ -349,7 +364,7 @@ export type BoardStageProps = {
   slots: Record<TeamName, (Card | null)[]>;
   combatCard?: { card: Card; team: TeamName } | null;
   /** Slot em destaque (ex.: sorteado pelo dado). */
-  highlight?: { team: TeamName; index: number } | null;
+  highlight?: { team: TeamName; index: number; warning?: boolean } | null;
   /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
   bottomInset?: number;
   /** Foco pedido pelo tutorial; substitui a tomada normal. */
@@ -620,6 +635,8 @@ export const BoardStage = ({
             onDropHandCard={handleDrop}
           />
         )}
+
+        {highlight?.warning && <RangeWarning rect={slotRect(highlight.team, highlight.index)} />}
 
         {combatCard && (
           <CardOnBoard
