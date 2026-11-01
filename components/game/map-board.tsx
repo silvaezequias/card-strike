@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Portrait } from "@/components/art/noir";
 import { factionPalette, getPalette, policePalette } from "@/components/art/palette";
+import { BULLET_GAP_MS, BULLET_TRAVEL_MS, THROW_MS, fxKind } from "@/game/card-fx";
+import { CombatEvent } from "@/game/game-types";
+import { FxStage } from "@/game/useCombatFx";
+import { CombatFx, Flames, SmokeCloud } from "./combat-fx";
 import { BOARD_EDGE } from "./minimap";
 
 /* ═══════════════════════════════════════════════
@@ -308,7 +312,22 @@ const MapArt = ({ conflict, bomb = null }: { conflict: Bombsite | null; bomb?: B
 
 const TOKEN_SPEED = 0.16; // unidades do mapa por ms
 
-const Token = ({ team, spot, onArrive }: { team: TeamName; spot: MapSpot; onArrive?: () => void }) => {
+/** Tremida do peão a cada impacto, no ritmo do efeito. */
+type TokenHit = { delay: number; duration: number; count: number };
+
+const Token = ({
+  team,
+  spot,
+  effects = [],
+  hit = null,
+  onArrive,
+}: {
+  team: TeamName;
+  spot: MapSpot;
+  effects?: string[];
+  hit?: TokenHit | null;
+  onArrive?: () => void;
+}) => {
   const ref = useRef<HTMLDivElement>(null);
   const current = useRef<MapSpot>(spot);
   const arriveRef = useRef(onArrive);
@@ -352,7 +371,17 @@ const Token = ({ team, spot, onArrive }: { team: TeamName; spot: MapSpot; onArri
       className="absolute"
       style={{ ...pct(spotPoint(team, spot)), width: "8%", transform: "translate(-50%, -50%)" }}
     >
-      <div style={{ animation: walking ? "token-hop 300ms ease-in-out infinite" : undefined }}>
+      {effects.includes("Molotov") && <Flames />}
+      <div
+        className="relative"
+        style={{
+          animation: walking
+            ? "token-hop 300ms ease-in-out infinite"
+            : hit
+              ? `token-hit ${hit.duration}ms ease-in-out ${hit.delay}ms ${hit.count}`
+              : undefined,
+        }}
+      >
         <div
           className="aspect-square w-full overflow-hidden rounded-full"
           style={{ border: `3px solid ${p.rim}`, boxShadow: `0 0 0 2px #000, 0 0 16px ${p.glow}, 0 6px 10px rgba(0,0,0,0.8)` }}
@@ -360,6 +389,7 @@ const Token = ({ team, spot, onArrive }: { team: TeamName; spot: MapSpot; onArri
           <Portrait team={team} crop="head" flip={team === "police"} className="block h-full w-full" />
         </div>
       </div>
+      {effects.includes("Smoke") && <SmokeCloud />}
     </div>
   );
 };
@@ -437,6 +467,16 @@ const focusFrame = (focus: MapCameraFocus) => {
   return { scale, cx: r.x + r.w / 2, cy: r.y + r.h / 2 };
 };
 
+/** Tremida do alvo durante a ação da carta, se ela o atingir. */
+const tokenHit = (event: CombatEvent): TokenHit | null => {
+  if (event.blocked) return null;
+  const kind = fxKind(event.card);
+  if (kind === "shots")
+    return { delay: BULLET_TRAVEL_MS, duration: BULLET_GAP_MS, count: event.card.damage };
+  if (kind === "grenade") return { delay: THROW_MS, duration: 400, count: 1 };
+  return null;
+};
+
 // Recorte no formato chanfrado da moldura.
 const MAP_CLIP = "polygon(3.1% 0, 96.9% 0, 100% 5%, 100% 95%, 96.9% 100%, 3.1% 100%, 0 95%, 0 5%)";
 
@@ -444,6 +484,9 @@ export const MapBoard = ({
   positions,
   bomb = null,
   autoZoom = false,
+  flat = false,
+  effects,
+  fx = null,
   focus = null,
   className,
   onArrive,
@@ -453,22 +496,42 @@ export const MapBoard = ({
   bomb?: Bombsite | null;
   /** Zoom automático na bomba (usado no modo minimapa). */
   autoZoom?: boolean;
+  /** Visto de cima, sem inclinação (minimapa). */
+  flat?: boolean;
+  /** Efeitos ativos em cada time (Smoke, Molotov). */
+  effects?: Record<TeamName, string[]>;
+  /** Carta sendo animada: a câmera fecha em quem jogou. */
+  fx?: { event: CombatEvent; stage: FxStage } | null;
   /** Foco pedido pelo tutorial; tem prioridade sobre o zoom automático. */
   focus?: MapCameraFocus | null;
   className?: string;
   onArrive?: (team: TeamName) => void;
 }) => {
   const conflict = positions.police !== "BASE" && positions.police === positions.faction ? positions.police : null;
+  const fxSpot = fx && fx.stage !== "flight" && fx.stage !== "return" ? positions[fx.event.team] : null;
+  const fxFocus: MapCameraFocus | null =
+    !fxSpot ? null : fxSpot === "BASE" ? { area: "base", team: fx?.event.team } : { area: fxSpot };
   const transform = zoomTransform(
-    focus ? focusFrame(focus) : autoZoom ? zoomFrame(positions, bomb) : null,
+    focus
+      ? focusFrame(focus)
+      : fxFocus
+        ? focusFrame(fxFocus)
+        : autoZoom
+          ? zoomFrame(positions, bomb)
+          : null,
   );
+  const acting = fx?.stage === "action" ? fx.event : null;
   const ring = focus ? focusRect(focus) : null;
 
   return (
-    <div className={className} style={{ perspective: 900 }}>
+    <div className={className} style={{ perspective: flat ? undefined : 900 }}>
       <div
         className="relative w-full drop-shadow-[0_18px_30px_rgba(0,0,0,0.85)]"
-        style={{ aspectRatio: `${MAP_W} / ${MAP_H}`, transform: "rotateX(22deg)", transformOrigin: "50% 100%" }}
+        style={{
+          aspectRatio: `${MAP_W} / ${MAP_H}`,
+          transform: flat ? undefined : "rotateX(22deg)",
+          transformOrigin: "50% 100%",
+        }}
       >
         <div className="absolute inset-0 overflow-hidden" style={{ clipPath: MAP_CLIP }}>
           <div
@@ -490,8 +553,24 @@ export const MapBoard = ({
               />
             )}
             {(["faction", "police"] as TeamName[]).map((team) => (
-              <Token key={team} team={team} spot={positions[team]} onArrive={() => onArrive?.(team)} />
+              <Token
+                key={team}
+                team={team}
+                spot={positions[team]}
+                effects={effects?.[team]}
+                hit={acting?.target === team ? tokenHit(acting) : null}
+                onArrive={() => onArrive?.(team)}
+              />
             ))}
+            {acting && (
+              <CombatFx
+                event={acting}
+                from={spotPoint(acting.team, positions[acting.team])}
+                to={spotPoint(acting.target, positions[acting.target])}
+                width={MAP_W}
+                height={MAP_H}
+              />
+            )}
             {ring && focus?.dim && (
               // Foco total: tudo fora da seleção escurece (fichas inclusive).
               <div

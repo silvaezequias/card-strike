@@ -22,6 +22,18 @@ export interface BombData {
   maxTime: number;
 }
 
+/** Carta que chegou ao alvo: é o que os efeitos visuais animam. */
+export type CombatEvent = {
+  id: number;
+  card: Card;
+  team: TeamName;
+  target: TeamName;
+  /** Parada pela Smoke do alvo. */
+  blocked: boolean;
+  /** Vida que o alvo perdeu de uma vez, antes de aparecer na tela. */
+  damage: number;
+};
+
 export interface GameState {
   currentTeam: TeamName;
   turnPhase: GamePhase;
@@ -30,6 +42,7 @@ export interface GameState {
   playedCards: Card[];
   /** O que aconteceu com a última carta jogada neste turno. */
   lastResult: string | null;
+  combatEvent: CombatEvent | null;
   bomb: BombData;
   countdown: {
     round: number;

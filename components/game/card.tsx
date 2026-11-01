@@ -1,5 +1,4 @@
 import { GameEngine } from "@/game/useGameEngine";
-import { useGameTheme } from "@/game/useGameTheme";
 import { Card } from "@/lib/types";
 import { Plus } from "lucide-react";
 import { NoirCard } from "@/components/art/noir-card";
@@ -46,7 +45,6 @@ export const InventorySlot = ({
   game: GameEngine;
   type: "hand" | "warZone";
 }) => {
-  const theme = useGameTheme(game.state.currentTeam);
   const buyGate = useGate("buy");
   const placeGate = useGate("place");
 
@@ -100,11 +98,8 @@ export const InventorySlot = ({
 
   const baseSlotStyle =
     "aspect-[3/4] w-full  " +
-    "bg-gradient-to-b  " +
-    " border border-zinc-900 " +
-    `${theme.overlay} ` +
+    "bg-black/30 border border-white/10 " +
     "rounded " +
-    "shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] " +
     "flex flex-col items-center justify-center";
 
   const interactionStyle =
@@ -138,7 +133,7 @@ export const InventorySlot = ({
       onClick={handleBuy}
       className={`group ${tutorialHighlight} ${animatedRingStyle} ${
         canBuy ? "cursor-pointer" : "cursor-default animate-accordion-down"
-      } ${theme.background}`}
+      }`}
     >
       <div
         onClick={type === "hand" ? handleSelectCard : handlePlayCard}

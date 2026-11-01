@@ -6,6 +6,7 @@ export const ActionEndTurn = (state: GameState): GameState => ({
   ...resolveEndOfTurn(state),
   currentTeam: opponentOf(state.currentTeam),
   lastResult: null,
+  combatEvent: null,
   turnPhase: "COUNTDOWN",
   tool: {
     ...state.tool,

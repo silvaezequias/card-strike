@@ -34,8 +34,8 @@ export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps)
     <button
       onClick={handleToggle}
       className={`px-8 py-2 rounded-t-xl border-t border-l border-r flex justify-center
-      ${theme.underlay}
-      font-bold text-xs tracking-widest shadow-lg flex items-center gap-2 hover:brightness-110 transition-all`}
+      ${theme.hudPanel}
+      font-bold text-xs tracking-widest flex items-center gap-2 hover:brightness-110 transition-all`}
     >
       INVENTARIO
       {game.state.hud.inventory.isLocked ? (
@@ -74,8 +74,8 @@ export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps)
         {isSelecting ? keepGate.allowed ? <KeepInHandButton /> : <div className="h-8" /> : <ToggleButton />}
         <div
           className={`${spotlight ? "tutorial-highlight" : ""} w-[350px] md:w-[500px]
-          ${theme.underlay}
-          border-t-2 border-x-2 rounded-t-sm shadow-[0_-10px_40px_rgba(0,0,0,0.8)] p-4`}
+          ${theme.hudPanel}
+          border-t-2 border-x-2 rounded-t-sm p-4`}
         >
           <InventoryGrid length={3} game={game} type="hand" />
         </div>

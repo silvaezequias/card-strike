@@ -235,7 +235,6 @@ const FocusDim = ({ rect }: { rect: Rect }) => (
   />
 );
 
-/** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 /** Contorno vermelho que pisca uma vez: carta de ataque fora de confronto. */
 const RangeWarning = ({ rect }: { rect: Rect }) => (
   <div
@@ -251,6 +250,7 @@ const RangeWarning = ({ rect }: { rect: Rect }) => (
   />
 );
 
+/** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 const SlotHighlight = ({
   rect,
   team,
@@ -367,6 +367,8 @@ export type BoardStageProps = {
   highlight?: { team: TeamName; index: number; warning?: boolean } | null;
   /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
   bottomInset?: number;
+  /** Pixels ocupados pela HUD: o palco é maior que a área enquadrada pela câmera. */
+  hudInset?: { x: number; y: number };
   /** Foco pedido pelo tutorial; substitui a tomada normal. */
   cameraFocus?: CardCameraFocus | null;
   onSlotClick?: (team: TeamName, index: number) => void;
@@ -380,6 +382,7 @@ export type BoardStageProps = {
 type CardLocation = { team: TeamName; index: number };
 
 const HAND_DISTANCE = 300; // px do tabuleiro além da borda do jogador
+const NO_INSET = { x: 0, y: 0 };
 const DROP_WINDOW_MS = 1500;
 
 export const BoardStage = ({
@@ -389,6 +392,7 @@ export const BoardStage = ({
   combatCard,
   highlight,
   bottomInset = 0,
+  hudInset = NO_INSET,
   cameraFocus = null,
   onSlotClick,
   onHandCardDrop,
@@ -520,7 +524,10 @@ export const BoardStage = ({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const framed = { w: viewport.w, h: Math.max(200, viewport.h - bottomInset) };
+  const framed = {
+    w: viewport.w - hudInset.x,
+    h: Math.max(200, viewport.h - hudInset.y - bottomInset),
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;

@@ -14,12 +14,12 @@ export const MissionStatus = ({ game }: { game: GameEngine }) => {
         <div className="flex items-center gap-2 text-zinc-400 text-xs tracking-widest mb-1">
           <Hash size={10} /> RODADA
         </div>
-        <div className="text-4xl font-black text-white bg-zinc-800/50 px-4 py-1 rounded border border-zinc-700 shadow-inner">
+        <div className="text-4xl font-black text-white px-4 py-1 rounded border border-white/20">
           {round}
         </div>
       </div>
       <div className="flex flex-col items-center">
-        <span className="text-[10px] text-zinc-500 tracking-widest mb-1">
+        <span className="text-[10px] text-zinc-300 tracking-widest mb-1">
           TEMPO DA RODADA
         </span>
         <div
@@ -29,7 +29,7 @@ export const MissionStatus = ({ game }: { game: GameEngine }) => {
         </div>
       </div>
 
-      <div className="text-xs font-mono text-zinc-500">
+      <div className="text-xs font-mono text-zinc-300">
         TOTAL: {formatTime(gameTime)}
       </div>
     </HUDPanel>

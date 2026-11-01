@@ -16,6 +16,7 @@ export const createInitialGameState = (
 
   playedCards: [],
   lastResult: null,
+  combatEvent: null,
 
   countdown: {
     gameTime: 0,

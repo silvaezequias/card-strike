@@ -1,212 +1,262 @@
 "use client";
 
+import { ReactNode } from "react";
 import Link from "next/link";
-import { Shield, Crosshair, Shuffle, Play, BookOpen, GraduationCap } from "lucide-react";
+import {
+  ArrowLeftRight,
+  BookOpen,
+  ChevronLeft,
+  ChevronRight,
+  Crosshair,
+  Globe,
+  GraduationCap,
+  Play,
+  Shield,
+  Shuffle,
+  User,
+  Users,
+  X,
+} from "lucide-react";
 import { Portrait } from "@/components/art/noir";
-import { SetupSettings } from "@/game/game-types";
-import { useGameSetup } from "@/game/useSetupGame";
+import { SetupSettings, TeamName } from "@/game/game-types";
+import { LobbyPlayer, useGameSetup } from "@/game/useSetupGame";
+
+/** Só o modo local existe; os outros aparecem como próximos passos. */
+const MODES = [
+  { id: "solo", label: "1 jogador", icon: User, available: false },
+  { id: "local", label: "Local", icon: Users, available: true },
+  { id: "online", label: "Online", icon: Globe, available: false },
+];
+
+const TEAM_STYLE = {
+  police: {
+    label: "Polícia",
+    icon: Shield,
+    joinArrow: ChevronLeft,
+    text: "text-blue-400",
+    frame: "border-blue-500/40 from-blue-950/50",
+    join: "border-blue-500/60 text-blue-300 hover:bg-blue-500/20",
+  },
+  faction: {
+    label: "Facção",
+    icon: Crosshair,
+    joinArrow: ChevronRight,
+    text: "text-red-400",
+    frame: "border-red-500/40 from-red-950/50",
+    join: "border-red-500/60 text-red-300 hover:bg-red-500/20",
+  },
+};
+
+const PlayerRow = ({
+  index,
+  player,
+  onName,
+  children,
+}: {
+  index: number;
+  player: LobbyPlayer;
+  onName: (name: string) => void;
+  children?: ReactNode;
+}) => (
+  <div>
+    <label
+      htmlFor={`player-${index}`}
+      className="mb-1 block text-[10px] uppercase tracking-[0.2em] text-zinc-400"
+    >
+      Jogador {index + 1}
+    </label>
+    <div className="flex items-center gap-2">
+      <input
+        id={`player-${index}`}
+        type="text"
+        value={player.name}
+        onChange={(e) => onName(e.target.value)}
+        placeholder="Seu nome..."
+        maxLength={16}
+        className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/60 px-3 py-2 text-sm tracking-wider text-white placeholder-zinc-500 transition-colors focus:border-white/50 focus:outline-none"
+      />
+      {children}
+    </div>
+  </div>
+);
 
 export const GameMenu = ({
   onStart,
 }: {
   onStart: (setup: SetupSettings) => void;
 }) => {
-  const { state, canStart, shuffleTeams, buildSetup, setPlayerName } =
-    useGameSetup();
+  const lobby = useGameSetup();
+  const { players, isShuffling, namesFilled, canStart } = lobby;
 
   const handleStart = () => {
-    const setup = buildSetup();
-    if (!setup) return;
-    onStart(setup);
+    const setup = lobby.buildSetup();
+    if (setup) onStart(setup);
   };
 
-  const [player1, player2] = state.players;
+  const bench = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ player }) => !player.team);
+
+  const hint = !namesFilled
+    ? "Digite o nome dos dois jogadores"
+    : bench.length > 0
+      ? "Coloque um jogador em cada time"
+      : "Times prontos";
+
+  const teamSide = (team: TeamName) => {
+    const style = TEAM_STYLE[team];
+    const { icon: Icon, joinArrow: JoinArrow } = style;
+    const index = players.findIndex((p) => p.team === team);
+    const player = players[index];
+
+    return (
+      <section
+        aria-label={`Time ${style.label}`}
+        className={`relative flex min-h-[26rem] flex-col justify-between overflow-hidden rounded-2xl border bg-gradient-to-b to-transparent p-4 ${style.frame}`}
+      >
+        <Portrait
+          team={team}
+          flip={team === "police"}
+          backdrop={false}
+          className={`pointer-events-none absolute -bottom-4 left-1/2 h-[85%] w-auto max-w-none -translate-x-1/2 transition-opacity duration-300 ${
+            player ? "opacity-90" : "opacity-25"
+          }`}
+        />
+
+        <div className={`relative flex items-center gap-2 ${style.text}`}>
+          <Icon size={20} />
+          <h2 className="text-xl font-black uppercase tracking-[0.2em]">{style.label}</h2>
+        </div>
+
+        <div className="relative rounded-xl bg-black/70 p-3 backdrop-blur-sm">
+          {player ? (
+            <PlayerRow
+              index={index}
+              player={player}
+              onName={(name) => lobby.setPlayerName(index, name)}
+            >
+              <button
+                aria-label="Tirar do time"
+                title="Tirar do time"
+                onClick={() => lobby.movePlayer(index, null)}
+                disabled={isShuffling}
+                className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/50 text-zinc-300 transition-colors hover:border-white/40 hover:text-white disabled:opacity-40"
+              >
+                <X size={16} />
+              </button>
+            </PlayerRow>
+          ) : (
+            <div className="space-y-2">
+              {bench.map(({ player: waiting, index: i }) => (
+                <button
+                  key={i}
+                  onClick={() => lobby.movePlayer(i, team)}
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${style.join}`}
+                >
+                  <JoinArrow size={14} />
+                  {waiting.name.trim() || `Jogador ${i + 1}`} entra
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    );
+  };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-neutral-950 flex items-center justify-center p-4 font-mono select-none">
-      {/* Ambient glow */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-red-600/5 rounded-full blur-3xl" />
-      </div>
+    <div className="relative flex min-h-screen select-none flex-col gap-4 overflow-x-hidden bg-[#050409] px-4 py-5 font-mono md:px-8">
+      <header className="text-center">
+        <h1 className="text-3xl font-black tracking-[0.3em] text-white">CARD STRIKE</h1>
+        <p className="text-xs uppercase tracking-[0.4em] text-zinc-400">Operação tática</p>
+      </header>
 
-      {/* Personagens */}
-      <div className="absolute inset-y-0 left-0 w-[calc(50vw-18rem)] hidden lg:flex items-end justify-end overflow-hidden pointer-events-none [mask-image:linear-gradient(to_right,transparent,black_25%,black_70%,transparent)]">
-        <Portrait team="police" variant={1} flip backdrop={false} className="h-[58vh] w-auto flex-shrink-0 -mr-28 opacity-70" />
-        <Portrait team="police" variant={0} flip backdrop={false} className="h-[68vh] w-auto flex-shrink-0" />
-      </div>
-      <div className="absolute inset-y-0 right-0 w-[calc(50vw-18rem)] hidden lg:flex items-end justify-start overflow-hidden pointer-events-none [mask-image:linear-gradient(to_left,transparent,black_25%,black_70%,transparent)]">
-        <Portrait team="faction" variant={0} backdrop={false} className="h-[68vh] w-auto flex-shrink-0 relative z-10" />
-        <Portrait team="faction" variant={1} backdrop={false} className="h-[58vh] w-auto flex-shrink-0 -ml-28 opacity-70" />
-      </div>
+      <nav aria-label="Modo de jogo" className="mx-auto flex overflow-hidden rounded-lg border border-white/15">
+        {MODES.map(({ id, label, icon: Icon, available }) => (
+          <button
+            key={id}
+            disabled={!available}
+            aria-pressed={available}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest ${
+              available ? "bg-white text-black" : "cursor-not-allowed text-zinc-500"
+            }`}
+          >
+            <Icon size={14} />
+            {label}
+            {!available && <span className="text-[9px] tracking-wider text-zinc-600">Em breve</span>}
+          </button>
+        ))}
+      </nav>
 
-      <div className="relative z-10 w-full max-w-lg">
-        {/* Title */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl font-black text-white tracking-[0.3em] mb-2">
-            CARD STRIKE - OPERAÇÃO TÁTICA
-          </h1>
-          <div className="w-48 h-px bg-gradient-to-r from-transparent via-slate-500 to-transparent mx-auto mb-3" />
-          <p className="text-slate-500 text-sm tracking-widest uppercase">
-            Configure a partida
-          </p>
+      <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 md:grid-cols-[1fr_15rem_1fr]">
+        {teamSide("police")}
+
+        <div className="flex flex-col justify-center gap-3">
+          {bench.length > 0 ? (
+            <div className="space-y-3">
+              <h2 className="text-center text-[10px] uppercase tracking-[0.3em] text-zinc-400">Sem time</h2>
+              {bench.map(({ player, index }) => (
+                <PlayerRow
+                  key={index}
+                  index={index}
+                  player={player}
+                  onName={(name) => lobby.setPlayerName(index, name)}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-5xl font-black tracking-widest text-white/80">VS</p>
+          )}
+
+          <button
+            onClick={lobby.shuffleTeams}
+            disabled={isShuffling}
+            className="flex items-center justify-center gap-2 rounded-lg border border-white/20 px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-200 transition-colors hover:border-white/50 hover:text-white disabled:opacity-50"
+          >
+            <Shuffle size={15} className={isShuffling ? "animate-spin" : ""} />
+            {isShuffling ? "Sorteando..." : "Aleatorizar"}
+          </button>
+
+          <button
+            onClick={lobby.swapTeams}
+            disabled={isShuffling || bench.length === players.length}
+            className="flex items-center justify-center gap-2 rounded-lg border border-white/20 px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-200 transition-colors hover:border-white/50 hover:text-white disabled:opacity-40"
+          >
+            <ArrowLeftRight size={15} />
+            Trocar de lado
+          </button>
         </div>
 
-        {/* Player Inputs */}
-        <div className="space-y-4 mb-8">
-          {/* Player 1 */}
-          <div className="relative group">
-            <label className="text-slate-500 text-[10px] tracking-[0.2em] uppercase mb-1.5 block">
-              Jogador 1
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={player1.name}
-                onChange={(e) => setPlayerName(0, e.target.value)}
-                placeholder="Nome do jogador..."
-                maxLength={16}
-                className="flex-1 bg-slate-900/80 border border-slate-700/60 text-white placeholder-slate-600 px-4 py-3 rounded-lg text-sm tracking-wider focus:outline-none focus:border-slate-500 transition-colors"
-              />
-              {player1.team && (
-                <div
-                  className={`flex items-center gap-2 px-3 py-3 rounded-lg border text-xs font-bold tracking-wider transition-all duration-300 ${
-                    player1.team === "police"
-                      ? "bg-blue-950/60 border-blue-600/40 text-blue-400"
-                      : "bg-red-950/60 border-red-600/40 text-red-400"
-                  }`}
-                >
-                  {player1.team === "police" ? (
-                    <Shield size={16} />
-                  ) : (
-                    <Crosshair size={16} />
-                  )}
-                  {player1.team === "police" ? "POL" : "FAC"}
-                </div>
-              )}
-            </div>
-          </div>
+        {teamSide("faction")}
+      </main>
 
-          {/* Player 2 */}
-          <div className="relative group">
-            <label className="text-slate-500 text-[10px] tracking-[0.2em] uppercase mb-1.5 block">
-              Jogador 2
-            </label>
-            <div className="flex items-center gap-3">
-              <input
-                type="text"
-                value={player2.name}
-                onChange={(e) => setPlayerName(1, e.target.value)}
-                placeholder="Nome do jogador..."
-                maxLength={16}
-                className="flex-1 bg-slate-900/80 border border-slate-700/60 text-white placeholder-slate-600 px-4 py-3 rounded-lg text-sm tracking-wider focus:outline-none focus:border-slate-500 transition-colors"
-              />
-              {player2.team && (
-                <div
-                  className={`flex items-center gap-2 px-3 py-3 rounded-lg border text-xs font-bold tracking-wider transition-all duration-300 ${
-                    player2.team === "police"
-                      ? "bg-blue-950/60 border-blue-600/40 text-blue-400"
-                      : "bg-red-950/60 border-red-600/40 text-red-400"
-                  }`}
-                >
-                  {player2.team === "police" ? (
-                    <Shield size={16} />
-                  ) : (
-                    <Crosshair size={16} />
-                  )}
-                  {player2.team === "police" ? "POL" : "FAC"}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Shuffle Button */}
-        <button
-          onClick={shuffleTeams}
-          disabled={
-            !player1.name.trim() || !player2.name.trim() || state.isShuffling
-          }
-          className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg border text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 mb-4 ${
-            !player1.name.trim() || !player2.name.trim()
-              ? "bg-slate-900/40 border-slate-800 text-slate-700 cursor-not-allowed"
-              : state.isShuffling
-                ? "bg-slate-800 border-slate-600 text-white"
-                : "bg-slate-900/80 border-slate-600 text-slate-300 hover:bg-slate-800 hover:border-slate-500 hover:text-white"
-          }`}
-        >
-          <Shuffle
-            size={18}
-            className={state.isShuffling ? "animate-spin" : ""}
-          />
-          {state.isShuffling
-            ? "Sorteando..."
-            : player1.team
-              ? "Sortear novamente"
-              : "Sortear times"}
-        </button>
-
-        {/* Team Preview */}
-        {player1.team && !state.isShuffling && (
-          <div className="grid grid-cols-2 gap-3 mb-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Police Team */}
-            <div className="bg-blue-950/30 border border-blue-800/30 rounded-xl p-4 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-blue-900/50 border border-blue-600/40 flex items-center justify-center">
-                <Shield size={24} className="text-blue-400" />
-              </div>
-              <p className="text-blue-400 text-[10px] tracking-[0.2em] font-bold mb-1">
-                POLICIA
-              </p>
-              <p className="text-white text-sm font-bold tracking-wider truncate">
-                {player1.team === "police" ? player1.name : player2.name}
-              </p>
-            </div>
-
-            {/* Faction Team */}
-            <div className="bg-red-950/30 border border-red-800/30 rounded-xl p-4 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-red-900/50 border border-red-600/40 flex items-center justify-center">
-                <Crosshair size={24} className="text-red-400" />
-              </div>
-              <p className="text-red-400 text-[10px] tracking-[0.2em] font-bold mb-1">
-                FACÇÃO
-              </p>
-              <p className="text-white text-sm font-bold tracking-wider truncate">
-                {player1.team === "faction" ? player1.name : player2.name}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Start Button */}
+      <footer className="mx-auto flex w-full max-w-md flex-col items-center gap-2">
+        <p className="text-[11px] uppercase tracking-widest text-zinc-400">{hint}</p>
         <button
           onClick={handleStart}
-          disabled={!canStart || state.isShuffling}
-          className={`w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 ${
-            canStart && !state.isShuffling
-              ? "bg-white text-black hover:bg-slate-200 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
-              : "bg-slate-900/40 border border-slate-800 text-slate-700 cursor-not-allowed"
-          }`}
+          disabled={!canStart}
+          className="flex w-full items-center justify-center gap-3 rounded-lg bg-white px-6 py-3.5 text-sm font-bold uppercase tracking-[0.2em] text-black transition-all hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
         >
           <Play size={18} />
           Iniciar partida
         </button>
-
-        <Link
-          href="/tutorial"
-          className="mt-3 w-full flex items-center justify-center gap-3 px-6 py-3 rounded-lg border border-sky-500/40 bg-sky-950/40 text-sky-200 text-sm font-bold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-sky-900/50 hover:border-sky-400/70"
-        >
-          <GraduationCap size={18} />
-          Tutorial
-        </Link>
-
-        <Link
-          href="/cartas"
-          className="mt-4 flex items-center justify-center gap-2 text-xs font-bold tracking-[0.2em] uppercase text-slate-500 hover:text-white transition-colors"
-        >
-          <BookOpen size={14} />
-          Cartas e regras
-        </Link>
-      </div>
+        <div className="flex gap-6">
+          <Link
+            href="/tutorial"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-white"
+          >
+            <GraduationCap size={14} />
+            Tutorial
+          </Link>
+          <Link
+            href="/cartas"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-white"
+          >
+            <BookOpen size={14} />
+            Cartas e regras
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 };

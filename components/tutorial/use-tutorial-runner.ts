@@ -17,7 +17,7 @@ import { TutorialStep, actionTeam } from "@/lib/tutorial/types";
 const CLOSED: GateState = { allowed: [], highlight: null };
 
 /** Tempo para a animação assentar antes de dar o passo como feito. */
-const SETTLE_MS = { move: 2300, place: 1300, play: 2300 };
+const SETTLE_MS = { move: 2300, place: 1300, play: 5500 };
 
 type StepRuntime = { started: boolean; fired: Set<string>; playedAtStart: number };
 

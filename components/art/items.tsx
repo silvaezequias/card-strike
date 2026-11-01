@@ -681,63 +681,79 @@ const Vest = ({ p }: ArtProps) => (
 type ItemArt = {
   Art: (props: ArtProps) => React.ReactElement;
   transform: string;
+  /** Giro usado em `transform`: os efeitos do jogo desenham o item reto. */
+  tilt: number;
 };
 
 export const ITEM_ART: Record<string, ItemArt> = {
   "AK-47": {
     Art: AK47,
     transform: "translate(150 172) rotate(-30) scale(1.14) translate(-131 -60)",
+    tilt: -30,
   },
   M4A1: {
     Art: M4A1,
     transform: "translate(150 172) rotate(-30) scale(1.1) translate(-135 -55)",
+    tilt: -30,
   },
   AWP: {
     Art: AWP,
     transform: "translate(150 172) rotate(-32) scale(1.0) translate(-150 -55)",
+    tilt: -32,
   },
   "DESERT EAGLE": {
     Art: DesertEagle,
     transform: "translate(150 172) rotate(-14) scale(1.42) translate(-84 -64)",
+    tilt: -14,
   },
   GLOCK: {
     Art: Glock,
     transform: "translate(150 172) rotate(-14) scale(1.5) translate(-78 -62)",
+    tilt: -14,
   },
   USP: {
     Art: USP,
     transform: "translate(150 172) rotate(-22) scale(1.16) translate(-120 -62)",
+    tilt: -22,
   },
   Granada: {
     Art: Grenade,
     transform: "translate(150 172) rotate(-10) scale(1.2) translate(-74 -100)",
+    tilt: -10,
   },
   Flashbang: {
     Art: Flashbang,
     transform: "translate(150 172) rotate(-10) scale(1.15) translate(-74 -104)",
+    tilt: -10,
   },
   Smoke: {
     Art: Smoke,
     transform: "translate(150 172) rotate(-6) scale(1.2) translate(-68 -100)",
+    tilt: -6,
   },
   Molotov: {
     Art: Molotov,
     transform: "translate(150 178) rotate(-10) scale(1.08) translate(-78 -82)",
+    tilt: -10,
   },
   BOMBA: {
     Art: C4,
     transform: "translate(150 178) rotate(-8) scale(1.12) translate(-95 -70)",
+    tilt: -8,
   },
   "KIT DEFUSE": {
     Art: DefuseKit,
     transform: "translate(150 176) rotate(-6) scale(1.12) translate(-100 -100)",
+    tilt: -6,
   },
   Capacete: {
     Art: Helmet,
     transform: "translate(150 172) rotate(-6) scale(1.1) translate(-104 -100)",
+    tilt: -6,
   },
   Colete: {
     Art: Vest,
     transform: "translate(150 170) rotate(-4) scale(1.05) translate(-100 -104)",
+    tilt: -4,
   },
 };

@@ -179,7 +179,7 @@ body {
   animation: board-conflict-dash 0.9s linear infinite;
 }
 
-/* Opção destacada pelo tutorial */
+/* Aviso de carta de ataque fora de confronto: pisca uma vez */
 @keyframes range-warning {
   0%, 100% { opacity: 0; }
   15%, 70% { opacity: 1; }
@@ -190,6 +190,7 @@ body {
   animation: range-warning 1.2s ease-out;
 }
 
+/* Opção destacada pelo tutorial */
 @keyframes tutorial-glow {
   0%,
   100% {
@@ -219,4 +220,232 @@ body {
   50% {
     transform: translateY(-22%);
   }
+}
+
+/* Aviso de novo turno: entra, fica um instante e sai sozinho */
+@keyframes turn-banner {
+  0% { opacity: 0; transform: translateY(-16px); }
+  10%, 80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-16px); }
+}
+
+.turn-banner {
+  animation: turn-banner 2800ms ease-out both;
+}
+
+/* ───────────── Efeitos das cartas ───────────── */
+
+.fx-pop,
+.fx-pop-big,
+.fx-ring,
+.fx-puff,
+.fx-float,
+.fx-recoil,
+.fx-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes fx-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  25% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+.fx-pop {
+  animation: fx-pop 170ms ease-out both;
+}
+
+.fx-pop-big {
+  animation: fx-pop 600ms ease-out both;
+}
+
+@keyframes fx-ring {
+  0% { opacity: 1; transform: scale(0.2); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+
+.fx-ring {
+  animation: fx-ring 650ms ease-out both;
+}
+
+@keyframes fx-puff {
+  0% { opacity: 0; transform: scale(0.4); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: scale(1.8) translateY(-10px); }
+}
+
+.fx-puff {
+  animation: fx-puff 1000ms ease-out both;
+}
+
+@keyframes fx-float {
+  0% { opacity: 0; transform: translateY(8px) scale(0.7); }
+  15% { opacity: 1; transform: translateY(0) scale(1.15); }
+  100% { opacity: 0; transform: translateY(-34px) scale(1); }
+}
+
+.fx-float {
+  animation: fx-float 700ms ease-out both;
+}
+
+@keyframes fx-bullet {
+  0% { opacity: 0; transform: translateX(0); }
+  1%, 97% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(var(--fx-dx)); }
+}
+
+.fx-bullet {
+  animation: fx-bullet 160ms linear both;
+}
+
+@keyframes fx-recoil {
+  0%, 100% { transform: translateX(0) rotate(0deg); }
+  25% { transform: translateX(-16px) rotate(-5deg); }
+}
+
+.fx-recoil {
+  animation: fx-recoil 240ms ease-out;
+}
+
+@keyframes fx-throw-x {
+  0% { opacity: 1; transform: translateX(0); }
+  97% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(var(--fx-dx)); }
+}
+
+@keyframes fx-throw-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-105px); }
+}
+
+.fx-throw-x {
+  animation: fx-throw-x 700ms linear both;
+}
+
+.fx-throw-y {
+  animation: fx-throw-y 700ms ease-in-out both;
+}
+
+@keyframes fx-spin {
+  to { transform: rotate(540deg); }
+}
+
+.fx-spin {
+  animation: fx-spin 700ms linear both;
+}
+
+@keyframes token-hit {
+  0%, 100% { transform: translateX(0); filter: none; }
+  30% { transform: translateX(7%); filter: brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(5); }
+  65% { transform: translateX(-5%); }
+}
+
+@keyframes fx-flame {
+  0%, 100% { transform: scale(1, 1) rotate(-3deg); }
+  35% { transform: scale(0.86, 1.2) rotate(4deg); }
+  70% { transform: scale(1.1, 0.88) rotate(-5deg); }
+}
+
+.fx-flame {
+  transform-origin: 0 0;
+  animation: fx-flame 480ms ease-in-out infinite;
+}
+
+@keyframes fx-flame-glow {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.6; }
+}
+
+.fx-flame-glow {
+  animation: fx-flame-glow 700ms ease-in-out infinite;
+}
+
+@keyframes fx-smoke-in {
+  from { opacity: 0; transform: scale(0.35); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.fx-smoke-in {
+  animation: fx-smoke-in 1100ms ease-out both;
+}
+
+@keyframes fx-smoke-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(5%, -6%) scale(1.08); }
+  66% { transform: translate(-6%, 4%) scale(0.96); }
+}
+
+.fx-smoke-drift {
+  animation: fx-smoke-drift 5s ease-in-out infinite;
+}
+
+@keyframes fx-blind {
+  0%, 70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.fx-blind {
+  animation: fx-blind 4s ease-in both;
+}
+
+/* Explosão da C4 */
+@keyframes bomb-shake {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  4% { transform: translate(-26px, 16px) rotate(-1.4deg) scale(1.04); }
+  8% { transform: translate(24px, -20px) rotate(1.2deg) scale(1.05); }
+  14% { transform: translate(-20px, -14px) rotate(-1deg) scale(1.04); }
+  22% { transform: translate(18px, 16px) rotate(0.9deg) scale(1.03); }
+  32% { transform: translate(-13px, 9px) rotate(-0.6deg) scale(1.02); }
+  46% { transform: translate(9px, -8px) rotate(0.4deg) scale(1.01); }
+  62% { transform: translate(-5px, 5px) rotate(-0.2deg); }
+  80% { transform: translate(3px, -2px); }
+}
+
+.bomb-shock {
+  animation: bomb-shake 3.8s ease-out both;
+  filter: url(#bomb-distort);
+}
+
+@keyframes fx-bomb-ball {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.02); }
+  12% { opacity: 1; transform: translate(-50%, -50%) scale(0.75); }
+  45% { opacity: 0.85; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.fx-bomb-ball {
+  background: radial-gradient(circle, #fff7d6 0%, #ffc04d 20%, #f4560f 42%, #7a1400 60%, rgba(30, 8, 4, 0) 72%);
+  animation: fx-bomb-ball var(--bomb-ms) ease-out both;
+}
+
+@keyframes fx-bomb-wave {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.05); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); }
+}
+
+.fx-bomb-wave {
+  animation: fx-bomb-wave 1100ms ease-out both;
+}
+
+@keyframes fx-bomb-smoke {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.2); }
+  18% { opacity: 0.95; }
+  70% { opacity: 0.85; }
+  100% { opacity: 0; transform: translate(var(--fx-x), var(--fx-y)) scale(1.5); }
+}
+
+.fx-bomb-smoke {
+  background: radial-gradient(circle, rgba(58, 54, 60, 0.95) 0%, rgba(38, 34, 40, 0.75) 45%, rgba(20, 18, 22, 0) 72%);
+  animation: fx-bomb-smoke 3000ms ease-out both;
+}
+
+@keyframes fx-bomb-flash {
+  0% { opacity: 0; }
+  5% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.fx-bomb-flash {
+  animation: fx-bomb-flash 900ms ease-out both;
 }

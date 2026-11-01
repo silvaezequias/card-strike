@@ -1,5 +1,6 @@
 import { Card } from "@/lib/types";
-import { BombData, GameState, Team, TeamName } from "./game-types";
+import { fxKind } from "./card-fx";
+import { BombData, CombatEvent, GameState, Team, TeamName } from "./game-types";
 
 /* ═══════════════════════════════════════════════
    EFEITOS DAS CARTAS
@@ -140,6 +141,31 @@ export const resolveCard = (state: GameState, card: Card) => {
     default:
       return outcome("");
   }
+};
+
+/** O que animar depois da carta resolvida, se ela chegou a alguém. */
+export const createCombatEvent = (
+  state: GameState,
+  card: Card,
+  teams: GameState["teams"],
+): CombatEvent | null => {
+  const kind = fxKind(card);
+  if (!kind) return null;
+  if (kind !== "smoke" && !inConfrontation(state)) return null;
+
+  const team = state.currentTeam;
+  const target = kind === "smoke" ? team : opponentOf(team);
+
+  return {
+    id: state.playedCards.length + 1,
+    card,
+    team,
+    target,
+    blocked:
+      (kind === "shots" || kind === "molotov") &&
+      hasEffect(state.teams[target], "Smoke"),
+    damage: state.teams[target].health - teams[target].health,
+  };
 };
 
 /** Efeitos ativos perdem 1 round; quem está em chamas leva o dano do fogo. */
