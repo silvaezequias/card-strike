@@ -1,10 +1,11 @@
 import { GameState } from "../game-types";
-import { opponentOf, resolveEndOfTurn } from "../card-effects";
+import { closesRound, opponentOf, resolveEndOfTurn } from "../card-effects";
 
 export const ActionEndTurn = (state: GameState): GameState => ({
   ...state,
   ...resolveEndOfTurn(state),
   currentTeam: opponentOf(state.currentTeam),
+  boughtThisTurn: false,
   lastResult: null,
   combatEvent: null,
   turnPhase: "COUNTDOWN",
@@ -14,7 +15,7 @@ export const ActionEndTurn = (state: GameState): GameState => ({
   },
   countdown: {
     ...state.countdown,
-    round: state.countdown.round + 1,
+    round: state.countdown.round + (closesRound(state.currentTeam) ? 1 : 0),
     seconds: 60,
   },
   hud: {

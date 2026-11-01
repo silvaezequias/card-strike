@@ -22,12 +22,21 @@ export interface BombData {
   maxTime: number;
 }
 
-/** Carta que chegou ao alvo: é o que os efeitos visuais animam. */
+/** Efeito que fica no mapa por alguns rounds, com ou sem jogador por perto. */
+export type MapEffect = Card & {
+  owner: TeamName;
+  /** Bombsite onde está; null é a base de quem jogou. */
+  spot: Bombsite | null;
+};
+
+/** Carta jogada no mapa: é o que os efeitos visuais animam. */
 export type CombatEvent = {
   id: number;
   card: Card;
   team: TeamName;
   target: TeamName;
+  /** O alvo estava ao alcance; senão o efeito cai no mapa sem acertar ninguém. */
+  hit: boolean;
   /** Parada pela Smoke do alvo. */
   blocked: boolean;
   /** Vida que o alvo perdeu de uma vez, antes de aparecer na tela. */
@@ -35,14 +44,19 @@ export type CombatEvent = {
 };
 
 export interface GameState {
+  /** Time jogado pelo bot; null quando os dois lados são humanos. */
+  botTeam: TeamName | null;
   currentTeam: TeamName;
   turnPhase: GamePhase;
   turnAction: TurnActionState;
+  /** Cada jogador compra uma carta por rodada, mesmo com a mão livre. */
+  boughtThisTurn: boolean;
 
   playedCards: Card[];
   /** O que aconteceu com a última carta jogada neste turno. */
   lastResult: string | null;
   combatEvent: CombatEvent | null;
+  mapEffects: MapEffect[];
   bomb: BombData;
   countdown: {
     round: number;
@@ -78,6 +92,7 @@ export interface GameState {
 export type SetupSettings = {
   police: Pick<Team, "playerName">;
   faction: Pick<Team, "playerName">;
+  botTeam?: TeamName | null;
 };
 
 export type Tool = "d6" | "spinner";
@@ -96,7 +111,7 @@ export type Team = {
     warZone: (Card | null)[];
   };
 
-  /** Efeitos ativos no time (Smoke, Molotov, Flashbang). */
+  /** Efeitos presos ao time (Flashbang); Smoke e Molotov ficam em mapEffects. */
   effects: Card[];
 };
 

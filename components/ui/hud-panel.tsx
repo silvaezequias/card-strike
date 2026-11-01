@@ -16,7 +16,7 @@ export const HUDPanel = ({
 }) => {
   return (
     <div
-      className={`relative w-full max-w-[250px] h-auto ${danger ? "border-red-600 border-2 animate-pulse shadow-[0_0_30px_rgba(220,38,38,0.4)]" : ""} rounded-xl p-4 flex flex-col items-center gap-4 overflow-hidden group [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] ${className}`}
+      className={`relative w-full max-w-[250px] h-auto ${danger ? "border-red-600 border-2 animate-pulse shadow-[0_0_30px_rgba(220,38,38,0.4)]" : ""} rounded-xl p-4 flex flex-col items-center gap-4 overflow-hidden group bg-black/20 backdrop-blur-sm [text-shadow:0_1px_3px_rgba(0,0,0,0.9)] ${className}`}
     >
       <Header title={title} icon={icon} />
       <div className="w-full h-full flex flex-col items-center justify-center gap-4 py-4">

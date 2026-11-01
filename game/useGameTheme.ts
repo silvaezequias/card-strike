@@ -18,7 +18,7 @@ export const policeTheme = {
   orbInner: "border-blue-600/30",
 
   innerSurface: "bg-zinc-950",
-  hudPanel: "border-slate-600 text-blue-400",
+  hudPanel: "bg-black/20 backdrop-blur-sm border-slate-600 text-blue-400",
   overlay: "from-black to-zinc-800 border-zinc-600",
   overlayScrim: "bg-blue-900/20 hover:bg-blue-900/40",
   overlayScrimNoHover: "bg-blue-900/20",
@@ -42,7 +42,7 @@ const factionTheme: typeof policeTheme = {
   orbInner: "border-red-600/30",
 
   innerSurface: "bg-zinc-950",
-  hudPanel: "border-red-800 text-red-400",
+  hudPanel: "bg-black/20 backdrop-blur-sm border-red-800 text-red-400",
   overlay: "from-black to-zinc-950 border-zinc-600",
   overlayScrim: "bg-red-900/20 hover:bg-red-900/40",
   overlayScrimNoHover: "bg-red-900/20",

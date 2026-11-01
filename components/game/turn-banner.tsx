@@ -26,11 +26,11 @@ export const TurnBanner = ({ game }: { game: GameEngine }) => {
     if (turnPhase !== "COUNTDOWN") return;
     const timer = window.setTimeout(() => dispatch({ type: "SELECT_ACTION" }), TURN_START_MS);
     return () => window.clearTimeout(timer);
-  }, [turnPhase, countdown.round, dispatch]);
+  }, [turnPhase, currentTeam, countdown.round, dispatch]);
 
   return (
     <div
-      key={countdown.round}
+      key={`${countdown.round}-${currentTeam}`}
       className="turn-banner pointer-events-none fixed inset-x-0 top-9 z-40 flex justify-center"
     >
       <div className="bg-gradient-to-r from-transparent via-black/80 to-transparent px-32 py-2 text-center">

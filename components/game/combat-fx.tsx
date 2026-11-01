@@ -49,8 +49,9 @@ const Shots = ({ event, from, to }: { event: CombatEvent; from: Point; to: Point
   const dir = Math.sign(to.x - from.x) || 1;
   const count = event.card.damage;
   const muzzle = from.x + dir * MUZZLE_OFFSET;
-  // Com Smoke as balas somem na fumaça, antes de chegar ao corpo.
+  // Com Smoke as balas somem na fumaça; sem alvo, vão até o fim do site.
   const stop = to.x - dir * (event.blocked ? BODY_RADIUS * 2 : BODY_RADIUS);
+  const hitsBody = event.hit && !event.blocked;
   const p = getPalette(event.team);
 
   return (
@@ -83,7 +84,7 @@ const Shots = ({ event, from, to }: { event: CombatEvent; from: Point; to: Point
               <rect x={muzzle - 13} y={from.y + spread / 4} width="26" height="3.5" rx="1.75" fill={p.rim} />
               <rect x={muzzle + 7} y={from.y + spread / 4} width="9" height="3.5" rx="1.75" fill="#ffffff" />
             </g>
-            {!event.blocked && (
+            {hitsBody && (
               <>
                 <circle
                   cx={stop}

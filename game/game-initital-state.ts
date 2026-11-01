@@ -10,13 +10,16 @@ export const createInitialGameState = (
   setup: SetupSettings,
   startingCards = STARTING_CARDS,
 ): GameState => ({
+  botTeam: setup.botTeam ?? null,
   currentTeam: "faction",
   turnPhase: "COUNTDOWN",
   turnAction: "SELECTING_ACTION",
+  boughtThisTurn: false,
 
   playedCards: [],
   lastResult: null,
   combatEvent: null,
+  mapEffects: [],
 
   countdown: {
     gameTime: 0,

@@ -7,7 +7,13 @@ export type LobbyPlayer = {
   team: TeamName | null;
 };
 
+/** Modos que já podem ser jogados. */
+export type GameMode = "solo" | "local";
+
+export const BOT_NAME = "BOT";
+
 const STORAGE_KEY = "card-strike:lobby";
+const MODE_STORAGE_KEY = "card-strike:mode";
 const SHUFFLE_STEP_MS = 180;
 const SHUFFLE_STEPS = 8;
 
@@ -38,9 +44,19 @@ const readLobby = () => {
   }
 };
 
-const saveLobby = (players: LobbyPlayer[]) => {
+const readMode = (): GameMode | null => {
+  try {
+    const mode = window.localStorage.getItem(MODE_STORAGE_KEY);
+    return mode === "solo" || mode === "local" ? mode : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveLobby = (players: LobbyPlayer[], mode: GameMode) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+    window.localStorage.setItem(MODE_STORAGE_KEY, mode);
   } catch {
     // Segue sem salvar.
   }
@@ -48,6 +64,7 @@ const saveLobby = (players: LobbyPlayer[]) => {
 
 export const useGameSetup = () => {
   const [players, setPlayers] = useState(EMPTY_LOBBY);
+  const [mode, setMode] = useState<GameMode>("local");
   const [isShuffling, setIsShuffling] = useState(false);
   const [restored, setRestored] = useState(false);
   const shuffleTimer = useRef<number | null>(null);
@@ -56,12 +73,14 @@ export const useGameSetup = () => {
   useEffect(() => {
     const saved = readLobby();
     if (saved) setPlayers(saved);
+    const savedMode = readMode();
+    if (savedMode) setMode(savedMode);
     setRestored(true);
   }, []);
 
   useEffect(() => {
-    if (restored && !isShuffling) saveLobby(players);
-  }, [players, restored, isShuffling]);
+    if (restored && !isShuffling) saveLobby(players, mode);
+  }, [players, mode, restored, isShuffling]);
 
   useEffect(
     () => () => {
@@ -109,21 +128,35 @@ export const useGameSetup = () => {
     }, SHUFFLE_STEP_MS);
   };
 
-  const police = players.find((p) => p.team === "police");
-  const faction = players.find((p) => p.team === "faction");
-  const namesFilled = players.every((p) => p.name.trim());
-  const canStart = !!police && !!faction && namesFilled && !isShuffling;
+  // Sozinho, só o jogador 1 aparece; o bot fica com o time que sobrar.
+  const seats = players
+    .map((player, index) => ({ player, index }))
+    .filter(({ index }) => mode === "local" || index === 0);
+  const humanTeam = players[0].team;
+  const botTeam = mode === "solo" && humanTeam ? otherTeam(humanTeam) : null;
+
+  const nameOn = (team: TeamName) =>
+    team === botTeam ? BOT_NAME : seats.find(({ player }) => player.team === team)?.player.name.trim();
+
+  const namesFilled = seats.every(({ player }) => player.name.trim());
+  const teamsFilled = !!nameOn("police") && !!nameOn("faction");
+  const allSeated = seats.every(({ player }) => player.team);
+  const canStart = allSeated && (mode === "solo" ? !!botTeam : teamsFilled) && namesFilled && !isShuffling;
 
   const buildSetup = (): SetupSettings | null =>
     canStart
       ? {
-          police: { playerName: police.name.trim() },
-          faction: { playerName: faction.name.trim() },
+          police: { playerName: nameOn("police")! },
+          faction: { playerName: nameOn("faction")! },
+          botTeam,
         }
       : null;
 
   return {
-    players,
+    mode,
+    setMode,
+    seats,
+    botTeam,
     isShuffling,
     namesFilled,
     canStart,

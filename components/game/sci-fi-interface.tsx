@@ -8,21 +8,25 @@ import { MissionStatus } from "@/components/game/mission-status";
 import { BombPanel } from "@/components/game/bomb-panel";
 import { InventoryPanel } from "@/components/game/inventory-panel";
 import { TurnBanner } from "@/components/game/turn-banner";
-import { Action } from "@/components/game/action";
+import { Action, ActionFrame, DiceDock } from "@/components/game/action";
 import { BoardStage } from "@/components/game/board-stage";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
-import { Ban, Maximize2, Minimize2 } from "lucide-react";
+import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
-import { SetupSettings, TBoardTabs, TeamName } from "@/game/game-types";
+import { SetupSettings, TeamName } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
-import { inConfrontation, isAttackCard, isFlashed } from "@/game/card-effects";
+import { inConfrontation, isAttackCard, isFlashed, opponentOf } from "@/game/card-effects";
 import { BOMB_FX_MS } from "@/game/card-fx";
+import { useBot } from "@/game/useBot";
 import { useCombatFx } from "@/game/useCombatFx";
+import { playDiceHit, useGameSounds } from "@/game/useGameSounds";
+import { isMuted, setMuted } from "@/lib/game-audio";
 import { BombExplosion, FlashBlind } from "@/components/game/combat-fx";
-import { MapBoard, MapSpot } from "@/components/game/map-board";
+import { CameraNav, CameraView, cardCameraFocus, mapCameraFocus } from "@/components/game/camera-nav";
+import { MapBoard, MapMark, MapSpot } from "@/components/game/map-board";
 import { CardBoardPreview, MainBoardView, MinimapButton } from "@/components/game/minimap";
 import { Card } from "@/lib/types";
-import { useGate } from "./tutorial-gate";
+import { GateState, TutorialGateProvider, useGate } from "./tutorial-gate";
 import { CameraFocus, HudElement } from "@/lib/tutorial/types";
 import { HIGHLIGHT_CLASS } from "./tutorial-gate";
 
@@ -91,10 +95,8 @@ const boardLayer = (active: boolean, side: -1 | 1): CSSProperties => ({
 /** Interface apagada (e sem clique) durante o foco de câmera do tutorial. */
 const DIMMED = "pointer-events-none opacity-20";
 
-const TABS: { id: TBoardTabs; label: string }[] = [
-  { id: "battlefieldTab", label: "Campo de Batalha" },
-  { id: "actionTab", label: "Ação" },
-];
+/** Na vez do bot o humano só assiste. */
+const BOT_TURN_GATE: GateState = { allowed: ["camera"], highlight: null };
 
 export default function SciFiInterface({
   playerSetup,
@@ -102,7 +104,15 @@ export default function SciFiInterface({
   playerSetup: SetupSettings;
 }) {
   const game = useGameEngine(playerSetup);
-  return <GameScreen game={game} />;
+  useBot(game);
+
+  const botTurn = game.state.botTeam === game.state.currentTeam;
+
+  return (
+    <TutorialGateProvider value={botTurn ? BOT_TURN_GATE : null}>
+      <GameScreen game={game} />
+    </TutorialGateProvider>
+  );
 }
 
 /**
@@ -124,6 +134,7 @@ export function GameScreen({
 }) {
   const { state, dispatch } = game;
   const { currentTeam, turnPhase, teams, board } = state;
+  const botTurn = state.botTeam === currentTeam;
 
   const theme = useGameTheme(currentTeam);
   const [fit, setFit] = useState(1);
@@ -160,13 +171,27 @@ export function GameScreen({
     return () => window.clearTimeout(timer);
   }, [playedCount]);
 
-  const shot = cardFlying || turnPhase === "COUNTDOWN" ? "overview" : "focus";
+  // Enquadramento escolhido nos botões do topo; null segue a câmera do jogo.
+  const [view, setView] = useState<CameraView | null>(null);
+  useEffect(() => setView(null), [turnPhase]);
+
+  const shot =
+    cardFlying || turnPhase === "COUNTDOWN" || view?.board === "cards" ? "overview" : "focus";
 
   const plantedSite = state.bomb.planted ? state.bomb.position : null;
 
   // Tabuleiro em destaque; o outro fica no minimapa da coluna esquerda.
   const [mainView, setMainView] = useState<MainBoardView>("cards");
-  const toggleView = () => setMainView((v) => (v === "cards" ? "map" : "cards"));
+  const toggleView = () => {
+    setView(null);
+    setMainView((v) => (v === "cards" ? "map" : "cards"));
+    minimizeAction();
+  };
+  const showView = (next: CameraView) => {
+    setView(next);
+    setMainView(next.board);
+    minimizeAction();
+  };
   // Foco do tutorial: mostra o tabuleiro pedido e volta às cartas quando termina.
   const cameraBoard =
     tutorialCamera && tutorialCamera.board !== "hud" ? tutorialCamera.board : null;
@@ -188,10 +213,23 @@ export function GameScreen({
     if (fx.stage === "return" && fx.active) setMainView("cards");
   }, [fx.stage, fx.active, cameraBoard]);
 
-  const effectsOnMap: Record<TeamName, string[]> = {
-    police: teams.police.effects.map((e) => e.name).filter((name) => !fx.hidesEffect("police", name)),
-    faction: teams.faction.effects.map((e) => e.name).filter((name) => !fx.hidesEffect("faction", name)),
+  const shownView = fx.active ? null : view;
+  const me = state.botTeam ? opponentOf(state.botTeam) : currentTeam;
+
+  const fighters = {
+    police: { name: teams.police.playerName, health: teams.police.health + fx.pendingDamage("police") },
+    faction: { name: teams.faction.playerName, health: teams.faction.health + fx.pendingDamage("faction") },
   };
+
+  // Fogo na metade inimiga do site; Smoke em quem jogou.
+  const effectsOnMap: MapMark[] = state.mapEffects
+    .filter((effect) => !fx.hidesEffect(effect.id))
+    .map((effect) => ({
+      id: effect.id,
+      name: effect.name,
+      spot: effect.spot ?? "BASE",
+      team: effect.name === "Molotov" ? opponentOf(effect.owner) : effect.owner,
+    }));
 
   // A tela de fim de jogo espera a explosão da C4 e a última animação.
   const { exploded } = state.bomb;
@@ -202,6 +240,15 @@ export function GameScreen({
     return () => window.clearTimeout(timer);
   }, [exploded]);
   const bombFxPlaying = exploded && !bombFxDone;
+
+  useGameSounds(state, fx, game.tool.dice.shaking, game.gameOver && !fx.active && !bombFxPlaying);
+
+  const [soundOff, setSoundOff] = useState(false);
+  useEffect(() => setSoundOff(isMuted()), []);
+  const toggleSound = () => {
+    setMuted(!soundOff);
+    setSoundOff(!soundOff);
+  };
 
   const lastCameraBoard = useRef<string | null>(null);
   useEffect(() => {
@@ -237,6 +284,7 @@ export function GameScreen({
   const placeGate = useGate("place");
   const buyGate = useGate("buy");
   const tabsGate = useGate("tabs");
+  const cameraGate = useGate("camera");
 
   // Clicar na carta do slot sorteado joga a carta (vai para a zona de combate).
   const handleSlotClick = (team: TeamName, index: number) => {
@@ -261,8 +309,13 @@ export function GameScreen({
   const handFull = teams[currentTeam].inventory.hand.length >= 3;
   // Compra bloqueada pelo tutorial (com mão livre): o baralho nem acende.
   const deck =
-    (turnPhase === "PLACING" || turnPhase === "BUYING") && (buyGate.allowed || handFull)
-      ? { team: currentTeam, canBuy: !handFull, strong: buyGate.highlighted }
+    !botTurn && (turnPhase === "PLACING" || turnPhase === "BUYING") && (buyGate.allowed || handFull)
+      ? {
+          team: currentTeam,
+          canBuy: !handFull && !state.boughtThisTurn,
+          strong: buyGate.highlighted,
+          blockedLabel: state.boughtThisTurn ? "JÁ COMPROU" : "MÃO CHEIA",
+        }
       : null;
   const handleDeckClick = () => {
     if (deck?.canBuy) dispatch({ type: "BUY_CARD" });
@@ -272,6 +325,10 @@ export function GameScreen({
   // Painel de ação minimizado: o jogador olha os tabuleiros e volta quando quiser.
   const canMinimizeAction = board.enabledTabs.battlefieldTab && tabsGate.allowed;
   const actionPending = turnPhase === "CHOOSING" || turnPhase === "ACTING";
+  // Olhar outro tabuleiro tira o painel da frente.
+  const minimizeAction = () => {
+    if (showAction && canMinimizeAction) dispatch({ type: "SWITCH_TAB", payload: "battlefieldTab" });
+  };
 
   // Foco de câmera do tutorial: nada por cima do tabuleiro e o resto apagado.
   const focusMode = !!tutorialCamera;
@@ -307,7 +364,7 @@ export function GameScreen({
 
       <div className={`fixed top-0 left-0 right-0 z-50 ${hudClass("turn-bar")}`}>
         <div
-          className="flex items-center justify-center gap-3 py-2 px-4"
+          className="flex items-center justify-center gap-3 py-2 px-4 bg-black/20 backdrop-blur-sm"
         >
           <div className={`w-2 h-2 rounded-full animate-pulse ${theme.teamBackground}`} />
           <span className={`text-xs font-bold tracking-[0.3em] uppercase ${theme.text}`}>
@@ -361,9 +418,12 @@ export function GameScreen({
               slots={slots}
               combatCard={combatCard}
               highlight={highlight}
-              bottomInset={state.hud.inventory.isOpen ? INVENTORY_OPEN_HEIGHT * fit - BOARD_BOTTOM_GAP : 0}
+              bottomInset={state.hud.inventory.isOpen && !botTurn ? INVENTORY_OPEN_HEIGHT * fit - BOARD_BOTTOM_GAP : 0}
               hudInset={{ x: centerArea.left + centerArea.right, y: centerArea.top + centerArea.bottom }}
-              cameraFocus={tutorialCamera?.board === "cards" ? tutorialCamera : null}
+              cameraFocus={tutorialCamera?.board === "cards" ? tutorialCamera : cardCameraFocus(shownView, me)}
+              dice={game.tool.dice}
+              onDiceHit={playDiceHit}
+              onDiceSettled={game.tool.finishRoll}
               onSlotClick={handleSlotClick}
               onHandCardDrop={handleHandCardDrop}
               deck={deck}
@@ -381,34 +441,19 @@ export function GameScreen({
               bomb={plantedSite}
               effects={effectsOnMap}
               fx={fx.event ? { event: fx.event, stage: fx.stage } : null}
-              focus={tutorialCamera?.board === "map" ? tutorialCamera : null}
+              fighters={fighters}
+              focus={tutorialCamera?.board === "map" ? tutorialCamera : mapCameraFocus(shownView)}
               className="w-[min(96cqw,150cqh)]"
             />
           </div>
         </div>
 
         <div className="pointer-events-none absolute z-10" style={centerArea}>
-          {/* Abas: campo de batalha / ação */}
-          {!boardClear && (
-          <div className="pointer-events-auto absolute left-1/2 top-2 z-10 flex -translate-x-1/2 overflow-hidden rounded-lg border border-white/10 bg-black/60 backdrop-blur">
-            {TABS.map((tab) => {
-              const enabled = board.enabledTabs[tab.id] && tabsGate.allowed;
-              const active = board.activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  disabled={!enabled}
-                  onClick={() => dispatch({ type: "SWITCH_TAB", payload: tab.id })}
-                  className={`flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-colors ${
-                    active ? `${theme.text} bg-white/10` : "text-white/50 hover:text-white"
-                  } disabled:cursor-not-allowed disabled:opacity-40`}
-                >
-                  {!enabled && <Ban size={12} />}
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Atalhos de câmera */}
+          {!boardClear && cameraGate.allowed && (
+            <div className="pointer-events-auto absolute left-1/2 top-2 z-20 -translate-x-1/2">
+              <CameraNav board={mainView} view={shownView} activeClass={theme.text} onSelect={showView} />
+            </div>
           )}
 
           {/* Aviso do slot sorteado */}
@@ -423,7 +468,7 @@ export function GameScreen({
             </div>
           )}
 
-          {!boardClear && turnPhase === "PLACING" && d6 && !rangeWarning && (
+          {!boardClear && !botTurn && turnPhase === "PLACING" && d6 && !rangeWarning && (
             <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex flex-col items-center gap-1">
               <h2 className={`text-2xl font-black tracking-widest drop-shadow-lg ${theme.text}`}>
                 {slots[currentTeam][d6 - 1]
@@ -431,9 +476,11 @@ export function GameScreen({
                   : `POSICIONE UMA CARTA NO SLOT ${d6}`}
               </h2>
               <p className="text-xs font-bold tracking-wider text-zinc-300 drop-shadow">
-                {handFull
-                  ? "MÃO CHEIA · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"
-                  : "COMPRE NO BARALHO · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"}
+                {state.boughtThisTurn
+                  ? "COMPRA DA RODADA FEITA · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"
+                  : handFull
+                    ? "MÃO CHEIA · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"
+                    : "COMPRE NO BARALHO · ARRASTE OU CLIQUE NUMA CARTA DO INVENTÁRIO"}
               </p>
             </div>
           )}
@@ -450,25 +497,31 @@ export function GameScreen({
         </div>
 
         {/* Painel de ação (dado / roleta) sobre o tabuleiro */}
-        {!boardClear && showAction && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-            <div className="relative w-full max-w-xl rounded-2xl border border-white/10 bg-black/75 p-4 shadow-2xl">
+        {/* Com o dado o tabuleiro fica livre: é onde ele rola. */}
+        {!boardClear && !botTurn && showAction && state.tool.selected === "d6" && <DiceDock game={game} />}
+
+        {!boardClear && !botTurn && showAction && state.tool.selected !== "d6" && (
+          <div
+            className="absolute inset-0 z-10 flex items-center justify-center bg-black/30"
+            style={{ paddingLeft: centerArea.left, paddingRight: centerArea.right }}
+          >
+            <ActionFrame>
               {canMinimizeAction && (
                 <button
                   onClick={() => dispatch({ type: "SWITCH_TAB", payload: "battlefieldTab" })}
-                  className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
+                  className="absolute right-6 top-3 z-10 flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   <Minimize2 size={12} />
                   Minimizar
                 </button>
               )}
               <Action game={game} />
-            </div>
+            </ActionFrame>
           </div>
         )}
 
         {/* Painel minimizado: fica aqui até o jogador reabrir */}
-        {!boardClear && actionPending && !showAction && (
+        {!boardClear && !botTurn && actionPending && !showAction && (
           <button
             onClick={() => dispatch({ type: "SWITCH_TAB", payload: "actionTab" })}
             className={`absolute bottom-16 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-lg border-2 ${theme.border} bg-black/80 px-5 py-2 text-xs font-bold uppercase tracking-widest ${theme.text} shadow-2xl transition-transform hover:scale-105 active:scale-95`}
@@ -489,9 +542,21 @@ export function GameScreen({
         </FitColumn>
       </div>
 
-      <div className={hudFocus?.hud.includes("inventory") ? "" : hudClass("inventory")}>
-        <InventoryPanel game={game} spotlight={!!hudFocus?.hud.includes("inventory")} />
-      </div>
+      {/* Na vez do bot a mão dele fica escondida. */}
+      {!botTurn && (
+        <div className={hudFocus?.hud.includes("inventory") ? "" : hudClass("inventory")}>
+          <InventoryPanel game={game} spotlight={!!hudFocus?.hud.includes("inventory")} />
+        </div>
+      )}
+
+      <button
+        onClick={toggleSound}
+        aria-label={soundOff ? "Ligar som" : "Desligar som"}
+        title={soundOff ? "Ligar som" : "Desligar som"}
+        className="fixed bottom-3 right-3 z-40 flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-black/30 text-zinc-300 backdrop-blur-sm transition-colors hover:text-white"
+      >
+        {soundOff ? <VolumeX size={16} /> : <Volume2 size={16} />}
+      </button>
 
       {turnPhase === "IDLE" && isFlashed(teams[currentTeam]) && <FlashBlind />}
       {bombFxPlaying && <BombExplosion />}

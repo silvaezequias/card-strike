@@ -7,6 +7,7 @@ import {
   fxRemainingDamage,
   fxTotalMs,
 } from "./card-fx";
+import { Card } from "@/lib/types";
 import { CombatEvent, TeamName } from "./game-types";
 
 export type FxStage = "flight" | "camera" | "action" | "return" | "done";
@@ -50,9 +51,8 @@ export const useCombatFx = (event: CombatEvent | null) => {
     /** Dano já aplicado no jogo que a barra de vida ainda não deve mostrar. */
     pendingDamage: (team: TeamName) =>
       active && team === event.target ? fxRemainingDamage(event, landed) : 0,
-    /** Efeito da carta só aparece no jogador quando ela chega nele. */
-    hidesEffect: (team: TeamName, name: string) =>
-      active && landed === 0 && team === event.target && name === event.card.name,
+    /** Efeito da carta só aparece no mapa quando ela chega lá. */
+    hidesEffect: (cardId: Card["id"]) => active && landed === 0 && cardId === event.card.id,
   };
 };
 

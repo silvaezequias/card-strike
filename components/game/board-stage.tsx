@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
 import { NoirCard } from "@/components/art/noir-card";
+import { BoardDice, DiceRoll } from "@/components/game/board-dice";
 import { getPalette } from "@/components/art/palette";
 import {
   BOARD_H,
@@ -50,6 +51,8 @@ export type CardCameraFocus = {
   slot?: number;
   /** Foco total: escurece o que estiver fora da seleção. */
   dim?: boolean;
+  /** Só move a câmera, sem contorno na parte focada. */
+  plain?: boolean;
 };
 
 const rectCenterOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
@@ -323,11 +326,13 @@ const DeckHighlight = ({
   team,
   canBuy,
   strong,
+  blockedLabel,
   onClick,
 }: {
   team: TeamName;
   canBuy: boolean;
   strong: boolean;
+  blockedLabel: string;
   onClick?: () => void;
 }) => {
   const p = getPalette(team);
@@ -352,7 +357,7 @@ const DeckHighlight = ({
         className="whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-lg font-black tracking-[0.2em]"
         style={{ color: canBuy ? p.rim : "#a1a1aa", transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
       >
-        {canBuy ? "COMPRAR" : "MÃO CHEIA"}
+        {canBuy ? "COMPRAR" : blockedLabel}
       </span>
     </div>
   );
@@ -374,8 +379,12 @@ export type BoardStageProps = {
   onSlotClick?: (team: TeamName, index: number) => void;
   /** Carta da mão (índice) solta sobre o slot em destaque. */
   onHandCardDrop?: (handIndex: number) => void;
+  /** Dado 3D sobre o tabuleiro. */
+  dice?: { shaking: boolean; roll: DiceRoll | null };
+  onDiceHit?: () => void;
+  onDiceSettled?: () => void;
   /** Baralho em destaque (hora de posicionar) e se dá para comprar. */
-  deck?: { team: TeamName; canBuy: boolean; strong?: boolean } | null;
+  deck?: { team: TeamName; canBuy: boolean; strong?: boolean; blockedLabel: string } | null;
   onDeckClick?: () => void;
 };
 
@@ -396,6 +405,9 @@ export const BoardStage = ({
   cameraFocus = null,
   onSlotClick,
   onHandCardDrop,
+  dice,
+  onDiceHit,
+  onDiceSettled,
   deck,
   onDeckClick,
 }: BoardStageProps) => {
@@ -627,11 +639,17 @@ export const BoardStage = ({
         )}
 
         {deck && (
-          <DeckHighlight team={deck.team} canBuy={deck.canBuy} strong={!!deck.strong} onClick={onDeckClick} />
+          <DeckHighlight
+            team={deck.team}
+            canBuy={deck.canBuy}
+            strong={!!deck.strong}
+            blockedLabel={deck.blockedLabel}
+            onClick={onDeckClick}
+          />
         )}
 
         {target && cameraFocus?.dim && <FocusDim rect={target.spotlight} />}
-        {target && <FocusRing rect={target.spotlight} />}
+        {target && !cameraFocus?.plain && <FocusRing rect={target.spotlight} />}
 
         {highlight && (
           <SlotHighlight
@@ -656,6 +674,15 @@ export const BoardStage = ({
           />
         )}
 
+        {dice && (
+          <BoardDice
+            team={turn}
+            shaking={dice.shaking}
+            roll={dice.roll}
+            onHit={onDiceHit}
+            onSettled={() => onDiceSettled?.()}
+          />
+        )}
       </div>
     </div>
   );

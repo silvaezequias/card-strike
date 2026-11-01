@@ -1,8 +1,8 @@
-import { MutableRefObject, useCallback, useEffect, useReducer, useState } from "react";
-import { Bombsite, SetupSettings } from "./game-types";
+import { MutableRefObject, useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { Bombsite, SetupSettings, TeamName, Tool } from "./game-types";
 import { gameReducer } from "./game-reducer";
 import { createInitialGameState } from "./game-initital-state";
-import { getD6Rotation, getSpinnerRotation } from "@/lib/game-helpers";
+import { getSpinnerRotation } from "@/lib/game-helpers";
 import { GameAction } from "./game-actions";
 import { isGameOver } from "./card-effects";
 
@@ -13,6 +13,11 @@ export type ScriptedOutcomes = {
   /** Nome da carta entregue na próxima compra. */
   card?: string | null;
 };
+
+const BOMBSITES: Bombsite[] = ["A", "B", "C"];
+const SPINNER_MS = 3000;
+/** Segurança: aba em segundo plano para o dado, e o jogo não pode travar. */
+const DICE_FALLBACK_MS = 7000;
 
 export type GameEngineOptions = {
   /** false desliga o relógio: nada acontece sozinho quando o tempo acaba. */
@@ -26,7 +31,11 @@ export type GameEngineOptions = {
 export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions = {}) => {
   const { timer = true, script, startingCards } = options;
   const startRotation = { x: 0, y: 0, z: 0 };
-  const [d6Rotation, setD6Rotation] = useState(startRotation);
+  const [dice, setDice] = useState<{
+    shaking: boolean;
+    roll: { id: number; value: number; team: TeamName } | null;
+  }>({ shaking: false, roll: null });
+  const finishRollRef = useRef<(() => void) | null>(null);
   const [spinnerRotation, setSpinnerRotation] = useState(startRotation);
 
   const [state, rawDispatch] = useReducer(gameReducer, undefined, () =>
@@ -50,30 +59,21 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
   const { hand: handInventory, warZone: warZoneInventory } =
     state.teams[currentTeam].inventory;
 
-  const rollTool = (props: { timerAfter?: number } = {}) => {
+  const rollTool = (props: { timerAfter?: number; tool?: Tool } = {}) => {
+    if (finishRollRef.current) return;
+    const tool = props.tool ?? state.tool.selected;
     dispatch({ type: "ROLL_TOOL_START" });
 
     const d6Result = script?.current.d6 ?? Math.floor(Math.random() * 6) + 1;
+    // Se reposicionar sempre muda de lugar: o site atual fica fora do sorteio.
+    const otherSites = BOMBSITES.filter((site) => site !== state.teams[currentTeam].position);
     const spinnerResult =
       script?.current.spinner ??
-      (["A", "B", "C"][Math.floor(Math.random() * 3)] as Bombsite);
+      otherSites[Math.floor(Math.random() * otherSites.length)];
 
-    const d6Spins = 3 + Math.floor(Math.random() * 4);
     const spinnerSpins = 5 + Math.floor(Math.random() * 6);
 
-    const d6TargetRot = getD6Rotation(d6Result);
     const spinnerTargetRot = getSpinnerRotation(spinnerResult);
-
-    setD6Rotation((prev) => {
-      const currentXMod = prev.x % 360;
-      const currentYMod = prev.y % 360;
-
-      return {
-        x: prev.x + d6Spins * 360 + (d6TargetRot.x - currentXMod),
-        y: prev.y + d6Spins * 360 + (d6TargetRot.y - currentYMod),
-        z: d6TargetRot.z + (Math.random() * 20 - 10),
-      };
-    });
 
     setSpinnerRotation((prev) => {
       const currentZ = prev.z;
@@ -90,7 +90,10 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
       };
     });
 
-    setTimeout(() => {
+    // O dado termina quando para na mesa; a roleta, no fim do giro.
+    const finish = () => {
+      window.clearTimeout(timeout);
+      finishRollRef.current = null;
       dispatch({
         type: "ROLL_TOOL_COMPLETE",
         payload: {
@@ -99,7 +102,13 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
           timerAfter: props?.timerAfter,
         },
       });
-    }, 3000);
+    };
+    finishRollRef.current = finish;
+    const timeout = window.setTimeout(finish, tool === "d6" ? DICE_FALLBACK_MS : SPINNER_MS);
+
+    if (tool === "d6") {
+      setDice({ shaking: false, roll: { id: Date.now(), value: d6Result, team: currentTeam } });
+    }
   };
 
   const { seconds } = state.countdown;
@@ -146,7 +155,7 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
         dispatch({ type: "SET_TOOL", payload: "d6" });
 
         setTimeout(() => {
-          !state.tool.isRolling && rollTool({ timerAfter: 5 });
+          !state.tool.isRolling && rollTool({ timerAfter: 5, tool: "d6" });
           state.tool.isRolling = true;
         }, 100);
 
@@ -177,10 +186,12 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
     gameOver,
     tool: {
       rotation: {
-        d6: d6Rotation,
         spinner: spinnerRotation,
       },
       roll: rollTool,
+      dice,
+      shakeDice: (shaking: boolean) => setDice((current) => ({ ...current, shaking })),
+      finishRoll: () => finishRollRef.current?.(),
     },
     teamNames: { faction: "Facção", police: "Polícia" },
     currentTeamName: state.currentTeam === "faction" ? "Facção" : "Polícia",

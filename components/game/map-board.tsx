@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
+import { Card } from "@/lib/types";
 import { TeamName } from "@/game/game-types";
 import { Portrait } from "@/components/art/noir";
 import { factionPalette, getPalette, policePalette } from "@/components/art/palette";
+import { MAX_HEALTH } from "@/game/card-effects";
 import { BULLET_GAP_MS, BULLET_TRAVEL_MS, THROW_MS, fxKind } from "@/game/card-fx";
 import { CombatEvent } from "@/game/game-types";
 import { FxStage } from "@/game/useCombatFx";
@@ -61,9 +63,13 @@ const routeFromBase = (spot: MapSpot): Point[] => {
   return [base, { x: LANE_X, y: MID_Y }, { x: LANE_X, y: end.y }, end];
 };
 
+/** Vai direto de onde está: de site para site, passa só pelo corredor ao lado deles. */
 const routeBetween = (team: TeamName, from: MapSpot, to: MapSpot): Point[] => {
   if (from === to) return [spotPoint(team, to)];
-  return [...routeFromBase(from).slice().reverse(), ...routeFromBase(to).slice(1)].map((p) => side(team, p));
+  const start = routeFromBase(from);
+  const end = routeFromBase(to);
+  const route = from === "BASE" || to === "BASE" ? [...start.slice().reverse(), ...end.slice(1)] : [...start.slice(-2).reverse(), ...end.slice(-2)];
+  return route.map((p) => side(team, p));
 };
 
 const pct = (p: Point) => ({ left: `${(p.x / MAP_W) * 100}%`, top: `${(p.y / MAP_H) * 100}%` });
@@ -179,6 +185,58 @@ const Site = ({ site, conflict }: { site: Bombsite; conflict: boolean }) => {
   );
 };
 
+/** Nome e vida de quem está no site, mostrados com ele ampliado. */
+export type SiteFighters = Record<TeamName, { name: string; health: number }>;
+
+const FIGHTER_BAR_W = 100;
+
+const FighterTag = ({ team, site, name, health }: { team: TeamName; site: Bombsite; name: string; health: number }) => {
+  const p = getPalette(team);
+  const y = SITE_Y[site];
+  const x = team === "police" ? SITE.x + 12 : SITE.x + SITE.w - 12 - FIGHTER_BAR_W;
+  return (
+    <g>
+      <text x={x} y={y + 18} fontSize="11" fontWeight={900} fill={p.rim} fontFamily={MONO_FONT}>
+        {name}
+      </text>
+      <rect x={x} y={y + 24} width={FIGHTER_BAR_W} height="8" rx="2" fill="#000000" opacity={0.65} />
+      <rect x={x} y={y + 24} width={(FIGHTER_BAR_W * health) / MAX_HEALTH} height="8" rx="2" fill={p.accent} className="transition-all duration-200" />
+      <text x={x} y={y + 44} fontSize="9" fontWeight={800} fill="#ffffff" opacity={0.8} fontFamily={MONO_FONT}>
+        {health}/{MAX_HEALTH} HP
+      </text>
+    </g>
+  );
+};
+
+/** Detalhes do site ampliado: cobertura, zona de plantio e situação dos jogadores. */
+const SiteDetails = ({ site, fighters }: { site: Bombsite; fighters?: SiteFighters }) => {
+  const y = SITE_Y[site];
+  const cx = SITE.x + SITE.w / 2;
+  const plantY = siteCenterY(site) + TOKEN_DY;
+  return (
+    <g className="animate-in fade-in duration-700">
+      <text x={cx} y={y + 11} textAnchor="middle" fontSize="8" fontWeight={900} fill="#c9bcff" fontFamily={MONO_FONT} letterSpacing="3">
+        BOMBSITE {site}
+      </text>
+
+      <circle cx={cx} cy={plantY} r="40" fill="#ffb020" fillOpacity={0.06} stroke="#ffb020" strokeOpacity={0.55} strokeWidth={1.5} strokeDasharray="5 5" />
+      <text x={cx} y={y + SITE.h - 5} textAnchor="middle" fontSize="6.5" fontWeight={800} fill="#ffb020" opacity={0.75} fontFamily={MONO_FONT} letterSpacing="2">
+        ZONA DE PLANTIO
+      </text>
+
+      <Crate x={cx - 74} y={y + 52} />
+      <Crate x={cx + 58} y={y + 52} />
+      <Crate x={cx - 74} y={y + SITE.h - 22} />
+      <Crate x={cx + 58} y={y + SITE.h - 22} />
+
+      {fighters &&
+        (["police", "faction"] as TeamName[]).map((team) => (
+          <FighterTag key={team} team={team} site={site} {...fighters[team]} />
+        ))}
+    </g>
+  );
+};
+
 const ConflictLine = ({ site }: { site: Bombsite }) => {
   const a = spotPoint("police", site);
   const b = spotPoint("faction", site);
@@ -222,7 +280,18 @@ const BombMarker = ({ site }: { site: Bombsite }) => {
   );
 };
 
-const MapArt = ({ conflict, bomb = null }: { conflict: Bombsite | null; bomb?: Bombsite | null }) => (
+const MapArt = ({
+  conflict,
+  bomb = null,
+  detail = null,
+  fighters,
+}: {
+  conflict: Bombsite | null;
+  bomb?: Bombsite | null;
+  /** Site ampliado, com os detalhes à mostra. */
+  detail?: Bombsite | null;
+  fighters?: SiteFighters;
+}) => (
   <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="absolute inset-0 h-full w-full" aria-hidden="true">
     <defs>
       <radialGradient id="map-ground" cx="0.5" cy="0.45" r="0.75">
@@ -279,6 +348,7 @@ const MapArt = ({ conflict, bomb = null }: { conflict: Bombsite | null; bomb?: B
       {(["A", "B", "C"] as Bombsite[]).map((s) => (
         <Site key={s} site={s} conflict={conflict === s} />
       ))}
+      {detail && <SiteDetails key={detail} site={detail} fighters={conflict === detail ? fighters : undefined} />}
       {conflict && <ConflictLine site={conflict} />}
       {bomb && <BombMarker site={bomb} />}
 
@@ -311,6 +381,7 @@ const MapArt = ({ conflict, bomb = null }: { conflict: Bombsite | null; bomb?: B
 /* ───────────── FICHAS ───────────── */
 
 const TOKEN_SPEED = 0.16; // unidades do mapa por ms
+const BASE_THROW = 150; // alcance do arremesso saindo da base
 
 /** Tremida do peão a cada impacto, no ritmo do efeito. */
 type TokenHit = { delay: number; duration: number; count: number };
@@ -318,13 +389,11 @@ type TokenHit = { delay: number; duration: number; count: number };
 const Token = ({
   team,
   spot,
-  effects = [],
   hit = null,
   onArrive,
 }: {
   team: TeamName;
   spot: MapSpot;
-  effects?: string[];
   hit?: TokenHit | null;
   onArrive?: () => void;
 }) => {
@@ -332,7 +401,6 @@ const Token = ({
   const current = useRef<MapSpot>(spot);
   const arriveRef = useRef(onArrive);
   arriveRef.current = onArrive;
-  const [walking, setWalking] = useState(false);
   const p = getPalette(team);
 
   useEffect(() => {
@@ -349,7 +417,6 @@ const Token = ({
       return { ...pct(pt), offset: walked / total };
     });
 
-    setWalking(true);
     const duration = Math.max(700, total / TOKEN_SPEED);
     const animation = el.animate(keyframes, { duration, easing: "ease-in-out", fill: "forwards" });
     // O estilo já aponta para o destino; o timer cobre abas em segundo plano.
@@ -358,7 +425,6 @@ const Token = ({
       if (arrived) return;
       arrived = true;
       animation.cancel();
-      setWalking(false);
       arriveRef.current?.();
     };
     animation.onfinish = finish;
@@ -371,15 +437,10 @@ const Token = ({
       className="absolute"
       style={{ ...pct(spotPoint(team, spot)), width: "8%", transform: "translate(-50%, -50%)" }}
     >
-      {effects.includes("Molotov") && <Flames />}
       <div
         className="relative"
         style={{
-          animation: walking
-            ? "token-hop 300ms ease-in-out infinite"
-            : hit
-              ? `token-hit ${hit.duration}ms ease-in-out ${hit.delay}ms ${hit.count}`
-              : undefined,
+          animation: hit ? `token-hit ${hit.duration}ms ease-in-out ${hit.delay}ms ${hit.count}` : undefined,
         }}
       >
         <div
@@ -389,7 +450,6 @@ const Token = ({
           <Portrait team={team} crop="head" flip={team === "police"} className="block h-full w-full" />
         </div>
       </div>
-      {effects.includes("Smoke") && <SmokeCloud />}
     </div>
   );
 };
@@ -437,7 +497,11 @@ export type MapCameraFocus = {
   team?: TeamName;
   /** Foco total: escurece o que estiver fora da seleção. */
   dim?: boolean;
+  /** Só move a câmera, sem contorno na parte focada. */
+  plain?: boolean;
 };
+
+const isSite = (area: MapCameraFocus["area"]): area is Bombsite => area in SITE_Y;
 
 const focusRect = (focus: MapCameraFocus) => {
   if (focus.area === "full") return null;
@@ -461,15 +525,43 @@ const focusRect = (focus: MapCameraFocus) => {
 const focusFrame = (focus: MapCameraFocus) => {
   const r = focusRect(focus);
   if (!r) return null;
-  const scale = Math.min(MAP_W / (r.w + 160), MAP_H / (r.h + 140), 2.6);
+  // Bombsite ocupa quase todo o mapa: é onde o confronto acontece.
+  const scale = isSite(focus.area)
+    ? Math.min(MAP_W / (r.w + 40), MAP_H / (r.h + 54), 2.6)
+    : Math.min(MAP_W / (r.w + 160), MAP_H / (r.h + 140), 2.6);
   // Áreas da altura do mapa (campo da equipe): só o contorno, sem zoom.
   if (scale <= 1) return null;
   return { scale, cx: r.x + r.w / 2, cy: r.y + r.h / 2 };
 };
 
+/** Efeito no mapa e em qual metade do lugar ele aparece. */
+export type MapMark = { id: Card["id"]; name: string; spot: MapSpot; team: TeamName };
+
+/** Área do tamanho de um peão, onde o efeito fica enquanto durar. */
+const MarkSpot = ({ mark, children }: { mark: MapMark; children: ReactNode }) => (
+  <div
+    className="pointer-events-none absolute aspect-square"
+    style={{
+      ...pct(spotPoint(mark.team, mark.spot)),
+      width: "8%",
+      transform: "translate(-50%, -50%)",
+    }}
+  >
+    {children}
+  </div>
+);
+
+/** Onde a carta cai: na metade do oponente no site de quem jogou. */
+const landingPoint = (event: CombatEvent, spot: MapSpot): Point => {
+  const from = spotPoint(event.team, spot);
+  if (event.target === event.team) return from;
+  if (spot !== "BASE") return spotPoint(event.target, spot);
+  return { x: from.x + (event.team === "police" ? BASE_THROW : -BASE_THROW), y: from.y };
+};
+
 /** Tremida do alvo durante a ação da carta, se ela o atingir. */
 const tokenHit = (event: CombatEvent): TokenHit | null => {
-  if (event.blocked) return null;
+  if (!event.hit || event.blocked) return null;
   const kind = fxKind(event.card);
   if (kind === "shots")
     return { delay: BULLET_TRAVEL_MS, duration: BULLET_GAP_MS, count: event.card.damage };
@@ -487,6 +579,7 @@ export const MapBoard = ({
   flat = false,
   effects,
   fx = null,
+  fighters,
   focus = null,
   className,
   onArrive,
@@ -498,11 +591,13 @@ export const MapBoard = ({
   autoZoom?: boolean;
   /** Visto de cima, sem inclinação (minimapa). */
   flat?: boolean;
-  /** Efeitos ativos em cada time (Smoke, Molotov). */
-  effects?: Record<TeamName, string[]>;
+  /** Efeitos ativos no mapa (Smoke, Molotov). */
+  effects?: MapMark[];
   /** Carta sendo animada: a câmera fecha em quem jogou. */
   fx?: { event: CombatEvent; stage: FxStage } | null;
-  /** Foco pedido pelo tutorial; tem prioridade sobre o zoom automático. */
+  /** Nome e vida dos jogadores, mostrados no site do confronto. */
+  fighters?: SiteFighters;
+  /** Foco pedido pelo tutorial ou pelos botões de câmera; tem prioridade sobre o zoom automático. */
   focus?: MapCameraFocus | null;
   className?: string;
   onArrive?: (team: TeamName) => void;
@@ -511,17 +606,15 @@ export const MapBoard = ({
   const fxSpot = fx && fx.stage !== "flight" && fx.stage !== "return" ? positions[fx.event.team] : null;
   const fxFocus: MapCameraFocus | null =
     !fxSpot ? null : fxSpot === "BASE" ? { area: "base", team: fx?.event.team } : { area: fxSpot };
+  // No mapa grande, o site do confronto se expande sozinho.
+  const conflictFocus: MapCameraFocus | null = !flat && conflict ? { area: conflict } : null;
+  const shownFocus = focus ?? fxFocus ?? conflictFocus;
   const transform = zoomTransform(
-    focus
-      ? focusFrame(focus)
-      : fxFocus
-        ? focusFrame(fxFocus)
-        : autoZoom
-          ? zoomFrame(positions, bomb)
-          : null,
+    shownFocus ? focusFrame(shownFocus) : autoZoom ? zoomFrame(positions, bomb) : null,
   );
+  const detail = !flat && shownFocus && isSite(shownFocus.area) ? shownFocus.area : null;
   const acting = fx?.stage === "action" ? fx.event : null;
-  const ring = focus ? focusRect(focus) : null;
+  const ring = focus && !focus.plain ? focusRect(focus) : null;
 
   return (
     <div className={className} style={{ perspective: flat ? undefined : 900 }}>
@@ -538,7 +631,7 @@ export const MapBoard = ({
             className="absolute inset-0"
             style={{ transform, transformOrigin: "0 0", transition: "transform 700ms cubic-bezier(0.4, 0, 0.2, 1)" }}
           >
-            <MapArt conflict={conflict} bomb={bomb} />
+            <MapArt conflict={conflict} bomb={bomb} detail={detail} fighters={fighters} />
             {ring && (
               <div
                 className="pointer-events-none absolute animate-pulse rounded-xl"
@@ -552,21 +645,34 @@ export const MapBoard = ({
                 }}
               />
             )}
+            {effects
+              ?.filter((mark) => mark.name === "Molotov")
+              .map((mark) => (
+                <MarkSpot key={mark.id} mark={mark}>
+                  <Flames />
+                </MarkSpot>
+              ))}
             {(["faction", "police"] as TeamName[]).map((team) => (
               <Token
                 key={team}
                 team={team}
                 spot={positions[team]}
-                effects={effects?.[team]}
                 hit={acting?.target === team ? tokenHit(acting) : null}
                 onArrive={() => onArrive?.(team)}
               />
             ))}
+            {effects
+              ?.filter((mark) => mark.name === "Smoke")
+              .map((mark) => (
+                <MarkSpot key={mark.id} mark={mark}>
+                  <SmokeCloud />
+                </MarkSpot>
+              ))}
             {acting && (
               <CombatFx
                 event={acting}
                 from={spotPoint(acting.team, positions[acting.team])}
-                to={spotPoint(acting.target, positions[acting.target])}
+                to={landingPoint(acting, positions[acting.team])}
                 width={MAP_W}
                 height={MAP_H}
               />

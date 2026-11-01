@@ -59,6 +59,7 @@ export const InventorySlot = ({
     buyGate.allowed &&
     (turnPhase === "BUYING" || turnPhase === "PLACING") &&
     type === "hand" &&
+    !game.state.boughtThisTurn &&
     inventory.length < 3 &&
     index === inventory.length &&
     !card;

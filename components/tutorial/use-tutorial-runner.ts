@@ -86,7 +86,7 @@ export const useTutorialRunner = ({
       } else if (turnPhase === "COUNTDOWN" || tool.isRolling) {
         return;
       } else {
-        once(`end-turn-${countdown.round}`, 700, () => gameRef.current.dispatch({ type: "END_TURN" }));
+        once(`end-turn-${countdown.round}-${currentTeam}`, 700, () => gameRef.current.dispatch({ type: "END_TURN" }));
         return;
       }
     }

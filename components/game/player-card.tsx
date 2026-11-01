@@ -4,7 +4,7 @@ import type { Card } from "@/lib/types";
 import { Portrait } from "@/components/art/noir";
 import { GameEngine } from "@/game/useGameEngine";
 import { Bombsite } from "@/game/game-types";
-import { MAX_HEALTH } from "@/game/card-effects";
+import { MAX_HEALTH, activeEffectsOn } from "@/game/card-effects";
 
 export const PlayerCard = ({
   game,
@@ -20,12 +20,13 @@ export const PlayerCard = ({
   const cardTeam = isRight ? "faction" : "police";
   const isActive = game.state.currentTeam === cardTeam;
 
-  const { health, position, effects } = game.state.teams[cardTeam];
+  const { health, position } = game.state.teams[cardTeam];
+  const effects = activeEffectsOn(game.state, cardTeam);
 
   return (
     <div
       className={`
-        flex flex-col gap-3 p-4
+        flex flex-col gap-3 rounded-xl p-4 bg-black/20 backdrop-blur-sm
         transform transition-all duration-700 cursor-default
         [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]
         min-w-[220px]

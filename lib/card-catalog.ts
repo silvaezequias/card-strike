@@ -52,14 +52,14 @@ const CARD_RULES: Record<string, CardRules> = {
     interactions: ["Só tem efeito se houver uma BOMBA plantada."],
   },
   Granada: {
-    mapEffect: null,
+    mapEffect: "Explode no seu bombsite; dura só aquele round.",
     interactions: [
       "Com Smoke ativa, causa só 2 de dano.",
-      "Destrói a Smoke ativa.",
+      "Destrói a Smoke do oponente no site.",
     ],
   },
   Smoke: {
-    mapEffect: "Cobre a posição de quem jogou por 3 rounds.",
+    mapEffect: "Cobre o lugar de quem jogou por 3 rounds; só protege quem ficar nele.",
     interactions: [
       "Protege contra armas.",
       "Apaga e protege contra Molotov.",
@@ -68,8 +68,8 @@ const CARD_RULES: Record<string, CardRules> = {
     ],
   },
   Molotov: {
-    mapEffect: "Deixa fogo no alvo por 3 rounds.",
-    interactions: ["Apagada por Smoke."],
+    mapEffect: "Deixa fogo no bombsite por 3 rounds e queima o oponente que estiver lá, mesmo chegando depois.",
+    interactions: ["Apagada por Smoke.", "Não queima quem jogou."],
   },
   Flashbang: {
     mapEffect: null,

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowLeftRight,
   BookOpen,
+  Bot,
   ChevronLeft,
   ChevronRight,
   Crosshair,
@@ -19,13 +20,12 @@ import {
 } from "lucide-react";
 import { Portrait } from "@/components/art/noir";
 import { SetupSettings, TeamName } from "@/game/game-types";
-import { LobbyPlayer, useGameSetup } from "@/game/useSetupGame";
+import { BOT_NAME, GameMode, LobbyPlayer, useGameSetup } from "@/game/useSetupGame";
 
-/** Só o modo local existe; os outros aparecem como próximos passos. */
-const MODES = [
-  { id: "solo", label: "1 jogador", icon: User, available: false },
-  { id: "local", label: "Local", icon: Users, available: true },
-  { id: "online", label: "Online", icon: Globe, available: false },
+const MODES: { id: GameMode | "online"; label: string; icon: typeof User }[] = [
+  { id: "solo", label: "1 jogador", icon: User },
+  { id: "local", label: "Local", icon: Users },
+  { id: "online", label: "Online", icon: Globe },
 ];
 
 const TEAM_STYLE = {
@@ -86,28 +86,30 @@ export const GameMenu = ({
   onStart: (setup: SetupSettings) => void;
 }) => {
   const lobby = useGameSetup();
-  const { players, isShuffling, namesFilled, canStart } = lobby;
+  const { mode, seats, botTeam, isShuffling, namesFilled, canStart } = lobby;
 
   const handleStart = () => {
     const setup = lobby.buildSetup();
     if (setup) onStart(setup);
   };
 
-  const bench = players
-    .map((player, index) => ({ player, index }))
-    .filter(({ player }) => !player.team);
+  const bench = seats.filter(({ player }) => !player.team);
 
   const hint = !namesFilled
-    ? "Digite o nome dos dois jogadores"
+    ? mode === "solo"
+      ? "Digite o seu nome"
+      : "Digite o nome dos dois jogadores"
     : bench.length > 0
-      ? "Coloque um jogador em cada time"
+      ? mode === "solo"
+        ? "Escolha o seu time"
+        : "Coloque um jogador em cada time"
       : "Times prontos";
 
   const teamSide = (team: TeamName) => {
     const style = TEAM_STYLE[team];
     const { icon: Icon, joinArrow: JoinArrow } = style;
-    const index = players.findIndex((p) => p.team === team);
-    const player = players[index];
+    const seat = seats.find(({ player }) => player.team === team);
+    const isBot = team === botTeam;
 
     return (
       <section
@@ -119,7 +121,7 @@ export const GameMenu = ({
           flip={team === "police"}
           backdrop={false}
           className={`pointer-events-none absolute -bottom-4 left-1/2 h-[85%] w-auto max-w-none -translate-x-1/2 transition-opacity duration-300 ${
-            player ? "opacity-90" : "opacity-25"
+            seat || isBot ? "opacity-90" : "opacity-25"
           }`}
         />
 
@@ -129,16 +131,21 @@ export const GameMenu = ({
         </div>
 
         <div className="relative rounded-xl bg-black/70 p-3 backdrop-blur-sm">
-          {player ? (
+          {isBot ? (
+            <p className="flex items-center gap-2 py-1 text-sm font-bold tracking-widest text-white">
+              <Bot size={18} className={style.text} />
+              {BOT_NAME}
+            </p>
+          ) : seat ? (
             <PlayerRow
-              index={index}
-              player={player}
-              onName={(name) => lobby.setPlayerName(index, name)}
+              index={seat.index}
+              player={seat.player}
+              onName={(name) => lobby.setPlayerName(seat.index, name)}
             >
               <button
                 aria-label="Tirar do time"
                 title="Tirar do time"
-                onClick={() => lobby.movePlayer(index, null)}
+                onClick={() => lobby.movePlayer(seat.index, null)}
                 disabled={isShuffling}
                 className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-white/15 bg-black/50 text-zinc-300 transition-colors hover:border-white/40 hover:text-white disabled:opacity-40"
               >
@@ -172,20 +179,29 @@ export const GameMenu = ({
       </header>
 
       <nav aria-label="Modo de jogo" className="mx-auto flex overflow-hidden rounded-lg border border-white/15">
-        {MODES.map(({ id, label, icon: Icon, available }) => (
-          <button
-            key={id}
-            disabled={!available}
-            aria-pressed={available}
-            className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest ${
-              available ? "bg-white text-black" : "cursor-not-allowed text-zinc-500"
-            }`}
-          >
-            <Icon size={14} />
-            {label}
-            {!available && <span className="text-[9px] tracking-wider text-zinc-600">Em breve</span>}
-          </button>
-        ))}
+        {MODES.map(({ id, label, icon: Icon }) => {
+          const available = id !== "online";
+          const selected = id === mode;
+          return (
+            <button
+              key={id}
+              disabled={!available}
+              aria-pressed={selected}
+              onClick={() => id !== "online" && lobby.setMode(id)}
+              className={`flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-colors ${
+                selected
+                  ? "bg-white text-black"
+                  : available
+                    ? "text-zinc-300 hover:bg-white/10 hover:text-white"
+                    : "cursor-not-allowed text-zinc-500"
+              }`}
+            >
+              <Icon size={14} />
+              {label}
+              {!available && <span className="text-[9px] tracking-wider text-zinc-600">Em breve</span>}
+            </button>
+          );
+        })}
       </nav>
 
       <main className="mx-auto grid w-full max-w-6xl flex-1 gap-4 md:grid-cols-[1fr_15rem_1fr]">
@@ -219,7 +235,7 @@ export const GameMenu = ({
 
           <button
             onClick={lobby.swapTeams}
-            disabled={isShuffling || bench.length === players.length}
+            disabled={isShuffling || bench.length === seats.length}
             className="flex items-center justify-center gap-2 rounded-lg border border-white/20 px-3 py-2.5 text-xs font-bold uppercase tracking-widest text-zinc-200 transition-colors hover:border-white/50 hover:text-white disabled:opacity-40"
           >
             <ArrowLeftRight size={15} />
