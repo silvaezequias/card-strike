@@ -253,7 +253,7 @@ const FocusDim = ({ rect }: { rect: Rect }) => (
 
 /** Contorno vermelho que pisca uma vez: carta de ataque fora de confronto. */
 /**
- * Fora de alcance: contorno vermelho no slot e um triângulo de atenção com "?"
+ * Fora de alcance: contorno vermelho no slot e um triângulo de atenção com "!"
  * por cima da carta (os jogadores não estão no mesmo bombsite).
  */
 const RangeWarning = ({ rect }: { rect: Rect }) => {
@@ -292,17 +292,9 @@ const RangeWarning = ({ rect }: { rect: Rect }) => {
             strokeWidth="5"
             strokeLinejoin="round"
           />
-          <text
-            x="50"
-            y="76"
-            textAnchor="middle"
-            fontSize="58"
-            fontWeight="900"
-            fontFamily="ui-sans-serif, system-ui, sans-serif"
-            fill="#fff"
-          >
-            ?
-          </text>
+          {/* Exclamação desenhada (não depende da fonte). */}
+          <rect x="44" y="30" width="12" height="34" rx="6" fill="#fff" />
+          <circle cx="50" cy="75" r="6.5" fill="#fff" />
         </svg>
       </div>
     </>
