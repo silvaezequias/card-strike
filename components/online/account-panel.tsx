@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { LogOut, User as UserIcon } from "lucide-react";
 import { api } from "@/lib/online/api";
 import { useOnline } from "@/lib/online/online-context";
+import { loginWithSteam, steam } from "@/lib/platform/steam";
 import {
   Avatar,
   FieldError,
@@ -196,6 +197,11 @@ export const AccountPanel = ({ onClose }: { onClose: () => void }) => {
         <p className="text-[10px] font-bold tracking-[0.3em] text-zinc-400">
           COM CONTA (TEM LISTA DE AMIGOS)
         </p>
+        {steam() && (
+          <button className={primaryButton} disabled={busy} onClick={() => run(loginWithSteam)}>
+            Entrar com a Steam
+          </button>
+        )}
         <ProviderButton
           provider="google"
           label="Entrar com Google"
