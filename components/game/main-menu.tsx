@@ -1,18 +1,37 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Bot, Home, Layers, Maximize2, Minimize2, Users, Volume2, VolumeX } from "lucide-react";
+import {
+  Bot,
+  Home,
+  Layers,
+  LogIn,
+  Maximize2,
+  Minimize2,
+  UserRound,
+  Users,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { Portrait } from "@/components/art/noir";
 import { getPalette } from "@/components/art/palette";
 import { Arena } from "@/components/game/menu-arena";
-import { SettingsButton, useFullscreen } from "@/components/settings/settings-panel";
+import {
+  SettingsButton,
+  useFullscreen,
+} from "@/components/settings/settings-panel";
 import { PlayLobby } from "@/components/game/game-menu";
 import { InventoryView } from "@/components/game/inventory-view";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { useMusic } from "@/game/useGameSounds";
 import { BOT_NAME, useGameSetup } from "@/game/useSetupGame";
 import { updateSettings, useSettings } from "@/lib/settings";
+import { useOnline } from "@/lib/online/online-context";
+import { AccountPanel } from "@/components/online/account-panel";
+import { FriendsPanel } from "@/components/online/friends-panel";
+import { InviteToasts } from "@/components/online/invite-toasts";
+import { Avatar } from "@/components/online/ui";
 
 /* ═══════════════════════════════════════════════
    MENU PRINCIPAL
@@ -24,20 +43,52 @@ import { updateSettings, useSettings } from "@/lib/settings";
 
 type View = "home" | "play" | "news" | "inventory";
 
-const TEAM_LABEL: Record<TeamName, string> = { police: "Polícia", faction: "Facção" };
+const TEAM_LABEL: Record<TeamName, string> = {
+  police: "Polícia",
+  faction: "Facção",
+};
 
 /** Novidades do jogo, da mais nova para a mais antiga. */
 const NEWS = [
-  { title: "Configurações", text: "Volumes separados com mudo, brilho, contraste, FPS e modo daltônico." },
-  { title: "Trilha sonora", text: "Música calma no menu, de guerra na partida e acelerada com a bomba plantada." },
-  { title: "Distribuição das cartas", text: "As mãos começam vazias e três cartas saem do baralho de cada time." },
-  { title: "Nova escolha de jogada", text: "Posicionar carta ou se posicionar em cartas no estilo do jogo (teclas 1 e 2)." },
-  { title: "Roleta 3D", text: "A roleta dos bombsites ganhou mesa própria, vista por todos os jogadores." },
-  { title: "Dado 3D com física", text: "Segure para balançar e solte para lançar o dado pela mesa inteira." },
-  { title: "Modo 1 jogador", text: "Jogue contra o BOT, que rola, compra e ataca sozinho." },
+  {
+    title: "Configurações",
+    text: "Volumes separados com mudo, brilho, contraste, FPS e modo daltônico.",
+  },
+  {
+    title: "Trilha sonora",
+    text: "Música calma no menu, de guerra na partida e acelerada com a bomba plantada.",
+  },
+  {
+    title: "Distribuição das cartas",
+    text: "As mãos começam vazias e três cartas saem do baralho de cada time.",
+  },
+  {
+    title: "Nova escolha de jogada",
+    text: "Posicionar carta ou se posicionar em cartas no estilo do jogo (teclas 1 e 2).",
+  },
+  {
+    title: "Roleta 3D",
+    text: "A roleta dos bombsites ganhou mesa própria, vista por todos os jogadores.",
+  },
+  {
+    title: "Dado 3D com física",
+    text: "Segure para balançar e solte para lançar o dado pela mesa inteira.",
+  },
+  {
+    title: "Modo 1 jogador",
+    text: "Jogue contra o BOT, que rola, compra e ataca sozinho.",
+  },
 ];
 
-const TopIcon = ({ label, onClick, children }: { label: string; onClick?: () => void; children: ReactNode }) => (
+const TopIcon = ({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick?: () => void;
+  children: ReactNode;
+}) => (
   <button
     type="button"
     onClick={onClick}
@@ -49,9 +100,20 @@ const TopIcon = ({ label, onClick, children }: { label: string; onClick?: () => 
   </button>
 );
 
-const tabClass = "px-3 py-1 text-sm font-semibold uppercase tracking-[0.15em] transition-colors";
+const tabClass =
+  "px-3 py-1 text-sm font-semibold uppercase tracking-[0.15em] transition-colors";
 
-const NavTab = ({ label, active, onClick, href }: { label: string; active?: boolean; onClick?: () => void; href?: string }) => {
+const NavTab = ({
+  label,
+  active,
+  onClick,
+  href,
+}: {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  href?: string;
+}) => {
   const className = `${tabClass} ${active ? "text-white" : "text-zinc-400 hover:text-white"}`;
   return href ? (
     <Link href={href} className={className}>
@@ -64,10 +126,20 @@ const NavTab = ({ label, active, onClick, href }: { label: string; active?: bool
   );
 };
 
-const Divider = () => <span className="h-4 w-px bg-white/20" aria-hidden="true" />;
+const Divider = () => (
+  <span className="h-4 w-px bg-white/20" aria-hidden="true" />
+);
 
 /** Operador em pé no centro, com a plaqueta do jogador à frente. */
-const Hero = ({ team, name, onPlay }: { team: TeamName; name: string; onPlay: () => void }) => {
+const Hero = ({
+  team,
+  name,
+  onPlay,
+}: {
+  team: TeamName;
+  name: string;
+  onPlay: () => void;
+}) => {
   const p = getPalette(team);
   return (
     <div className="relative flex h-full items-end justify-center">
@@ -89,20 +161,39 @@ const Hero = ({ team, name, onPlay }: { team: TeamName; name: string; onPlay: ()
         className="group absolute bottom-[3%] left-1/2 flex translate-x-[60%] flex-col items-center gap-2"
       >
         <span className="flex items-center gap-2 rounded-md bg-black/55 px-3 py-1 text-sm font-bold text-white backdrop-blur-sm">
-          <span className="h-2 w-2 rounded-full" style={{ background: p.rim, boxShadow: `0 0 8px ${p.glow}` }} />
+          <span
+            className="h-2 w-2 rounded-full"
+            style={{ background: p.rim, boxShadow: `0 0 8px ${p.glow}` }}
+          />
           {name}
         </span>
         <span
           className="flex w-20 flex-col items-center gap-1 rounded-md border bg-black/60 px-2 py-2 backdrop-blur-sm transition-colors group-hover:bg-black/80"
           style={{ borderColor: `${p.rim}66` }}
         >
-          <span className="h-12 w-12 overflow-hidden rounded-full border-2" style={{ borderColor: p.rim }}>
-            <Portrait team={team} crop="head" flip={team === "police"} className="block h-full w-full" />
+          <span
+            className="h-12 w-12 overflow-hidden rounded-full border-2"
+            style={{ borderColor: p.rim }}
+          >
+            <Portrait
+              team={team}
+              crop="head"
+              flip={team === "police"}
+              className="block h-full w-full"
+            />
           </span>
-          <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: p.rim }}>
+          <span
+            className="text-[9px] font-bold uppercase tracking-widest"
+            style={{ color: p.rim }}
+          >
             {TEAM_LABEL[team]}
           </span>
-          <span className="h-1 w-full rounded-full" style={{ background: `linear-gradient(90deg, ${p.accent}, ${p.rim})` }} />
+          <span
+            className="h-1 w-full rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${p.accent}, ${p.rim})`,
+            }}
+          />
         </span>
       </button>
     </div>
@@ -111,23 +202,48 @@ const Hero = ({ team, name, onPlay }: { team: TeamName; name: string; onPlay: ()
 
 const NewsPanel = () => (
   <div className="mx-auto flex h-full w-full max-w-2xl flex-col gap-3 overflow-y-auto px-4 py-8">
-    <h2 className="text-2xl font-black uppercase tracking-[0.25em] text-white">Novidades</h2>
+    <h2 className="text-2xl font-black uppercase tracking-[0.25em] text-white">
+      Novidades
+    </h2>
     {NEWS.map(({ title, text }, i) => (
-      <article key={title} className="rounded-lg border border-white/10 bg-black/55 p-4 backdrop-blur-sm">
-        <p className="text-[10px] font-bold tracking-[0.3em] text-[#c9bcff]">{i === 0 ? "NOVO" : "ATUALIZAÇÃO"}</p>
-        <h3 className="text-base font-black uppercase tracking-wider text-white">{title}</h3>
+      <article
+        key={title}
+        className="rounded-lg border border-white/10 bg-black/55 p-4 backdrop-blur-sm"
+      >
+        <p className="text-[10px] font-bold tracking-[0.3em] text-[#c9bcff]">
+          {i === 0 ? "NOVO" : "ATUALIZAÇÃO"}
+        </p>
+        <h3 className="text-base font-black uppercase tracking-wider text-white">
+          {title}
+        </h3>
         <p className="text-sm text-zinc-300">{text}</p>
       </article>
     ))}
   </div>
 );
 
-export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void }) => {
+export const GameMenu = ({
+  onStart,
+}: {
+  onStart: (setup: SetupSettings) => void;
+}) => {
   useMusic("menu");
   const lobby = useGameSetup();
   const [view, setView] = useState<View>("home");
   const [fullscreen, toggleFullscreen] = useFullscreen();
   const settings = useSettings();
+  const online = useOnline();
+  const [panel, setPanel] = useState<"account" | "friends" | null>(null);
+  const closePanel = useCallback(() => setPanel(null), []);
+  const onlineFriends = online.friends.friends.filter(
+    (f) => f.status !== "offline",
+  );
+  const pendingRequests = online.friends.incoming.length;
+  // Entrou numa sala (convite aceito, Steam...): vai para a aba Jogar, no online.
+  const roomId = online.room?.id;
+  useEffect(() => {
+    if (roomId) setView("play");
+  }, [roomId]);
 
   const me = lobby.seats[0]?.player;
   const heroTeam: TeamName = me?.team ?? "police";
@@ -141,7 +257,16 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
       team: player.team,
       bot: false,
     })),
-    ...(lobby.botTeam ? [{ key: "bot", name: BOT_NAME, team: lobby.botTeam as TeamName | null, bot: true }] : []),
+    ...(lobby.botTeam
+      ? [
+          {
+            key: "bot",
+            name: BOT_NAME,
+            team: lobby.botTeam as TeamName | null,
+            bot: true,
+          },
+        ]
+      : []),
   ].filter((entry, i) => entry.bot || lobby.mode === "local" || i === 0);
 
   return (
@@ -154,17 +279,32 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
           <TopIcon label="Início" onClick={() => setView("home")}>
             <Home size={18} />
           </TopIcon>
-          <Link href="/cartas" aria-label="Cartas" title="Cartas" className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white">
+          <Link
+            href="/cartas"
+            aria-label="Cartas"
+            title="Cartas"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
             <Layers size={18} />
           </Link>
           <SettingsButton className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white" />
-          <TopIcon label={fullscreen ? "Sair da tela cheia" : "Tela cheia"} onClick={toggleFullscreen}>
+          <TopIcon
+            label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            onClick={toggleFullscreen}
+          >
             {fullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
           </TopIcon>
         </div>
 
-        <nav aria-label="Menu principal" className="absolute left-1/2 flex -translate-x-1/2 items-center gap-3">
-          <NavTab label="Inventário" active={view === "inventory"} onClick={() => setView("inventory")} />
+        <nav
+          aria-label="Menu principal"
+          className="absolute left-1/2 flex -translate-x-1/2 items-center gap-3"
+        >
+          <NavTab
+            label="Inventário"
+            active={view === "inventory"}
+            onClick={() => setView("inventory")}
+          />
           <Divider />
           <NavTab label="Tutorial" href="/tutorial" />
           <Divider />
@@ -174,20 +314,86 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
             className={`px-4 text-2xl font-light uppercase tracking-[0.2em] transition-colors ${
               view === "play" ? "text-white" : "text-zinc-200 hover:text-white"
             }`}
-            style={view === "play" ? { textShadow: "0 0 18px rgba(201,188,255,0.8)" } : undefined}
+            style={
+              view === "play"
+                ? { textShadow: "0 0 18px rgba(201,188,255,0.8)" }
+                : undefined
+            }
           >
             Jogar
           </button>
           <Divider />
-          <NavTab label="Novidades" active={view === "news"} onClick={() => setView("news")} />
+          <NavTab
+            label="Novidades"
+            active={view === "news"}
+            onClick={() => setView("news")}
+          />
           <Divider />
-          <NavTab label="Início" active={view === "home"} onClick={() => setView("home")} />
+          <NavTab
+            label="Início"
+            active={view === "home"}
+            onClick={() => setView("home")}
+          />
         </nav>
       </header>
 
       {/* Lateral direita: jogadores */}
       <aside className="absolute bottom-0 right-0 top-0 z-30 flex w-14 flex-col items-center gap-2 border-l border-white/10 bg-black/55 py-3 backdrop-blur-md">
-        <span className="flex flex-col items-center text-zinc-300" title="Jogadores">
+        {/* Conta e amigos (online) */}
+        <button
+          type="button"
+          onClick={() => setPanel("account")}
+          title={
+            online.me
+              ? `${online.me.handle} · sua conta`
+              : "Entrar para jogar online"
+          }
+          className="flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+        >
+          {online.me ? (
+            <Avatar user={online.me} size={34} />
+          ) : (
+            <LogIn size={18} />
+          )}
+        </button>
+        {online.me && (
+          <button
+            type="button"
+            onClick={() => setPanel("friends")}
+            title={
+              pendingRequests
+                ? `Amigos · ${pendingRequests} pedido(s)`
+                : "Amigos"
+            }
+            className="relative flex h-9 w-9 flex-col items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
+          >
+            <UserRound size={17} />
+            <span className="text-[9px]">
+              {online.me.kind === "account" ? onlineFriends.length : "–"}
+            </span>
+            {pendingRequests > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ffb020] px-1 text-[9px] font-black text-black">
+                {pendingRequests}
+              </span>
+            )}
+          </button>
+        )}
+        {onlineFriends.slice(0, 6).map((f) => (
+          <button
+            key={f.id}
+            type="button"
+            onClick={() => setPanel("friends")}
+            title={`${f.handle} · amigo`}
+            className="transition-transform hover:scale-105"
+          >
+            <Avatar user={f} size={32} />
+          </button>
+        ))}
+        <span className="h-px w-8 bg-white/15" />
+        <span
+          className="flex flex-col items-center text-zinc-300"
+          title="Jogadores"
+        >
           <Users size={18} />
           <span className="text-[9px]">{roster.length}</span>
         </span>
@@ -204,14 +410,22 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
               style={{ borderColor: color }}
             >
               {team ? (
-                <Portrait team={team} crop="head" flip={team === "police"} className="block h-full w-full" />
+                <Portrait
+                  team={team}
+                  crop="head"
+                  flip={team === "police"}
+                  className="block h-full w-full"
+                />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-sm font-black text-zinc-400">
                   {name.slice(0, 1).toUpperCase()}
                 </span>
               )}
               {bot && (
-                <Bot size={12} className="absolute bottom-0 right-0 rounded-tl bg-black/80 p-0.5 text-white" />
+                <Bot
+                  size={12}
+                  className="absolute bottom-0 right-0 rounded-tl bg-black/80 p-0.5 text-white"
+                />
               )}
             </button>
           );
@@ -230,24 +444,45 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
       <main className="absolute bottom-0 left-0 right-14 top-14 z-10">
         {view === "home" && (
           <>
-            <Hero team={heroTeam} name={heroName} onPlay={() => setView("play")} />
+            <Hero
+              team={heroTeam}
+              name={heroName}
+              onPlay={() => setView("play")}
+            />
             <div className="pointer-events-none absolute bottom-10 left-8 max-w-xs">
-              <p className="text-[10px] font-bold tracking-[0.4em] text-zinc-400">OPERAÇÃO TÁTICA</p>
-              <h1 className="text-4xl font-black tracking-[0.2em] text-white drop-shadow-lg">CARD STRIKE</h1>
-              <p className="mt-1 text-xs text-zinc-400">Cartas, dados e bombsites. Clique em JOGAR para montar os times.</p>
+              <p className="text-[10px] font-bold tracking-[0.4em] text-zinc-400">
+                OPERAÇÃO TÁTICA
+              </p>
+              <h1 className="text-4xl font-black tracking-[0.2em] text-white drop-shadow-lg">
+                CARD STRIKE
+              </h1>
+              <p className="mt-1 text-xs text-zinc-400">
+                Cartas, dados e bombsites. Clique em JOGAR para montar os times.
+              </p>
             </div>
           </>
         )}
         {view === "play" && (
           <div className="h-full overflow-y-auto bg-black/30">
-            <PlayLobby lobby={lobby} onStart={onStart} />
+            <PlayLobby
+              lobby={lobby}
+              onStart={onStart}
+              initialOnline={!!online.room}
+              key={online.room ? "online" : "local"}
+            />
           </div>
         )}
         {view === "news" && <NewsPanel />}
         {view === "inventory" && <InventoryView initialTeam={heroTeam} />}
       </main>
 
-      <p className="pointer-events-none absolute bottom-1 left-2 z-20 text-[10px] text-zinc-500">CARD STRIKE · build de testes</p>
+      <InviteToasts />
+      {panel === "account" && <AccountPanel onClose={closePanel} />}
+      {panel === "friends" && <FriendsPanel onClose={closePanel} />}
+
+      <p className="pointer-events-none absolute bottom-1 left-2 z-20 text-[10px] text-zinc-500">
+        CARD STRIKE · build de testes
+      </p>
     </div>
   );
 };
