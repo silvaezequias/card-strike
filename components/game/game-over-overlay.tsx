@@ -17,6 +17,7 @@ export const GameOverOverlay = ({
   winnerName,
   subMessage,
   onRetry,
+  retryLabel,
 }: {
   visible: boolean;
   winner: TeamName;
@@ -25,6 +26,7 @@ export const GameOverOverlay = ({
   winnerName: string;
   subMessage: string;
   onRetry: () => void;
+  retryLabel?: string;
 }) => {
   if (!visible) return null;
   const p = getPalette(winner);
@@ -53,7 +55,7 @@ export const GameOverOverlay = ({
           className="mt-8 px-8 py-3 text-white rounded border-2 bg-black/60 font-bold tracking-widest transition-[filter] hover:brightness-125"
           style={{ borderColor: color, boxShadow: `0 0 18px ${glow}` }}
         >
-          {defeat ? "TENTAR NOVAMENTE" : "JOGAR NOVAMENTE"}
+          {retryLabel ?? (defeat ? "TENTAR NOVAMENTE" : "JOGAR NOVAMENTE")}
         </button>
       </div>
     </div>
