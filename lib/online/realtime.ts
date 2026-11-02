@@ -18,13 +18,18 @@ let supabase: SupabaseClient | null = null;
 const getSupabase = async () => {
   if (!supabase) {
     const { createClient } = await import("@supabase/supabase-js");
-    supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } });
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: { persistSession: false },
+    });
   }
   return supabase;
 };
 
 /** Assina os canais; devolve a função que cancela. */
-export const subscribe = (channels: string[], onEvent: (event: ClientEvent) => void) => {
+export const subscribe = (
+  channels: string[],
+  onEvent: (event: ClientEvent) => void,
+) => {
   if (channels.length === 0) return () => {};
 
   if (SUPABASE_URL && SUPABASE_KEY) {
@@ -35,7 +40,13 @@ export const subscribe = (channels: string[], onEvent: (event: ClientEvent) => v
       for (const channel of channels) {
         const sub = client
           .channel(channel)
-          .on("broadcast", { event: "*" }, (message) => onEvent({ channel, event: message.event, payload: message.payload }))
+          .on("broadcast", { event: "*" }, (message) =>
+            onEvent({
+              channel,
+              event: message.event,
+              payload: message.payload,
+            }),
+          )
           .subscribe();
         subs.push(sub);
       }
@@ -46,7 +57,9 @@ export const subscribe = (channels: string[], onEvent: (event: ClientEvent) => v
     };
   }
 
-  const source = new EventSource(`/api/realtime?channels=${encodeURIComponent(channels.join(","))}`);
+  const source = new EventSource(
+    `/api/realtime?channels=${encodeURIComponent(channels.join(","))}`,
+  );
   source.onmessage = (message) => {
     try {
       onEvent(JSON.parse(message.data));

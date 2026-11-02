@@ -174,7 +174,7 @@ const Header = ({
         isRight ? "text-right" : ""
       }`}
     >
-      HP: <span className="text-white font-bold">{health}/20</span>
+      HP: <span className="text-white font-bold">{health}/{MAX_HEALTH}</span>
     </div>
   </>
 );

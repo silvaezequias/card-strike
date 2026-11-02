@@ -84,4 +84,9 @@ create index invites_to on invites (to_id, status);
 -- Fila: quem não renova a presença em 30 s sai sozinho.
 alter table match_queue add column seen_at timestamptz not null default now();
 `,
+  `
+-- Sala: o dono escolhe o modo de jogo e as regras antes de começar.
+alter table rooms add column mode text not null default 'bombsite';
+alter table rooms add column rules jsonb not null default '{}'::jsonb;
+`,
 ];

@@ -198,7 +198,11 @@ export const AccountPanel = ({ onClose }: { onClose: () => void }) => {
           COM CONTA (TEM LISTA DE AMIGOS)
         </p>
         {steam() && (
-          <button className={primaryButton} disabled={busy} onClick={() => run(loginWithSteam)}>
+          <button
+            className={primaryButton}
+            disabled={busy}
+            onClick={() => run(loginWithSteam)}
+          >
             Entrar com a Steam
           </button>
         )}

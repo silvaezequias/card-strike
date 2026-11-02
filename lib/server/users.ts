@@ -25,7 +25,8 @@ export type User = {
 /** Visto há menos disso: online. */
 export const ONLINE_WINDOW_MS = 75_000;
 
-const USER_COLUMNS = "id, kind, name, tag, avatar_url, status, last_seen, steam_id";
+const USER_COLUMNS =
+  "id, kind, name, tag, avatar_url, status, last_seen, steam_id";
 
 export class HttpError extends Error {
   constructor(
@@ -44,16 +45,20 @@ export const cleanName = (raw: unknown) => {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 16);
-  if (name.length < 3) throw new HttpError(400, "O nome precisa ter de 3 a 16 caracteres.");
+  if (name.length < 3)
+    throw new HttpError(400, "O nome precisa ter de 3 a 16 caracteres.");
   return name;
 };
 
 export const handle = (user: Pick<User, "name" | "tag">) =>
-  user.tag == null ? user.name : `${user.name}#${String(user.tag).padStart(4, "0")}`;
+  user.tag == null
+    ? user.name
+    : `${user.name}#${String(user.tag).padStart(4, "0")}`;
 
 /** Visão pública de um usuário (o que os outros jogadores veem). */
 export const publicUser = (user: User) => {
-  const online = Date.now() - new Date(user.last_seen).getTime() < ONLINE_WINDOW_MS;
+  const online =
+    Date.now() - new Date(user.last_seen).getTime() < ONLINE_WINDOW_MS;
   return {
     id: user.id,
     kind: user.kind,
@@ -62,6 +67,8 @@ export const publicUser = (user: User) => {
     handle: handle(user),
     avatarUrl: user.avatar_url,
     status: online ? user.status : "offline",
+    /** Conta ligada à Steam (só o fato; o SteamID não sai do servidor). */
+    steam: !!user.steam_id,
   };
 };
 
@@ -69,7 +76,10 @@ export type PublicUser = ReturnType<typeof publicUser>;
 
 export const findUser = async (id: string, db?: Pick<Db, "query">) => {
   const conn = db ?? (await getDb());
-  const [user] = await conn.query<User>(`select ${USER_COLUMNS} from users where id = $1`, [id]);
+  const [user] = await conn.query<User>(
+    `select ${USER_COLUMNS} from users where id = $1`,
+    [id],
+  );
   return user ?? null;
 };
 
@@ -83,7 +93,8 @@ export const requireUser = async () => {
 
 export const requireAccount = async () => {
   const user = await requireUser();
-  if (user.kind !== "account") throw new HttpError(403, "Crie uma conta para ter lista de amigos.");
+  if (user.kind !== "account")
+    throw new HttpError(403, "Crie uma conta para ter lista de amigos.");
   return user;
 };
 
@@ -100,7 +111,10 @@ export const createGuest = async (name: string) => {
 const freeTag = async (db: Pick<Db, "query">, name: string) => {
   for (let i = 0; i < 20; i++) {
     const tag = 1 + Math.floor(Math.random() * 9999);
-    const taken = await db.query(`select 1 from users where kind = 'account' and lower(name) = lower($1) and tag = $2`, [name, tag]);
+    const taken = await db.query(
+      `select 1 from users where kind = 'account' and lower(name) = lower($1) and tag = $2`,
+      [name, tag],
+    );
     if (taken.length === 0) return tag;
   }
   throw new HttpError(409, "Esse nome está muito disputado. Tente outro.");
@@ -126,7 +140,10 @@ export const upsertProviderAccount = async ({
   const db = await getDb();
   const column = `${provider}_id`;
   return db.tx(async (tx) => {
-    const [existing] = await tx.query<User>(`select ${USER_COLUMNS} from users where ${column} = $1`, [providerId]);
+    const [existing] = await tx.query<User>(
+      `select ${USER_COLUMNS} from users where ${column} = $1`,
+      [providerId],
+    );
     if (existing) return existing;
 
     if (linkTo) {
@@ -157,14 +174,18 @@ export const renameAccount = async (userId: string, rawName: string) => {
   const db = await getDb();
   return db.tx(async (tx) => {
     const tag = await freeTag(tx, name);
-    const [user] = await tx.query<User>(`update users set name = $2, tag = $3 where id = $1 returning ${USER_COLUMNS}`, [userId, name, tag]);
+    const [user] = await tx.query<User>(
+      `update users set name = $2, tag = $3 where id = $1 returning ${USER_COLUMNS}`,
+      [userId, name, tag],
+    );
     return user;
   });
 };
 
 /** Responde erros conhecidos com o status certo nas rotas da API. */
 export const apiError = (error: unknown) => {
-  if (error instanceof HttpError) return Response.json({ error: error.message }, { status: error.status });
+  if (error instanceof HttpError)
+    return Response.json({ error: error.message }, { status: error.status });
   console.error(error);
   return Response.json({ error: "Erro no servidor." }, { status: 500 });
 };

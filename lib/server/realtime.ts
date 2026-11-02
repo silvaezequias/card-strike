@@ -13,7 +13,11 @@ import { env, realtimeKey, useSupabaseRealtime } from "./env";
    por isso o servidor só publica, nunca escuta.
    ═══════════════════════════════════════════════ */
 
-export type RealtimeEvent = { channel: string; event: string; payload: unknown };
+export type RealtimeEvent = {
+  channel: string;
+  event: string;
+  payload: unknown;
+};
 
 type Listener = (event: RealtimeEvent) => void;
 type Global = typeof globalThis & { __cardStrikeBus?: Set<Listener> };
@@ -25,7 +29,11 @@ export const localBus = () => {
   return g.__cardStrikeBus;
 };
 
-export const publish = async (channel: string, event: string, payload: unknown = {}) => {
+export const publish = async (
+  channel: string,
+  event: string,
+  payload: unknown = {},
+) => {
   if (useSupabaseRealtime()) {
     try {
       await fetch(`${env.supabaseUrl}/realtime/v1/api/broadcast`, {
@@ -35,7 +43,9 @@ export const publish = async (channel: string, event: string, payload: unknown =
           apikey: realtimeKey(),
           Authorization: `Bearer ${realtimeKey()}`,
         },
-        body: JSON.stringify({ messages: [{ topic: channel, event, payload }] }),
+        body: JSON.stringify({
+          messages: [{ topic: channel, event, payload }],
+        }),
       });
     } catch (error) {
       // O estado fica salvo; quem perder o aviso recarrega pelo próximo pedido.
@@ -46,5 +56,8 @@ export const publish = async (channel: string, event: string, payload: unknown =
   localBus().forEach((listener) => listener({ channel, event, payload }));
 };
 
-export const publishMany = (channels: string[], event: string, payload: unknown = {}) =>
-  Promise.all(channels.map((channel) => publish(channel, event, payload)));
+export const publishMany = (
+  channels: string[],
+  event: string,
+  payload: unknown = {},
+) => Promise.all(channels.map((channel) => publish(channel, event, payload)));

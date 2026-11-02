@@ -20,6 +20,7 @@ import { MapBoard } from "@/components/game/map-board";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { BOT_NAME, GameMode, useGameSetup } from "@/game/useSetupGame";
 import { OnlinePlay } from "@/components/online/online-play";
+import { TeamSelect } from "@/components/game/team-select";
 
 /* ═══════════════════════════════════════════════
    ABA JOGAR
@@ -189,6 +190,45 @@ const SoonCard = () => (
 );
 
 /** Aba JOGAR do menu: tipo de partida, times, modo e início. */
+/** Regra da partida: interruptor com explicação. */
+const RuleToggle = ({
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    onClick={() => onChange(!checked)}
+    className="flex items-start gap-3 rounded-sm border border-white/10 bg-black/40 p-2.5 text-left transition-colors hover:border-white/30"
+  >
+    <span
+      className="relative mt-0.5 h-4 w-8 shrink-0 rounded-full transition-colors"
+      style={{ background: checked ? GO : "#3f3f46" }}
+    >
+      <span
+        className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-[left]"
+        style={{ left: checked ? 18 : 2 }}
+      />
+    </span>
+    <span className="flex flex-col gap-0.5">
+      <span className="text-xs font-bold uppercase tracking-wider text-white">
+        {label}
+      </span>
+      <span className="text-[11px] leading-snug text-zinc-400">
+        {description}
+      </span>
+    </span>
+  </button>
+);
+
 export const PlayLobby = ({
   lobby,
   onStart,
@@ -199,27 +239,31 @@ export const PlayLobby = ({
   initialOnline?: boolean;
 }) => {
   const [online, setOnline] = useState(initialOnline);
-  const { mode, seats, botTeam, isShuffling, namesFilled, canStart } = lobby;
-  const active = seats.filter((_, i) => mode === "local" || i === 0);
-  const bench = active.filter(({ player }) => !player.team);
+  const [choosingTeams, setChoosingTeams] = useState(false);
+  const { mode, seats, namesFilled } = lobby;
 
-  const hint = !namesFilled
-    ? mode === "solo"
+  const hint = namesFilled
+    ? "Próximo: escolher os lados"
+    : mode === "solo"
       ? "Digite o seu nome"
-      : "Digite o nome dos dois jogadores"
-    : bench.length > 0
-      ? mode === "solo"
-        ? "Escolha o seu time"
-        : "Coloque um jogador em cada time"
-      : "Tudo pronto";
+      : "Digite o nome dos dois jogadores";
 
+  // JOGAR leva à escolha de times, com todos começando sem lado.
   const handleStart = () => {
-    const setup = lobby.buildSetup();
-    if (setup) onStart(setup);
+    if (!namesFilled) return;
+    lobby.clearTeams();
+    setChoosingTeams(true);
   };
 
   return (
     <div className="flex h-full flex-col">
+      {choosingTeams && !online && (
+        <TeamSelect
+          lobby={lobby}
+          onBack={() => setChoosingTeams(false)}
+          onStart={onStart}
+        />
+      )}
       {/* Subabas */}
       <div className="flex flex-col items-center gap-1 border-b border-white/10 bg-black/40 py-2 backdrop-blur-sm">
         <div className="flex items-center gap-1">
@@ -253,7 +297,7 @@ export const PlayLobby = ({
       ) : (
         <>
           <div className="flex min-h-0 flex-1 gap-6 px-6 py-5">
-            {/* Opções e times */}
+            {/* Jogadores e regras; os times são escolhidos depois, na tela de times */}
             <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto">
               <p
                 className="flex items-center gap-2 text-sm font-black uppercase italic tracking-wider"
@@ -266,77 +310,52 @@ export const PlayLobby = ({
                 {mode === "solo" ? "Contra o BOT" : "Mesmo computador"}
               </p>
 
-              <section className="flex flex-col gap-3">
+              <section className="flex flex-col gap-2">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-300">
                   Jogadores
                 </h3>
-                {active.map(({ player, index }) => (
-                  <div key={index} className="flex flex-col gap-1.5">
-                    <input
-                      type="text"
-                      value={player.name}
-                      onChange={(e) =>
-                        lobby.setPlayerName(index, e.target.value)
-                      }
-                      placeholder={`Jogador ${index + 1}`}
-                      maxLength={16}
-                      aria-label={`Nome do jogador ${index + 1}`}
-                      className="rounded-sm border border-white/15 bg-black/50 px-2.5 py-1.5 text-sm tracking-wider text-white placeholder-zinc-500 focus:border-white/50 focus:outline-none"
-                    />
-                    <TeamPicker
-                      team={player.team}
-                      disabled={isShuffling}
-                      onPick={(team) => lobby.movePlayer(index, team)}
-                    />
-                  </div>
+                {seats.map(({ player, index }) => (
+                  <input
+                    key={index}
+                    type="text"
+                    value={player.name}
+                    onChange={(e) => lobby.setPlayerName(index, e.target.value)}
+                    placeholder={`Jogador ${index + 1}`}
+                    maxLength={16}
+                    aria-label={`Nome do jogador ${index + 1}`}
+                    className="rounded-sm border border-white/15 bg-black/50 px-2.5 py-1.5 text-sm tracking-wider text-white placeholder-zinc-500 focus:border-white/50 focus:outline-none"
+                  />
                 ))}
-                {botTeam && (
-                  <div className="flex items-center gap-2 rounded-sm border border-white/10 bg-black/40 px-2.5 py-1.5 text-sm">
-                    <Bot
-                      size={15}
-                      style={{ color: TEAM_STYLE[botTeam].color }}
-                    />
+                {mode === "solo" && (
+                  <p className="flex items-center gap-2 rounded-sm border border-white/10 bg-black/40 px-2.5 py-1.5 text-sm text-zinc-300">
+                    <Bot size={15} />{" "}
                     <span className="font-bold text-white">{BOT_NAME}</span>
-                    <span
-                      className="ml-auto text-[10px] uppercase tracking-widest"
-                      style={{ color: TEAM_STYLE[botTeam].color }}
-                    >
-                      {TEAM_STYLE[botTeam].label}
+                    <span className="ml-auto text-[10px] uppercase tracking-widest text-zinc-500">
+                      oponente
                     </span>
-                  </div>
+                  </p>
                 )}
               </section>
 
+              <span className="h-px w-full bg-white/15" />
+
               <section className="flex flex-col gap-2">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-300">
-                  Times
+                  Regras
                 </h3>
-                <button
-                  onClick={lobby.shuffleTeams}
-                  disabled={isShuffling}
-                  className="flex items-center gap-2 text-left text-xs font-bold text-zinc-200 transition-colors hover:text-white disabled:opacity-50"
-                >
-                  <Shuffle
-                    size={14}
-                    className={isShuffling ? "animate-spin" : ""}
-                  />
-                  {isShuffling ? "Sorteando..." : "Aleatorizar"}
-                </button>
-                <button
-                  onClick={lobby.swapTeams}
-                  disabled={isShuffling || bench.length === active.length}
-                  className="flex items-center gap-2 text-left text-xs font-bold text-zinc-200 transition-colors hover:text-white disabled:opacity-40"
-                >
-                  <ArrowLeftRight size={14} />
-                  Trocar de lado
-                </button>
+                <RuleToggle
+                  label="Cartas ocultas"
+                  description="Você não vê as cartas do oponente, nem na mão nem nos 6 slots. Elas só aparecem quando ele joga."
+                  checked={lobby.rules.hiddenCards}
+                  onChange={(value) => lobby.setRule("hiddenCards", value)}
+                />
               </section>
 
               <p className="mt-auto flex items-start gap-2 rounded-sm bg-black/50 p-2.5 text-[11px] text-zinc-300">
                 <Info size={14} className="mt-0.5 shrink-0" />
                 {mode === "solo"
-                  ? "O BOT joga sozinho no outro time. Bom para treinar as cartas."
-                  : "Os dois jogadores revezam no mesmo computador, um turno cada."}
+                  ? "O BOT joga sozinho no outro time. Os lados são escolhidos na próxima tela."
+                  : "Os dois jogadores revezam no mesmo computador. Os lados são escolhidos na próxima tela."}
               </p>
             </aside>
 
@@ -356,12 +375,12 @@ export const PlayLobby = ({
             </p>
             <button
               onClick={handleStart}
-              disabled={!canStart}
+              disabled={!namesFilled}
               className="flex items-center gap-3 px-12 py-3 text-xl font-black uppercase tracking-[0.3em] text-white transition-[filter,opacity] hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-35"
               style={
                 {
                   background: `linear-gradient(180deg, ${GO}, #13853c)`,
-                  boxShadow: canStart
+                  boxShadow: namesFilled
                     ? `0 0 24px ${GO}88, inset 0 0 0 2px #7dffab`
                     : undefined,
                 } as CSSProperties

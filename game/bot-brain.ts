@@ -33,7 +33,7 @@ const shouldPlay = (state: GameState, card: Card) => {
   if (card.name === "KIT DEFUSE") return state.bomb.planted;
   if (card.name === "Smoke") return !isShielded(state, team);
   // O fogo fica no site e pega o oponente mesmo que ele chegue depois.
-  if (card.name === "Molotov") return !!me.position && !siteHasSmoke(state, me.position);
+  if (card.name === "Molotov") return !!me.position && !siteHasSmoke(state, me.position, opponentOf(team));
   if (card.healing) return me.health + card.healing <= MAX_HEALTH;
   if (!isAttackCard(card) || !inConfrontation(state)) return false;
 

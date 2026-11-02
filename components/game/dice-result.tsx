@@ -12,11 +12,14 @@ export const DiceResult = ({
   roll,
   playerName,
   card,
+  hidden = false,
 }: {
   roll: DiceRoll;
   playerName: string;
   /** Carta já no slot sorteado, se houver. */
   card: Card | null | undefined;
+  /** Slot do oponente com as cartas ocultas: não diz qual carta é. */
+  hidden?: boolean;
 }) => {
   const theme = useGameTheme(roll.team);
 
@@ -33,7 +36,9 @@ export const DiceResult = ({
         </p>
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-zinc-300">
           {card
-            ? `Slot ${roll.value}: ${card.name} pode ser jogada`
+            ? hidden
+              ? `Slot ${roll.value}: carta oculta pode ser jogada`
+              : `Slot ${roll.value}: ${card.name} pode ser jogada`
             : `Slot ${roll.value} vazio: hora de posicionar uma carta`}
         </p>
       </div>

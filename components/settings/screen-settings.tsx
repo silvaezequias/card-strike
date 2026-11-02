@@ -30,8 +30,25 @@ const IDENTITY = [1, 0, 0, 0, 1, 0, 0, 0, 1];
 
 /** Matriz do feColorMatrix (4×5), entre a cor original e a corrigida pela força. */
 const filterMatrix = (mode: Exclude<ColorMode, "off">, strength: number) => {
-  const m = DALTONIZE[mode].map((v, i) => IDENTITY[i] + (v - IDENTITY[i]) * strength);
-  return [...m.slice(0, 3), 0, 0, ...m.slice(3, 6), 0, 0, ...m.slice(6, 9), 0, 0, 0, 0, 0, 1, 0]
+  const m = DALTONIZE[mode].map(
+    (v, i) => IDENTITY[i] + (v - IDENTITY[i]) * strength,
+  );
+  return [
+    ...m.slice(0, 3),
+    0,
+    0,
+    ...m.slice(3, 6),
+    0,
+    0,
+    ...m.slice(6, 9),
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+  ]
     .map((v) => Math.round(v * 10000) / 10000)
     .join(" ");
 };
@@ -45,7 +62,8 @@ const FpsCounter = () => {
     let frame = requestAnimationFrame(function tick(now) {
       frames++;
       if (now - since >= 500) {
-        if (ref.current) ref.current.textContent = `${Math.round((frames * 1000) / (now - since))} FPS`;
+        if (ref.current)
+          ref.current.textContent = `${Math.round((frames * 1000) / (now - since))} FPS`;
         frames = 0;
         since = now;
       }
@@ -64,7 +82,15 @@ const FpsCounter = () => {
 };
 
 export const ScreenSettings = () => {
-  const { colorMode, colorStrength, brightness, contrast, saturation, uiBlur, showFps } = useSettings();
+  const {
+    colorMode,
+    colorStrength,
+    brightness,
+    contrast,
+    saturation,
+    uiBlur,
+    showFps,
+  } = useSettings();
   const daltonize = colorMode !== "off" && colorStrength > 0;
 
   const filter = [
@@ -94,7 +120,10 @@ export const ScreenSettings = () => {
       {daltonize && (
         <svg aria-hidden="true" className="pointer-events-none fixed h-0 w-0">
           <filter id={FILTER_ID} colorInterpolationFilters="linearRGB">
-            <feColorMatrix type="matrix" values={filterMatrix(colorMode, colorStrength)} />
+            <feColorMatrix
+              type="matrix"
+              values={filterMatrix(colorMode, colorStrength)}
+            />
           </filter>
         </svg>
       )}

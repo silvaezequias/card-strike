@@ -30,7 +30,14 @@ export const AWAY_WARNING_MS = 15_000;
 export const ABANDON_MS = 60_000;
 
 /** Ações sem sorteio: aparecem na hora, antes da resposta do servidor. */
-const OPTIMISTIC = new Set(["SELECT_ACTION", "SET_TOOL", "SWITCH_TAB", "TOGGLE_INVENTORY", "PLACE_CARD", "KEEP_IN_HAND"]);
+const OPTIMISTIC = new Set([
+  "SELECT_ACTION",
+  "SET_TOOL",
+  "SWITCH_TAB",
+  "TOGGLE_INVENTORY",
+  "PLACE_CARD",
+  "KEEP_IN_HAND",
+]);
 const SENT_TO_SERVER = new Set([...OPTIMISTIC, "BUY_CARD", "PLAY_CARD"]);
 
 export const useOnlineEngine = (matchId: string) => {
@@ -39,7 +46,10 @@ export const useOnlineEngine = (matchId: string) => {
   const [optimistic, setOptimistic] = useState<GameState | null>(null);
   const [now, setNow] = useState(Date.now());
   const [opponentAwayMs, setOpponentAwayMs] = useState(0);
-  const [dice, setDice] = useState<{ shaking: boolean; roll: { id: number; value: number; team: TeamName } | null }>({
+  const [dice, setDice] = useState<{
+    shaking: boolean;
+    roll: { id: number; value: number; team: TeamName } | null;
+  }>({
     shaking: false,
     roll: null,
   });
@@ -90,14 +100,19 @@ export const useOnlineEngine = (matchId: string) => {
   }, []);
   const serverNow = now + skew.current;
   const secondsLeft =
-    match?.deadline != null && !match.pendingRoll ? Math.max(0, Math.ceil((match.deadline - serverNow) / 1000)) : null;
+    match?.deadline != null && !match.pendingRoll
+      ? Math.max(0, Math.ceil((match.deadline - serverNow) / 1000))
+      : null;
 
   const state: GameState | null = useMemo(() => {
     if (!base) return null;
     return {
       ...base,
       botTeam: opponent,
-      countdown: secondsLeft === null ? base.countdown : { ...base.countdown, seconds: secondsLeft },
+      countdown:
+        secondsLeft === null
+          ? base.countdown
+          : { ...base.countdown, seconds: secondsLeft },
     };
   }, [base, opponent, secondsLeft]);
 
@@ -120,7 +135,8 @@ export const useOnlineEngine = (matchId: string) => {
   const dispatch = useCallback(
     (action: GameAction) => {
       if (!myTurn || !match || !SENT_TO_SERVER.has(action.type)) return;
-      if (OPTIMISTIC.has(action.type)) setOptimistic((current) => gameReducer(current ?? match.state, action));
+      if (OPTIMISTIC.has(action.type))
+        setOptimistic((current) => gameReducer(current ?? match.state, action));
       send(() => api.action(matchId, action));
     },
     [myTurn, match, matchId, send],
@@ -139,14 +155,21 @@ export const useOnlineEngine = (matchId: string) => {
     if (!pending) return;
     const mine = pending.team === you;
     if (pending.tool === "d6") {
-      setDice({ shaking: false, roll: { id: pending.id, value: pending.d6, team: pending.team } });
+      setDice({
+        shaking: false,
+        roll: { id: pending.id, value: pending.d6, team: pending.team },
+      });
     } else {
       const target = getSpinnerRotation(pending.spinner);
       const spins = 5 + (pending.id % 6);
       setSpinnerRotation((prev) => {
         let diff = target.z - (prev.z % 360);
         if (diff > 0) diff -= 360;
-        return { x: 0, y: 0, z: prev.z - spins * 360 + diff + ((pending.id % 40) - 20) };
+        return {
+          x: 0,
+          y: 0,
+          z: prev.z - spins * 360 + diff + ((pending.id % 40) - 20),
+        };
       });
     }
     let done = false;
@@ -158,7 +181,10 @@ export const useOnlineEngine = (matchId: string) => {
       if (mine) send(() => api.finishRoll(matchId));
     };
     finishRollRef.current = finish;
-    const timer = window.setTimeout(finish, pending.tool === "d6" ? DICE_FALLBACK_MS : SPINNER_MS);
+    const timer = window.setTimeout(
+      finish,
+      pending.tool === "d6" ? DICE_FALLBACK_MS : SPINNER_MS,
+    );
     return () => {
       window.clearTimeout(timer);
       if (finishRollRef.current === finish) finishRollRef.current = null;
@@ -172,7 +198,9 @@ export const useOnlineEngine = (matchId: string) => {
   useEffect(() => {
     if (!active || deadline == null || posting.current) return;
     const late = serverNow - deadline;
-    const turnOwner = match?.pendingRoll ? match.pendingRoll.team === you : myTurn;
+    const turnOwner = match?.pendingRoll
+      ? match.pendingRoll.team === you
+      : myTurn;
     if (late < (turnOwner ? 300 : 2500)) return;
     posting.current = true;
     api
@@ -180,7 +208,17 @@ export const useOnlineEngine = (matchId: string) => {
       .then(({ match: next }) => accept(next))
       .catch(() => refresh())
       .finally(() => (posting.current = false));
-  }, [active, deadline, serverNow, myTurn, match?.pendingRoll, you, matchId, accept, refresh]);
+  }, [
+    active,
+    deadline,
+    serverNow,
+    myTurn,
+    match?.pendingRoll,
+    you,
+    matchId,
+    accept,
+    refresh,
+  ]);
 
   // Sinal de vida; oponente sumido por 60 s → vitória por W.O.
   useEffect(() => {
@@ -220,7 +258,8 @@ export const useOnlineEngine = (matchId: string) => {
       rotation: { spinner: spinnerRotation },
       roll,
       dice,
-      shakeDice: (shaking: boolean) => myTurn && setDice((current) => ({ ...current, shaking })),
+      shakeDice: (shaking: boolean) =>
+        myTurn && setDice((current) => ({ ...current, shaking })),
       finishRoll: () => finishRollRef.current?.(),
     },
     teamNames: { faction: "Facção", police: "Polícia" },
@@ -228,5 +267,15 @@ export const useOnlineEngine = (matchId: string) => {
     currentPlayerName: state.teams[state.currentTeam].playerName,
   };
 
-  return { ready: true as const, error, engine, match, you, opponent, myTurn, opponentAwayMs, leave };
+  return {
+    ready: true as const,
+    error,
+    engine,
+    match,
+    you,
+    opponent,
+    myTurn,
+    opponentAwayMs,
+    leave,
+  };
 };
