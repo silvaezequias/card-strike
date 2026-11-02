@@ -1,17 +1,13 @@
 "use client";
 
 import { ReactNode } from "react";
-import Link from "next/link";
-import { useMusic } from "@/game/useGameSounds";
 import {
   ArrowLeftRight,
-  BookOpen,
   Bot,
   ChevronLeft,
   ChevronRight,
   Crosshair,
   Globe,
-  GraduationCap,
   Play,
   Shield,
   Shuffle,
@@ -81,13 +77,14 @@ const PlayerRow = ({
   </div>
 );
 
-export const GameMenu = ({
+/** Aba JOGAR do menu: modo, times e início da partida. */
+export const PlayLobby = ({
+  lobby,
   onStart,
 }: {
+  lobby: ReturnType<typeof useGameSetup>;
   onStart: (setup: SetupSettings) => void;
 }) => {
-  const lobby = useGameSetup();
-  useMusic("menu");
   const { mode, seats, botTeam, isShuffling, namesFilled, canStart } = lobby;
 
   const handleStart = () => {
@@ -174,11 +171,7 @@ export const GameMenu = ({
   };
 
   return (
-    <div className="relative flex min-h-screen select-none flex-col gap-4 overflow-x-hidden bg-[#050409] px-4 py-5 font-mono md:px-8">
-      <header className="text-center">
-        <h1 className="text-3xl font-black tracking-[0.3em] text-white">CARD STRIKE</h1>
-        <p className="text-xs uppercase tracking-[0.4em] text-zinc-400">Operação tática</p>
-      </header>
+    <div className="relative flex h-full flex-col gap-4 px-4 py-5 md:px-8">
 
       <nav aria-label="Modo de jogo" className="mx-auto flex overflow-hidden rounded-lg border border-white/15">
         {MODES.map(({ id, label, icon: Icon }) => {
@@ -258,22 +251,6 @@ export const GameMenu = ({
           <Play size={18} />
           Iniciar partida
         </button>
-        <div className="flex gap-6">
-          <Link
-            href="/tutorial"
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-white"
-          >
-            <GraduationCap size={14} />
-            Tutorial
-          </Link>
-          <Link
-            href="/cartas"
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-zinc-400 transition-colors hover:text-white"
-          >
-            <BookOpen size={14} />
-            Cartas e regras
-          </Link>
-        </div>
       </footer>
     </div>
   );

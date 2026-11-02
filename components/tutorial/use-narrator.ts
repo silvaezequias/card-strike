@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { narrationVolume } from "@/lib/settings";
 
 /* ═══════════════════════════════════════════════
    NARRADOR
@@ -73,6 +74,7 @@ export const useNarrator = () => {
   /** Reserva: toca num <audio> próprio se o canal único não estiver disponível. */
   const playOnElement = useCallback((audioUrl: string, finish: () => void) => {
     const el = new Audio(audioUrl);
+    el.volume = narrationVolume();
     audioRef.current = el;
     el.onended = finish;
     el.onerror = finish;
@@ -102,7 +104,9 @@ export const useNarrator = () => {
 
       const source = context.createBufferSource();
       source.buffer = clip;
-      source.connect(context.destination);
+      const volume = context.createGain();
+      volume.gain.value = narrationVolume();
+      source.connect(volume).connect(context.destination);
       source.onended = finish;
       sourceRef.current = source;
       source.start(context.currentTime + (firstClip ? FIRST_CLIP_LEAD_S : NEXT_CLIP_LEAD_S));

@@ -1,3 +1,5 @@
+import { getSettings, subscribeSettings, updateSettings } from "./settings";
+
 /* ═══════════════════════════════════════════════
    SONS DO JOGO
    Um único canal de áudio toca os efeitos curtos e
@@ -26,14 +28,14 @@ const SOUND_NAMES = [
 
 export type SoundName = (typeof SOUND_NAMES)[number];
 
-const MUTE_KEY = "card-strike:muted";
 const LOOP_FADE_S = 0.25;
 
 type Loop = { source: AudioBufferSourceNode; gain: GainNode };
 
 let context: AudioContext | null = null;
 let master: GainNode | null = null;
-let muted = false;
+/** Efeitos sonoros (tiros, bomba, dado, loops); a música tem o seu. */
+let effects: GainNode | null = null;
 const buffers = new Map<SoundName, AudioBuffer>();
 const loops = new Map<SoundName, Loop>();
 /** Volume pedido antes de o som terminar de carregar. */
@@ -50,12 +52,14 @@ const loadSound = async (audio: AudioContext, name: SoundName) => {
   }
 };
 
-const readMuted = () => {
-  try {
-    return window.localStorage.getItem(MUTE_KEY) === "1";
-  } catch {
-    return false;
-  }
+/** Aplica os volumes das configurações (geral, efeitos e música). */
+const applyVolumes = () => {
+  if (!context || !master || !effects) return;
+  const settings = getSettings();
+  const now = context.currentTime;
+  master.gain.setTargetAtTime(settings.muted ? 0 : settings.master, now, 0.03);
+  effects.gain.setTargetAtTime(settings.effectsMuted ? 0 : settings.effects, now, 0.03);
+  if (playingMode && musicGain) musicGain.gain.setTargetAtTime(musicVolume(playingMode), now, 0.03);
 };
 
 /** Prepara o áudio; pode ser chamado de novo para retomar após um clique. */
@@ -68,38 +72,33 @@ export const startAudio = () => {
 
   context = new AudioContext();
   master = context.createGain();
-  muted = readMuted();
-  master.gain.value = muted ? 0 : 1;
+  effects = context.createGain();
+  master.gain.value = 0;
+  effects.connect(master);
   master.connect(context.destination);
+  applyVolumes();
+  subscribeSettings(applyVolumes);
   context.resume().catch(() => {});
   SOUND_NAMES.forEach((name) => loadSound(context!, name));
 };
 
-export const isMuted = () => muted;
+export const isMuted = () => getSettings().muted;
 
-export const setMuted = (value: boolean) => {
-  muted = value;
-  if (master) master.gain.value = value ? 0 : 1;
-  try {
-    window.localStorage.setItem(MUTE_KEY, value ? "1" : "0");
-  } catch {
-    // Só não fica salvo.
-  }
-};
+export const setMuted = (value: boolean) => updateSettings({ muted: value });
 
 export const playSound = (
   name: SoundName,
   { volume = 1, delay = 0, rate = 1 }: { volume?: number; delay?: number; rate?: number } = {},
 ) => {
   const buffer = buffers.get(name);
-  if (!context || !master || !buffer) return;
+  if (!context || !effects || !buffer) return;
 
   const source = context.createBufferSource();
   const gain = context.createGain();
   source.buffer = buffer;
   source.playbackRate.value = rate;
   gain.gain.value = volume;
-  source.connect(gain).connect(master);
+  source.connect(gain).connect(effects);
   source.start(context.currentTime + delay);
 };
 
@@ -107,7 +106,7 @@ export const playSound = (
 export function setLoopVolume(name: SoundName, volume: number) {
   wantedLoops.set(name, volume);
   const buffer = buffers.get(name);
-  if (!context || !master || !buffer) return;
+  if (!context || !effects || !buffer) return;
 
   let loop = loops.get(name);
   if (!loop && volume <= 0) return;
@@ -118,7 +117,7 @@ export function setLoopVolume(name: SoundName, volume: number) {
     source.buffer = buffer;
     source.loop = true;
     gain.gain.value = 0;
-    source.connect(gain).connect(master);
+    source.connect(gain).connect(effects);
     source.start();
     loop = { source, gain };
     loops.set(name, loop);
@@ -152,6 +151,14 @@ const FAST_RATE = 1.25;
 /** Bem abaixo dos efeitos, para não brigar com tiros e narração. */
 const MUSIC_VOLUME: Record<MusicMode, number> = { menu: 0.22, game: 0.24, bomb: 0.28 };
 const MUSIC_FADE_S = 0.7;
+
+/** Volume da música do momento, já com o ajuste do jogador (menu ou partida). */
+const musicVolume = (mode: MusicMode) => {
+  const settings = getSettings();
+  const [volume, muted] =
+    mode === "menu" ? [settings.menuMusic, settings.menuMusicMuted] : [settings.gameMusic, settings.gameMusicMuted];
+  return muted ? 0 : MUSIC_VOLUME[mode] * volume;
+};
 
 let music: HTMLAudioElement | null = null;
 let musicGain: GainNode | null = null;
@@ -215,7 +222,7 @@ export const resumeMusic = () => {
       el.src = PLAYLISTS[to][musicTrack];
       el.addEventListener("loadedmetadata", () => (el.currentTime = Math.min(at, el.duration - 1)), { once: true });
       el.play().catch(() => {});
-      fadeMusic(MUSIC_VOLUME[to]);
+      fadeMusic(musicVolume(to));
     },
     from && !el.paused ? MUSIC_FADE_S * 1000 : 0,
   );

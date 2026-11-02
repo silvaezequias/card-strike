@@ -460,3 +460,32 @@ body {
 .fx-bomb-flash {
   animation: fx-bomb-flash 900ms ease-out both;
 }
+
+/* Controles deslizantes das configurações */
+.settings-range {
+  appearance: none;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, #86e3ff, #c9bcff var(--fill), #3f3f46 var(--fill));
+}
+.settings-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #07060c, 0 0 10px #c9bcff;
+}
+.settings-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 0;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px #07060c, 0 0 10px #c9bcff;
+}
+
+/* Configuração "Desfoque da interface" desligada */
+.no-ui-blur [class*="backdrop-blur"] {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import SciFiInterface from "@/components/game/sci-fi-interface";
-import { GameMenu } from "@/components/game/game-menu";
+import { GameMenu } from "@/components/game/main-menu";
 import { SetupSettings } from "@/game/game-types";
 
 export default function Page() {

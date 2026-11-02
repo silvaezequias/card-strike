@@ -25,7 +25,8 @@ import { BOMB_FX_MS } from "@/game/card-fx";
 import { useBot } from "@/game/useBot";
 import { useCombatFx } from "@/game/useCombatFx";
 import { playDiceHit, useGameSounds } from "@/game/useGameSounds";
-import { isMuted, setMuted } from "@/lib/game-audio";
+import { updateSettings, useSettings } from "@/lib/settings";
+import { SettingsButton } from "@/components/settings/settings-panel";
 import { BombExplosion, FlashBlind } from "@/components/game/combat-fx";
 import { CameraNav, CameraView, cardCameraFocus, mapCameraFocus } from "@/components/game/camera-nav";
 import { MapBoard, MapMark, MapSpot } from "@/components/game/map-board";
@@ -279,11 +280,10 @@ export function GameScreen({
 
   useGameSounds(state, fx, game.tool.dice.shaking, game.gameOver && !fx.active && !bombFxPlaying);
 
-  const [soundOff, setSoundOff] = useState(false);
-  useEffect(() => setSoundOff(isMuted()), []);
+  const settings = useSettings();
+  const soundOff = settings.muted;
   const toggleSound = () => {
-    setMuted(!soundOff);
-    setSoundOff(!soundOff);
+    updateSettings({ muted: !soundOff });
   };
 
   const lastCameraBoard = useRef<string | null>(null);
@@ -407,7 +407,7 @@ export function GameScreen({
       style={{ "--fit": fit } as CSSProperties}
       // overflow-clip: o tabuleiro fora de cena não pode rolar a tela (foco, teclado).
       className={`h-screen bg-[#050409] flex flex-col overflow-clip font-mono select-none relative ${
-        bombFxPlaying ? "bomb-shock" : ""
+        bombFxPlaying && settings.screenShake ? "bomb-shock" : ""
       }`}
     >
       {/* Aviso de novo turno; segue trocando o turno por trás do foco, só fica invisível. */}
@@ -634,6 +634,7 @@ export function GameScreen({
       >
         {soundOff ? <VolumeX size={16} /> : <Volume2 size={16} />}
       </button>
+      <SettingsButton className="fixed bottom-3 right-14 z-40 flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-black/30 text-zinc-300 backdrop-blur-sm transition-colors hover:text-white" />
 
       {turnPhase === "IDLE" && isFlashed(teams[currentTeam]) && <FlashBlind />}
       {bombFxPlaying && <BombExplosion />}

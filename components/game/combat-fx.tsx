@@ -13,6 +13,7 @@ import {
   fxKind,
 } from "@/game/card-fx";
 import { CombatEvent } from "@/game/game-types";
+import { useSettings } from "@/lib/settings";
 
 /* ═══════════════════════════════════════════════
    EFEITOS VISUAIS DAS CARTAS
@@ -330,12 +331,20 @@ export const SmokeCloud = () => (
 /* ───────────── TELA INTEIRA ───────────── */
 
 /** Clarão da Flashbang: tela branca enquanto o jogador perde a vez. */
-export const FlashBlind = () => (
-  <div className="fx-blind pointer-events-none fixed inset-0 z-[85] flex flex-col items-center justify-center gap-2 bg-white">
-    <p className="text-3xl font-black tracking-[0.3em] text-zinc-800">CEGO PELA FLASHBANG</p>
-    <p className="text-sm font-bold tracking-widest text-zinc-500">VOCÊ PERDEU A VEZ</p>
-  </div>
-);
+export const FlashBlind = () => {
+  // Flash suave (configuração): menos luz para quem é sensível a clarões.
+  const { softFlash } = useSettings();
+  return (
+    <div
+      className={`fx-blind pointer-events-none fixed inset-0 z-[85] flex flex-col items-center justify-center gap-2 ${
+        softFlash ? "bg-zinc-300/45 backdrop-blur-md" : "bg-white"
+      }`}
+    >
+      <p className="text-3xl font-black tracking-[0.3em] text-zinc-800">CEGO PELA FLASHBANG</p>
+      <p className="text-sm font-bold tracking-widest text-zinc-600">VOCÊ PERDEU A VEZ</p>
+    </div>
+  );
+};
 
 const BOMB_SMOKE = Array.from({ length: 34 }, (_, i) => {
   const angle = i * 2.399963; // ângulo áureo: espalha sem sortear
