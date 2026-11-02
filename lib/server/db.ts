@@ -51,10 +51,12 @@ const connectPglite = async (): Promise<Db> => {
 
 const migrate = async (db: Db) => {
   await db.query(`create table if not exists _cs_migrations (id int primary key, applied_at timestamptz not null default now())`);
-  const done = new Set((await db.query<{ id: number }>(`select id from _cs_migrations`)).map((r) => Number(r.id)));
   for (const [i, sql] of MIGRATIONS.entries()) {
-    if (done.has(i)) continue;
     await db.tx(async (tx) => {
+      // Trava: duas funções serverless subindo juntas não aplicam a mesma migração.
+      await tx.query(`select pg_advisory_xact_lock(4242)`);
+      const done = await tx.query(`select 1 from _cs_migrations where id = $1`, [i]);
+      if (done.length) return;
       for (const statement of sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
         await tx.query(statement);
       }
@@ -64,11 +66,20 @@ const migrate = async (db: Db) => {
 };
 
 /** Conexão única por processo, com as migrações aplicadas. */
-export const getDb = (): Promise<Db> => {
-  const g = globalThis as Global;
+export const getDb = async (): Promise<Db> => {
+  const g = globalThis as Global & { __cardStrikeMigrated?: number };
+  const db = await connect(g);
+  // No desenvolvimento a conexão sobrevive às edições: migrações novas rodam aqui.
+  if ((g.__cardStrikeMigrated ?? 0) < MIGRATIONS.length) {
+    await migrate(db);
+    g.__cardStrikeMigrated = MIGRATIONS.length;
+  }
+  return db;
+};
+
+const connect = (g: Global): Promise<Db> => {
   g.__cardStrikeDb ??= (async () => {
     const db = env.databaseUrl ? await connectPostgres() : await connectPglite();
-    await migrate(db);
     return db;
   })().catch((error) => {
     // Falhou ao conectar: a próxima chamada tenta de novo.

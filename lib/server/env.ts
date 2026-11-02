@@ -17,6 +17,8 @@ export const env = {
   appUrl: process.env.APP_URL ?? "",
 
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
+  /** Chave pública (anon): basta para o Broadcast em canais públicos. */
+  supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
   supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
 
   googleClientId: process.env.GOOGLE_CLIENT_ID ?? "",
@@ -30,8 +32,14 @@ export const env = {
   isProd,
 };
 
-/** Tempo real pelo Supabase quando configurado; senão, canal local (só desenvolvimento). */
-export const useSupabaseRealtime = () => !!env.supabaseUrl && !!env.supabaseServiceKey;
+/**
+ * Tempo real pelo Supabase quando configurado; senão, canal local (só desenvolvimento).
+ * Os avisos são só sinais ("mudou, busque de novo"): o estado de verdade sempre vem
+ * da API, então a chave pública basta e um aviso falso não altera nada.
+ */
+export const useSupabaseRealtime = () => !!env.supabaseUrl && !!(env.supabaseServiceKey || env.supabaseAnonKey);
+
+export const realtimeKey = () => env.supabaseServiceKey || env.supabaseAnonKey;
 
 /** O online só funciona com banco de verdade em produção. */
 export const onlineAvailable = () => !!env.authSecret && (!env.isProd || !!env.databaseUrl);

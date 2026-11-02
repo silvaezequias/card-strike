@@ -1,4 +1,4 @@
-import { env, useSupabaseRealtime } from "./env";
+import { env, realtimeKey, useSupabaseRealtime } from "./env";
 
 /* ═══════════════════════════════════════════════
    TEMPO REAL (servidor)
@@ -32,8 +32,8 @@ export const publish = async (channel: string, event: string, payload: unknown =
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: env.supabaseServiceKey,
-          Authorization: `Bearer ${env.supabaseServiceKey}`,
+          apikey: realtimeKey(),
+          Authorization: `Bearer ${realtimeKey()}`,
         },
         body: JSON.stringify({ messages: [{ topic: channel, event, payload }] }),
       });

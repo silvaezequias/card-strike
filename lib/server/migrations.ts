@@ -80,4 +80,8 @@ create table matches (
 create index matches_players on matches (police_id, faction_id, status);
 create index invites_to on invites (to_id, status);
 `,
+  `
+-- Fila: quem não renova a presença em 30 s sai sozinho.
+alter table match_queue add column seen_at timestamptz not null default now();
+`,
 ];
