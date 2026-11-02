@@ -45,8 +45,11 @@ export const opponentOf = (team: TeamName): TeamName =>
 
 export const isFlashed = (team: Team) => hasEffect(team, "Flashbang");
 
-export const siteHasSmoke = ({ mapEffects }: GameState, spot: Bombsite | null) =>
-  mapEffects.some((effect) => effect.name === "Smoke" && effect.spot === spot);
+/** Smoke no bombsite; com `owner`, só a Smoke daquele time (a que o protege). */
+export const siteHasSmoke = ({ mapEffects }: GameState, spot: Bombsite | null, owner?: TeamName) =>
+  mapEffects.some(
+    (effect) => effect.name === "Smoke" && effect.spot === spot && (!owner || effect.owner === owner),
+  );
 
 /** A Smoke protege quem a jogou enquanto estiver no lugar dela. */
 export const isShielded = (state: GameState, team: TeamName) =>
@@ -152,7 +155,8 @@ export const resolveCard = (state: GameState, card: Card) => {
   // O fogo fica no bombsite e queima quem estiver lá, mesmo chegando depois.
   if (card.name === "Molotov") {
     if (!site) return outcome("ALVO FORA DE ALCANCE");
-    if (siteHasSmoke(state, site)) return outcome("BLOQUEADO POR SMOKE");
+    // Só a Smoke do oponente segura o fogo; a de quem joga a Molotov não.
+    if (siteHasSmoke(state, site, foe)) return outcome("BLOQUEADO POR SMOKE");
     return outcome(inConfrontation(state) ? "ALVO EM CHAMAS" : `FOGO NO BOMBSITE ${site}`, {
       mapEffects: placed(self, site),
     });
@@ -222,7 +226,7 @@ export const createCombatEvent = (
     blocked:
       hit &&
       ((kind === "shots" && isShielded(state, target)) ||
-        (kind === "molotov" && siteHasSmoke(state, state.teams[team].position))),
+        (kind === "molotov" && siteHasSmoke(state, state.teams[team].position, target))),
     damage: state.teams[target].health - teams[target].health,
   };
 };
