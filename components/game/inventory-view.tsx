@@ -294,7 +294,8 @@ export const InventoryView = ({ initialTeam }: { initialTeam: TeamName }) => {
           variant={variant}
           flip={team === "police"}
           backdrop={false}
-          className="mt-auto h-[82%] w-auto max-w-none drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] animate-in fade-in duration-500"
+          crop="full"
+          className="mt-auto h-[92%] w-auto max-w-none drop-shadow-[0_20px_30px_rgba(0,0,0,0.8)] animate-in fade-in duration-500"
         />
       </div>
 

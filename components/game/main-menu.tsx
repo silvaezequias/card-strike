@@ -78,14 +78,15 @@ const Hero = ({ team, name, onPlay }: { team: TeamName; name: string; onPlay: ()
         team={team}
         flip={team === "police"}
         backdrop={false}
-        className="relative h-[76%] w-auto max-w-none drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-700"
+        crop="full"
+        className="relative mb-[2%] h-[90%] w-auto max-w-none drop-shadow-[0_30px_40px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-bottom-4 duration-700"
       />
 
       {/* Plaqueta do jogador */}
       <button
         type="button"
         onClick={onPlay}
-        className="group absolute bottom-[12%] left-1/2 flex -translate-x-1/2 flex-col items-center gap-2"
+        className="group absolute bottom-[3%] left-1/2 flex translate-x-[60%] flex-col items-center gap-2"
       >
         <span className="flex items-center gap-2 rounded-md bg-black/55 px-3 py-1 text-sm font-bold text-white backdrop-blur-sm">
           <span className="h-2 w-2 rounded-full" style={{ background: p.rim, boxShadow: `0 0 8px ${p.glow}` }} />

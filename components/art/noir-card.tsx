@@ -2,7 +2,7 @@
 
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
-import { TEAM_CHARACTERS } from "./characters";
+import { CharacterImage, TEAM_CHARACTERS, characterCrop } from "./characters";
 import { ITEM_ART } from "./items";
 import { NoirBackdrop, useSvgId } from "./noir";
 import { ArtPalette, getPalette } from "./palette";
@@ -247,7 +247,8 @@ export const NoirCard = ({
 export const NoirCardBack = ({ team, className }: { team: TeamName; className?: string }) => {
   const p = getPalette(team);
   const id = useSvgId("back");
-  const Character = TEAM_CHARACTERS[team][1];
+  const art = TEAM_CHARACTERS[team][1];
+  const box = characterCrop(art, "card");
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label="Verso da carta">
@@ -265,8 +266,9 @@ export const NoirCardBack = ({ team, className }: { team: TeamName; className?: 
         <g transform="translate(150 200)" opacity={0.1}>
           <TeamEmblem team={team} color={p.rim} size={130} />
         </g>
-        <g transform="translate(-34 -36) scale(0.92)">
-          <Character p={p} />
+        {/* Personagem enquadrado do topo da cabeça ao quadril */}
+        <g transform={`scale(${W / box.w}) translate(${-box.x} ${-box.y})`}>
+          <CharacterImage art={art} />
         </g>
         <rect width={W} height={H} fill={`url(#${id}-fade)`} />
         <text
