@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { SetupSettings, TeamName } from "@/game/game-types";
+import {
+  DEFAULT_RULES,
+  GameRules,
+  SetupSettings,
+  TeamName,
+} from "@/game/game-types";
 
 export type LobbyPlayer = {
   name: string;
@@ -14,6 +19,7 @@ export const BOT_NAME = "BOT";
 
 const STORAGE_KEY = "card-strike:lobby";
 const MODE_STORAGE_KEY = "card-strike:mode";
+const RULES_STORAGE_KEY = "card-strike:rules";
 const SHUFFLE_STEP_MS = 180;
 const SHUFFLE_STEPS = 8;
 
@@ -22,7 +28,8 @@ const EMPTY_LOBBY: LobbyPlayer[] = [
   { name: "", team: null },
 ];
 
-const otherTeam = (team: TeamName): TeamName => (team === "police" ? "faction" : "police");
+const otherTeam = (team: TeamName): TeamName =>
+  team === "police" ? "faction" : "police";
 
 const withTeams = (players: LobbyPlayer[], first: TeamName) => [
   { ...players[0], team: first },
@@ -53,10 +60,26 @@ const readMode = (): GameMode | null => {
   }
 };
 
-const saveLobby = (players: LobbyPlayer[], mode: GameMode) => {
+const readRules = (): GameRules => {
+  try {
+    const data = JSON.parse(
+      window.localStorage.getItem(RULES_STORAGE_KEY) ?? "null",
+    );
+    return { ...DEFAULT_RULES, hiddenCards: data?.hiddenCards === true };
+  } catch {
+    return DEFAULT_RULES;
+  }
+};
+
+const saveLobby = (
+  players: LobbyPlayer[],
+  mode: GameMode,
+  rules: GameRules,
+) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
     window.localStorage.setItem(MODE_STORAGE_KEY, mode);
+    window.localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(rules));
   } catch {
     // Segue sem salvar.
   }
@@ -65,6 +88,7 @@ const saveLobby = (players: LobbyPlayer[], mode: GameMode) => {
 export const useGameSetup = () => {
   const [players, setPlayers] = useState(EMPTY_LOBBY);
   const [mode, setMode] = useState<GameMode>("local");
+  const [rules, setRules] = useState<GameRules>(DEFAULT_RULES);
   const [isShuffling, setIsShuffling] = useState(false);
   const [restored, setRestored] = useState(false);
   const shuffleTimer = useRef<number | null>(null);
@@ -75,12 +99,13 @@ export const useGameSetup = () => {
     if (saved) setPlayers(saved);
     const savedMode = readMode();
     if (savedMode) setMode(savedMode);
+    setRules(readRules());
     setRestored(true);
   }, []);
 
   useEffect(() => {
-    if (restored && !isShuffling) saveLobby(players, mode);
-  }, [players, mode, restored, isShuffling]);
+    if (restored && !isShuffling) saveLobby(players, mode, rules);
+  }, [players, mode, rules, restored, isShuffling]);
 
   useEffect(
     () => () => {
@@ -90,7 +115,9 @@ export const useGameSetup = () => {
   );
 
   const setPlayerName = (index: number, name: string) =>
-    setPlayers((current) => current.map((p, i) => (i === index ? { ...p, name } : p)));
+    setPlayers((current) =>
+      current.map((p, i) => (i === index ? { ...p, name } : p)),
+    );
 
   /** Coloca o jogador no time; quem já estava lá vai para o lugar dele. */
   const movePlayer = (index: number, team: TeamName | null) =>
@@ -101,6 +128,13 @@ export const useGameSetup = () => {
         return team && p.team === team ? { ...p, team: previous } : p;
       });
     });
+
+  /** Todos sem time: a escolha acontece na tela de times. */
+  const clearTeams = () =>
+    setPlayers((current) => current.map((p) => ({ ...p, team: null })));
+
+  const setRule = <K extends keyof GameRules>(key: K, value: GameRules[K]) =>
+    setRules((current) => ({ ...current, [key]: value }));
 
   const swapTeams = () =>
     setPlayers((current) =>
@@ -136,12 +170,18 @@ export const useGameSetup = () => {
   const botTeam = mode === "solo" && humanTeam ? otherTeam(humanTeam) : null;
 
   const nameOn = (team: TeamName) =>
-    team === botTeam ? BOT_NAME : seats.find(({ player }) => player.team === team)?.player.name.trim();
+    team === botTeam
+      ? BOT_NAME
+      : seats.find(({ player }) => player.team === team)?.player.name.trim();
 
   const namesFilled = seats.every(({ player }) => player.name.trim());
   const teamsFilled = !!nameOn("police") && !!nameOn("faction");
   const allSeated = seats.every(({ player }) => player.team);
-  const canStart = allSeated && (mode === "solo" ? !!botTeam : teamsFilled) && namesFilled && !isShuffling;
+  const canStart =
+    allSeated &&
+    (mode === "solo" ? !!botTeam : teamsFilled) &&
+    namesFilled &&
+    !isShuffling;
 
   const buildSetup = (): SetupSettings | null =>
     canStart
@@ -149,6 +189,7 @@ export const useGameSetup = () => {
           police: { playerName: nameOn("police")! },
           faction: { playerName: nameOn("faction")! },
           botTeam,
+          rules,
         }
       : null;
 
@@ -162,6 +203,9 @@ export const useGameSetup = () => {
     canStart,
     setPlayerName,
     movePlayer,
+    clearTeams,
+    rules,
+    setRule,
     swapTeams,
     shuffleTeams,
     buildSetup,

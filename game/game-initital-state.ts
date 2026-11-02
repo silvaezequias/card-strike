@@ -1,5 +1,5 @@
 import { generateRandomCard } from "@/lib/game-helpers";
-import { GameState, SetupSettings, TeamName } from "./game-types";
+import { DEFAULT_RULES, GameState, SetupSettings, TeamName } from "./game-types";
 
 const STARTING_CARDS = 3;
 
@@ -11,6 +11,7 @@ export const createInitialGameState = (
   startingCards = STARTING_CARDS,
 ): GameState => ({
   botTeam: setup.botTeam ?? null,
+  rules: { ...DEFAULT_RULES, ...setup.rules },
   currentTeam: "faction",
   turnPhase: "COUNTDOWN",
   turnAction: "SELECTING_ACTION",

@@ -311,6 +311,10 @@ export function GameScreen({
 
   const d6 = state.tool.result.d6;
 
+  // Cartas ocultas: o oponente de quem está na tela fica de costas (contra o bot
+  // e online é sempre o mesmo; no local, quem não está na vez).
+  const hiddenTeam = state.rules?.hiddenCards ? (state.botTeam ?? opponentOf(currentTeam)) : null;
+
   // Ataque fora de confronto: o 1º clique só avisa, o 2º joga a carta.
   const [warnedCardId, setWarnedCardId] = useState<Card["id"] | null>(null);
   useEffect(() => setWarnedCardId(null), [turnPhase]);
@@ -438,6 +442,7 @@ export function GameScreen({
           roll={game.tool.dice.roll}
           playerName={teams[game.tool.dice.roll.team].playerName}
           card={slots[game.tool.dice.roll.team][game.tool.dice.roll.value - 1]}
+          hidden={game.tool.dice.roll.team === hiddenTeam}
         />
       )}
 
@@ -504,6 +509,7 @@ export function GameScreen({
               onHandCardDrop={handleHandCardDrop}
               deck={deck}
               onDeckClick={handleDeckClick}
+              hiddenTeams={hiddenTeam ? [hiddenTeam] : []}
             />
           </div>
 

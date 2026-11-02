@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
-import { NoirCard } from "@/components/art/noir-card";
+import { NoirCard, NoirCardBack } from "@/components/art/noir-card";
 import { BoardDice, DiceRoll, DiceStage } from "@/components/game/board-dice";
 import { getPalette } from "@/components/art/palette";
 import {
@@ -152,8 +152,11 @@ const CardOnBoard = ({
   rotate,
   entrance,
   onClick,
+  faceDown = false,
 }: {
   card: Card;
+  /** De costas: regra de cartas ocultas para o oponente. */
+  faceDown?: boolean;
   rect: Rect;
   team: TeamName;
   rotate: number;
@@ -210,7 +213,11 @@ const CardOnBoard = ({
         filter: lifted ? "drop-shadow(0 26px 22px rgba(0,0,0,0.85))" : "drop-shadow(0 10px 14px rgba(0,0,0,0.8))",
       }}
     >
-      <NoirCard card={card} team={team} className="block h-full w-full" />
+      {faceDown ? (
+        <NoirCardBack team={team} className="block h-full w-full" />
+      ) : (
+        <NoirCard card={card} team={team} className="block h-full w-full" />
+      )}
     </div>
   );
 };
@@ -383,6 +390,8 @@ export type BoardStageProps = {
   /** Foco pedido pelo tutorial; substitui a tomada normal. */
   cameraFocus?: CardCameraFocus | null;
   onSlotClick?: (team: TeamName, index: number) => void;
+  /** Times com as cartas dos slots de costas (regra de cartas ocultas). */
+  hiddenTeams?: TeamName[];
   /** Carta da mão (índice) solta sobre o slot em destaque. */
   onHandCardDrop?: (handIndex: number) => void;
   /** Dado 3D sobre o tabuleiro. */
@@ -418,6 +427,7 @@ export const BoardStage = ({
   onDiceStage,
   deck,
   onDeckClick,
+  hiddenTeams = [],
 }: BoardStageProps) => {
   /* ───────── Rastreio das cartas para animar de onde vieram ───────── */
 
@@ -642,6 +652,7 @@ export const BoardStage = ({
                 rect={slotRect(team, i)}
                 rotate={TEAM_CARD_ROTATION[team]}
                 entrance={slotEntrance(team, i, card)}
+                faceDown={hiddenTeams.includes(team)}
                 // Só o slot sorteado pelo dado é clicável.
                 onClick={
                   onSlotClick && highlight?.team === team && highlight.index === i

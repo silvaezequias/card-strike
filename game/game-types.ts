@@ -43,9 +43,19 @@ export type CombatEvent = {
   damage: number;
 };
 
+/** Regras escolhidas no lobby antes da partida. */
+export type GameRules = {
+  /** Cartas do oponente escondidas (mão e slots) até ele jogar uma. */
+  hiddenCards: boolean;
+};
+
+export const DEFAULT_RULES: GameRules = { hiddenCards: false };
+
 export interface GameState {
   /** Time jogado pelo bot; null quando os dois lados são humanos. */
   botTeam: TeamName | null;
+  /** Ausente em partidas antigas salvas no servidor: vale DEFAULT_RULES. */
+  rules?: GameRules;
   currentTeam: TeamName;
   turnPhase: GamePhase;
   turnAction: TurnActionState;
@@ -93,6 +103,7 @@ export type SetupSettings = {
   police: Pick<Team, "playerName">;
   faction: Pick<Team, "playerName">;
   botTeam?: TeamName | null;
+  rules?: GameRules;
 };
 
 export type Tool = "d6" | "spinner";
