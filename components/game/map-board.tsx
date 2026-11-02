@@ -613,13 +613,13 @@ export const MapBoard = ({
   const fxSpot = fx && fx.stage !== "flight" && fx.stage !== "return" ? positions[fx.event.team] : null;
   const fxFocus: MapCameraFocus | null =
     !fxSpot ? null : fxSpot === "BASE" ? { area: "base", team: fx?.event.team } : { area: fxSpot };
-  // No mapa grande, o site do confronto se expande sozinho.
-  const conflictFocus: MapCameraFocus | null = !flat && conflict ? { area: conflict } : null;
+  // O site do confronto se expande sozinho, no mapa grande e no minimapa.
+  const conflictFocus: MapCameraFocus | null = conflict ? { area: conflict } : null;
   const shownFocus = focus ?? fxFocus ?? conflictFocus;
   const zoom = zoomBox(
     shownFocus ? focusFrame(shownFocus) : autoZoom ? zoomFrame(positions, bomb) : null,
   );
-  const detail = !flat && shownFocus && isSite(shownFocus.area) ? shownFocus.area : null;
+  const detail = shownFocus && isSite(shownFocus.area) ? shownFocus.area : null;
   const acting = fx?.stage === "action" ? fx.event : null;
   const ring = focus && !focus.plain ? focusRect(focus) : null;
 
