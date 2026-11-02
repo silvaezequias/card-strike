@@ -46,12 +46,20 @@ export const fxKind = (card: Card): FxKind | null => {
   }
 };
 
+/** Armas de tiro único: todo o dano sai numa bala só. */
+const SINGLE_SHOT = ["AWP"];
+
+/** Balas da arma: uma por ponto de dano, ou uma só para a AWP. */
+export const shotCount = (card: Card) => (SINGLE_SHOT.includes(card.name) ? 1 : card.damage);
+
+/** Dano de cada bala. */
+export const shotDamage = (card: Card) => card.damage / Math.max(1, shotCount(card));
+
 /** Momentos (a partir do início da ação) em que o efeito acerta o alvo. */
 export const fxImpacts = (event: CombatEvent): number[] => {
   switch (fxKind(event.card)) {
     case "shots":
-      // Uma bala por ponto de dano da carta.
-      return Array.from({ length: event.card.damage }, (_, i) => i * BULLET_GAP_MS + BULLET_TRAVEL_MS);
+      return Array.from({ length: shotCount(event.card) }, (_, i) => i * BULLET_GAP_MS + BULLET_TRAVEL_MS);
     case "smoke":
       return [SMOKE_LAND_MS];
     default:
@@ -75,7 +83,7 @@ export const fxSeconds = (event: CombatEvent | null) =>
 /** Dano que o alvo ainda não sentiu, dado o número de impactos já mostrados. */
 export const fxRemainingDamage = (event: CombatEvent, landed: number) =>
   fxKind(event.card) === "shots"
-    ? Math.max(0, event.damage - landed)
+    ? Math.max(0, event.damage - landed * shotDamage(event.card))
     : landed > 0
       ? 0
       : event.damage;

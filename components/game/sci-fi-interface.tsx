@@ -8,17 +8,19 @@ import { MissionStatus } from "@/components/game/mission-status";
 import { BombPanel } from "@/components/game/bomb-panel";
 import { InventoryPanel } from "@/components/game/inventory-panel";
 import { TurnBanner } from "@/components/game/turn-banner";
-import { Action, ActionFrame, DiceDock } from "@/components/game/action";
+import { DiceDock } from "@/components/game/action";
+import { ActionChooser } from "@/components/game/action-chooser";
+import { DealLayer } from "@/components/game/deal-layer";
 import { BoardStage } from "@/components/game/board-stage";
 import { DiceResult } from "@/components/game/dice-result";
 import { DiceStage } from "@/components/game/board-dice";
 import { RouletteBoard, RouletteDock } from "@/components/game/roulette-board";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
+import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
-import { inConfrontation, isAttackCard, isFlashed, opponentOf } from "@/game/card-effects";
+import { inConfrontation, isAttackCard, isFlashed, opponentOf, winnerOf } from "@/game/card-effects";
 import { BOMB_FX_MS } from "@/game/card-fx";
 import { useBot } from "@/game/useBot";
 import { useCombatFx } from "@/game/useCombatFx";
@@ -101,6 +103,9 @@ const boardLayer = (board: ShownBoard, shown: ShownBoard): CSSProperties => {
   };
 };
 
+/** Tempo da câmera indo da mesa inteira aos slots (transição do palco). */
+const SLOT_FOCUS_MS = 1100;
+
 /** Interface apagada (e sem clique) durante o foco de câmera do tutorial. */
 const DIMMED = "pointer-events-none opacity-20";
 
@@ -112,7 +117,7 @@ export default function SciFiInterface({
 }: {
   playerSetup: SetupSettings;
 }) {
-  const game = useGameEngine(playerSetup);
+  const game = useGameEngine(playerSetup, { deal: true });
   useBot(game);
 
   const botTurn = game.state.botTeam === game.state.currentTeam;
@@ -192,6 +197,14 @@ export function GameScreen({
   const shot =
     cardFlying || wideShot || turnPhase === "COUNTDOWN" || view?.board === "cards" ? "overview" : "focus";
 
+  // A câmera leva um instante para fechar nos slots; o destaque espera ela chegar.
+  const [slotsInFocus, setSlotsInFocus] = useState(false);
+  useEffect(() => {
+    if (shot !== "focus") return setSlotsInFocus(false);
+    const timer = window.setTimeout(() => setSlotsInFocus(true), SLOT_FOCUS_MS);
+    return () => window.clearTimeout(timer);
+  }, [shot]);
+
   const plantedSite = state.bomb.planted ? state.bomb.position : null;
 
   // Tabuleiro em destaque; o outro fica no minimapa da coluna esquerda.
@@ -235,6 +248,8 @@ export function GameScreen({
 
   const shownView = fx.active ? null : view;
   const me = state.botTeam ? opponentOf(state.botTeam) : currentTeam;
+  // Mão aberta na distribuição: a do humano contra o bot; no local, a do time da vez.
+  const handTeam = me;
 
   const fighters = {
     police: { name: teams.police.playerName, health: teams.police.health + fx.pendingDamage("police") },
@@ -260,6 +275,7 @@ export function GameScreen({
     return () => window.clearTimeout(timer);
   }, [exploded]);
   const bombFxPlaying = exploded && !bombFxDone;
+  const winner = winnerOf(state);
 
   useGameSounds(state, fx, game.tool.dice.shaking, game.gameOver && !fx.active && !bombFxPlaying);
 
@@ -295,8 +311,11 @@ export function GameScreen({
   const drawnCard = d6 ? slots[currentTeam][d6 - 1] : null;
   const rangeWarning = !!drawnCard && drawnCard.id === warnedCardId;
 
+  // Com a mesa inteira na tela (dado rolando ou parado) o slot não acende;
+  // só quando a câmera foca os slots ou o jogador escolheu um enquadramento.
+  const slotsReady = slotsInFocus || !!view;
   const highlight =
-    turnPhase === "PLACING" && d6
+    turnPhase === "PLACING" && d6 && slotsReady
       ? { team: currentTeam, index: d6 - 1, warning: rangeWarning }
       : null;
 
@@ -416,23 +435,28 @@ export function GameScreen({
         />
       )}
 
-      <GameOverOverlay
-        visible={game.gameOver && !fx.active && !bombFxPlaying}
-        message="MISSAO FALHOU"
-        subMessage={
-          state.bomb.exploded
-            ? `CARGA DETONADA NO SITE ${state.bomb.position}`
-            : teams.police.health <= 0
-              ? "FORCAS POLICIAIS ELIMINADAS"
-              : "FACCAO ELIMINADA"
-        }
-        onRetry={() => window.location.reload()}
-      />
+      {winner && (
+        <GameOverOverlay
+          visible={game.gameOver && !fx.active && !bombFxPlaying}
+          winner={winner}
+          // Contra o bot a tela é de quem joga; no local, de quem ganhou.
+          defeat={!!state.botTeam && winner === state.botTeam}
+          winnerName={teams[winner].playerName}
+          subMessage={
+            state.bomb.exploded
+              ? `CARGA DETONADA NO SITE ${state.bomb.position}`
+              : teams.police.health <= 0
+                ? "FORÇAS POLICIAIS ELIMINADAS"
+                : "FACÇÃO ELIMINADA"
+          }
+          onRetry={() => window.location.reload()}
+        />
+      )}
 
       <div className="relative min-h-0 flex-1">
         {/* Polícia (esquerda, como no tabuleiro) */}
         <FitColumn onScale={setFit} onWidth={setLeftHud} className="left-4">
-          <div className={hudClass("player-police")}>
+          <div data-player-anchor="police" className={hudClass("player-police")}>
             <PlayerCard game={game} alignment="left" pendingDamage={fx.pendingDamage("police")} />
           </div>
           <div className={`w-[256px] ${hudClass("minimap")}`}>
@@ -467,7 +491,7 @@ export function GameScreen({
               onDiceHit={playDiceHit}
               onDiceSettled={game.tool.finishRoll}
               onDiceStage={setDiceStage}
-              onSlotClick={handleSlotClick}
+              onSlotClick={!botTurn && playGate.allowed ? handleSlotClick : undefined}
               onHandCardDrop={handleHandCardDrop}
               deck={deck}
               onDeckClick={handleDeckClick}
@@ -552,21 +576,15 @@ export function GameScreen({
 
         {!boardClear && !botTurn && showAction && !state.tool.selected && (
           <div
-            className="absolute inset-0 z-10 flex items-center justify-center bg-black/30"
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
             style={{ paddingLeft: centerArea.left, paddingRight: centerArea.right }}
           >
-            <ActionFrame>
-              {canMinimizeAction && (
-                <button
-                  onClick={() => dispatch({ type: "SWITCH_TAB", payload: "battlefieldTab" })}
-                  className="absolute right-6 top-3 z-10 flex items-center gap-1.5 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
-                >
-                  <Minimize2 size={12} />
-                  Minimizar
-                </button>
-              )}
-              <Action game={game} />
-            </ActionFrame>
+            <ActionChooser
+              game={game}
+              onMinimize={
+                canMinimizeAction ? () => dispatch({ type: "SWITCH_TAB", payload: "battlefieldTab" }) : undefined
+              }
+            />
           </div>
         )}
 
@@ -583,7 +601,7 @@ export function GameScreen({
 
         {/* Facção (direita) */}
         <FitColumn onWidth={setRightHud} className="right-4">
-          <div className={hudClass("player-faction")}>
+          <div data-player-anchor="faction" className={hudClass("player-faction")}>
             <PlayerCard game={game} alignment="right" pendingDamage={fx.pendingDamage("faction")} />
           </div>
           <div className={hudClass("bomb")}>
@@ -592,12 +610,21 @@ export function GameScreen({
         </FitColumn>
       </div>
 
-      {/* Na vez do bot a mão dele fica escondida. */}
-      {!botTurn && (
+      {/* Na vez do bot a mão dele fica escondida; na distribuição aparece a mão de quem joga. */}
+      {(!botTurn || game.dealing) && (
         <div className={hudFocus?.hud.includes("inventory") ? "" : hudClass("inventory")}>
-          <InventoryPanel game={game} spotlight={!!hudFocus?.hud.includes("inventory")} />
+          <InventoryPanel
+            game={game}
+            spotlight={!!hudFocus?.hud.includes("inventory")}
+            // Depois do dado a mão abre junto com o destaque do slot, com a câmera já nos slots.
+            waitCamera={turnPhase === "PLACING" && !slotsReady}
+            peek={game.dealing}
+            team={game.dealing ? handTeam : undefined}
+          />
         </div>
       )}
+
+      {game.dealing && <DealLayer game={game} handTeam={handTeam} />}
 
       <button
         onClick={toggleSound}

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { SoundName, playSound, setLoopVolume, startAudio } from "@/lib/game-audio";
+import { SoundName, playSound, setLoopVolume, startAudio, startMusic, stopMusic } from "@/lib/game-audio";
 import { Card } from "@/lib/types";
-import { BULLET_GAP_MS, THROW_MS, fxKind } from "./card-fx";
+import { BULLET_GAP_MS, THROW_MS, fxKind, shotCount } from "./card-fx";
 import { GameState, MapEffect, TeamName } from "./game-types";
 import { CombatFx } from "./useCombatFx";
 
@@ -32,7 +32,7 @@ const loopVolume = (effects: MapEffect[], name: string, currentTeam: TeamName) =
 const playCardSound = (card: Card) => {
   switch (fxKind(card)) {
     case "shots":
-      for (let i = 0; i < card.damage; i++) {
+      for (let i = 0; i < shotCount(card); i++) {
         playSound(WEAPON_SOUND[card.name] ?? "rifle", {
           delay: (i * BULLET_GAP_MS) / 1000,
           rate: 0.96 + Math.random() * 0.08,
@@ -58,10 +58,15 @@ export const useGameSounds = (state: GameState, fx: CombatFx, shaking: boolean, 
   const { bomb, currentTeam } = state;
 
   useEffect(() => {
-    startAudio();
-    window.addEventListener("pointerdown", startAudio);
+    const start = () => {
+      startAudio();
+      startMusic();
+    };
+    start();
+    window.addEventListener("pointerdown", start);
     return () => {
-      window.removeEventListener("pointerdown", startAudio);
+      window.removeEventListener("pointerdown", start);
+      stopMusic();
       (["smoke-loop", "fire-loop", "dice-shake"] as SoundName[]).forEach((name) => setLoopVolume(name, 0));
     };
   }, []);

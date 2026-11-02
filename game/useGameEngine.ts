@@ -28,10 +28,14 @@ export type GameEngineOptions = {
   script?: MutableRefObject<ScriptedOutcomes>;
   /** Cartas na mão de cada time no início; o tutorial começa sem nenhuma. */
   startingCards?: number;
+  /** Mãos vazias no início: as cartas saem do baralho numa distribuição animada. */
+  deal?: boolean;
 };
 
 export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions = {}) => {
-  const { timer = true, script, startingCards } = options;
+  const { timer = true, script, startingCards, deal = false } = options;
+  // Enquanto distribui, o relógio para e o primeiro turno espera.
+  const [dealing, setDealing] = useState(deal);
   const startRotation = { x: 0, y: 0, z: 0 };
   const [dice, setDice] = useState<{
     shaking: boolean;
@@ -41,7 +45,7 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
   const [spinnerRotation, setSpinnerRotation] = useState(startRotation);
 
   const [state, rawDispatch] = useReducer(gameReducer, undefined, () =>
-    createInitialGameState(setup, startingCards),
+    createInitialGameState(setup, deal ? 0 : startingCards),
   );
 
   // Com roteiro, a compra entrega a carta definida em vez de uma aleatória.
@@ -172,7 +176,7 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
   const gameOver = isGameOver(state);
 
   useEffect(() => {
-    if (!timer || gameOver) return;
+    if (!timer || gameOver || dealing) return;
     const interval = setInterval(() => {
       if (state.countdown.seconds === 0) handleEndTime();
 
@@ -180,12 +184,14 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [seconds, handInventory, isRolling, timer, gameOver]);
+  }, [seconds, handInventory, isRolling, timer, gameOver, dealing]);
 
   return {
     state,
     dispatch,
     gameOver,
+    dealing,
+    finishDeal: () => setDealing(false),
     tool: {
       rotation: {
         spinner: spinnerRotation,

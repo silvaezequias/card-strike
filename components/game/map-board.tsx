@@ -6,7 +6,7 @@ import { TeamName } from "@/game/game-types";
 import { Portrait } from "@/components/art/noir";
 import { factionPalette, getPalette, policePalette } from "@/components/art/palette";
 import { MAX_HEALTH } from "@/game/card-effects";
-import { BULLET_GAP_MS, BULLET_TRAVEL_MS, THROW_MS, fxKind } from "@/game/card-fx";
+import { BULLET_GAP_MS, BULLET_TRAVEL_MS, THROW_MS, fxKind, shotCount } from "@/game/card-fx";
 import { CombatEvent } from "@/game/game-types";
 import { FxStage } from "@/game/useCombatFx";
 import { CombatFx, Flames, SmokeCloud } from "./combat-fx";
@@ -214,7 +214,9 @@ const SiteDetails = ({ site, fighters }: { site: Bombsite; fighters?: SiteFighte
   const cx = SITE.x + SITE.w / 2;
   const plantY = siteCenterY(site) + TOKEN_DY;
   return (
-    <g className="animate-in fade-in duration-700">
+    // Só opacidade: animar transform num grupo SVG faz o navegador desenhá-lo
+    // como imagem no tamanho original do mapa, e o zoom deixa tudo pixelado.
+    <g className="map-fade-in">
       <text x={cx} y={y + 11} textAnchor="middle" fontSize="8" fontWeight={900} fill="#c9bcff" fontFamily={MONO_FONT} letterSpacing="3">
         BOMBSITE {site}
       </text>
@@ -571,7 +573,7 @@ const tokenHit = (event: CombatEvent): TokenHit | null => {
   if (!event.hit || event.blocked) return null;
   const kind = fxKind(event.card);
   if (kind === "shots")
-    return { delay: BULLET_TRAVEL_MS, duration: BULLET_GAP_MS, count: event.card.damage };
+    return { delay: BULLET_TRAVEL_MS, duration: BULLET_GAP_MS, count: shotCount(event.card) };
   if (kind === "grenade") return { delay: THROW_MS, duration: 400, count: 1 };
   return null;
 };

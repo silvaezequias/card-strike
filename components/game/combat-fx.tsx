@@ -6,6 +6,8 @@ import { getPalette } from "@/components/art/palette";
 import {
   BOMB_FX_MS,
   BULLET_GAP_MS,
+  shotCount,
+  shotDamage,
   BULLET_TRAVEL_MS,
   THROW_MS,
   fxKind,
@@ -44,10 +46,10 @@ const ItemSprite = ({ event, scale }: { event: CombatEvent; scale: number }) => 
   );
 };
 
-/** Atirador com a arma da carta: uma bala por ponto de dano. */
+/** Atirador com a arma da carta: uma bala por ponto de dano (a AWP dá um tiro só). */
 const Shots = ({ event, from, to }: { event: CombatEvent; from: Point; to: Point }) => {
   const dir = Math.sign(to.x - from.x) || 1;
-  const count = event.card.damage;
+  const count = shotCount(event.card);
   const muzzle = from.x + dir * MUZZLE_OFFSET;
   // Com Smoke as balas somem na fumaça; sem alvo, vão até o fim do site.
   const stop = to.x - dir * (event.blocked ? BODY_RADIUS * 2 : BODY_RADIUS);
@@ -108,7 +110,7 @@ const Shots = ({ event, from, to }: { event: CombatEvent; from: Point; to: Point
                   className="fx-float"
                   style={fxStyle(delay + BULLET_TRAVEL_MS)}
                 >
-                  -1
+                  -{shotDamage(event.card)}
                 </text>
               </>
             )}

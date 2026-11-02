@@ -90,7 +90,8 @@ export const BoardDice = ({
   /** Dado sumiu, está no ar/rolando ou parado mostrando o número. */
   onStage?: (stage: DiceStage) => void;
 }) => {
-  const p = getPalette(roll?.team ?? team);
+  // Balançando, o dado é de quem joga agora; `roll` ainda é a jogada anterior.
+  const p = getPalette(shaking || !roll ? team : roll.team);
   const cube = useRef<HTMLDivElement>(null);
   const shadow = useRef<HTMLDivElement>(null);
   const [resting, setResting] = useState<number | null>(null);

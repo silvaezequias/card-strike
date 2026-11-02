@@ -13,3 +13,7 @@ as origens ficam aqui para consulta.
 | `fire-loop` | [Fire Crackling](https://opengameart.org/content/fire-crackling), emenda fundida para o loop | CC0 |
 | `c4-explosion` | [Dynamite sound effect](https://opengameart.org/content/dynamite-sound-effect) + grave do pacote de combate (Kenney) | CC0 |
 | `smoke-loop`, `bomb-beep`, `bomb-plant`, `bomb-defuse`, `dice-hit`, `dice-shake` | Gerados por código para o projeto | Sem restrição |
+
+## Música
+
+- `music-1.ogg` e `music-2.ogg`: "Card Strike - Operação Tática", criadas no Suno (suno.com) na conta do autor do jogo, em 2 de novembro de 2026, e convertidas para OGG. O uso segue os termos do plano do Suno dessa conta.

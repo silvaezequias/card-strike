@@ -133,3 +133,40 @@ export function setLoopVolume(name: SoundName, volume: number) {
     loops.delete(name);
   }
 }
+
+/* ───────── Música de fundo ───────── */
+
+/** Trilhas tocadas em sequência, uma depois da outra. */
+const MUSIC_TRACKS = ["/audio/music-1.ogg", "/audio/music-2.ogg"];
+/** Bem abaixo dos efeitos, para não brigar com tiros e narração. */
+const MUSIC_VOLUME = 0.22;
+
+let music: HTMLAudioElement | null = null;
+let musicTrack = 0;
+let musicWanted = false;
+
+/** Liga a música (precisa de startAudio antes); pode ser chamada de novo após um clique. */
+export const startMusic = () => {
+  musicWanted = true;
+  if (!context || !master) return;
+  if (!music) {
+    musicTrack = Math.floor(Math.random() * MUSIC_TRACKS.length);
+    music = new Audio(MUSIC_TRACKS[musicTrack]);
+    const gain = context.createGain();
+    gain.gain.value = MUSIC_VOLUME;
+    // Passa pelo master: o botão de som também cala a música.
+    context.createMediaElementSource(music).connect(gain).connect(master);
+    music.addEventListener("ended", () => {
+      musicTrack = (musicTrack + 1) % MUSIC_TRACKS.length;
+      music!.src = MUSIC_TRACKS[musicTrack];
+      if (musicWanted) music!.play().catch(() => {});
+    });
+  }
+  // Sem permissão do navegador ainda: tenta de novo no próximo clique.
+  if (music.paused) music.play().catch(() => {});
+};
+
+export const stopMusic = () => {
+  musicWanted = false;
+  music?.pause();
+};

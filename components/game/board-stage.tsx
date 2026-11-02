@@ -162,6 +162,9 @@ const CardOnBoard = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { w, h } = cardBox(rect, rotate);
+  // Só a carta clicável sobe da mesa sob o mouse.
+  const [hovered, setHovered] = useState(false);
+  const lifted = hovered && !!onClick;
 
   // Voo de entrada só na montagem: sobe, faz um arco e pousa no lugar.
   useLayoutEffect(() => {
@@ -193,15 +196,18 @@ const CardOnBoard = ({
   return (
     <div
       ref={ref}
-      className={`absolute ${onClick ? "cursor-pointer transition-[filter] hover:brightness-125" : ""}`}
+      className={`absolute ${onClick ? "cursor-pointer hover:brightness-125" : ""}`}
       onClick={onClick}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
       style={{
         left: rect.x + rect.w / 2 - w / 2,
         top: rect.y + rect.h / 2 - h / 2,
         width: w,
         height: h,
-        transform: `rotate(${rotate}deg)`,
-        filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.8))",
+        transform: `rotate(${rotate}deg) translateZ(${lifted ? 34 : 0}px) scale(${lifted ? 1.05 : 1})`,
+        transition: "transform 200ms ease-out, filter 200ms",
+        filter: lifted ? "drop-shadow(0 26px 22px rgba(0,0,0,0.85))" : "drop-shadow(0 10px 14px rgba(0,0,0,0.8))",
       }}
     >
       <NoirCard card={card} team={team} className="block h-full w-full" />
@@ -591,12 +597,14 @@ export const BoardStage = ({
       }
     : getPose(cameraFocus?.area === "overview" ? "overview" : shot, turn, framed);
   const rotate = pose.rotate + orbit.rotate;
+  const zoom = pose.scale * orbit.zoom;
   const transform = [
     // Sobe o enquadramento acima da área coberta no rodapé.
     `translateY(${-bottomInset / 2}px)`,
     `rotateX(${pose.tilt + orbit.tilt}deg)`,
     `rotateZ(${rotate}deg)`,
-    `scale(${pose.scale * orbit.zoom})`,
+    // Escala também a altura (z): com scale() só x e y encolhem e o dado estica.
+    `scale3d(${zoom}, ${zoom}, ${zoom})`,
     `translate(${-pose.focus.x}px, ${-pose.focus.y}px)`,
   ].join(" ");
 
@@ -634,11 +642,29 @@ export const BoardStage = ({
                 rect={slotRect(team, i)}
                 rotate={TEAM_CARD_ROTATION[team]}
                 entrance={slotEntrance(team, i, card)}
-                onClick={onSlotClick ? () => onSlotClick(team, i) : undefined}
+                // Só o slot sorteado pelo dado é clicável.
+                onClick={
+                  onSlotClick && highlight?.team === team && highlight.index === i
+                    ? () => onSlotClick(team, i)
+                    : undefined
+                }
               />
             ) : null,
           ),
         )}
+
+        {/* Marcadores dos baralhos: a distribuição das cartas parte daqui. */}
+        {(["police", "faction"] as TeamName[]).map((team) => {
+          const r = deckRect(team);
+          return (
+            <div
+              key={`deck-${team}`}
+              data-deck-anchor={team}
+              className="pointer-events-none absolute"
+              style={{ left: r.x, top: r.y, width: r.w, height: r.h }}
+            />
+          );
+        })}
 
         {deck && (
           <DeckHighlight

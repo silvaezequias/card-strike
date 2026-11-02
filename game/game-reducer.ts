@@ -11,7 +11,7 @@ import { ActionToggleInventory } from "./actions/toggleInventory";
 import { ActionKeepInHand } from "./actions/keepInHand";
 import { ActionEndTurn } from "./actions/endTurn";
 import { ActionPlayCard } from "./actions/playCard";
-import { ActionBuyCard } from "./actions/buyCard";
+import { ActionBuyCard, ActionDealCard } from "./actions/buyCard";
 import { ActionPlaceCard } from "./actions/placeCard";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -54,6 +54,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "BUY_SCRIPTED_CARD":
       return ActionBuyCard(state, action.payload.cardName);
+
+    case "DEAL_CARD":
+      return ActionDealCard(state, action.payload.team);
 
     case "PLACE_CARD":
       return ActionPlaceCard(state, action);

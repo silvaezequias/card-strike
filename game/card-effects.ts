@@ -77,6 +77,13 @@ export const inConfrontation = ({ teams }: GameState) =>
 export const isGameOver = ({ bomb, teams }: GameState) =>
   bomb.exploded || teams.police.health <= 0 || teams.faction.health <= 0;
 
+/** Time vencedor: a Facção explode a bomba ou zera a Polícia; a Polícia zera a Facção. */
+export const winnerOf = ({ bomb, teams }: GameState): TeamName | null => {
+  if (bomb.exploded || teams.police.health <= 0) return "faction";
+  if (teams.faction.health <= 0) return "police";
+  return null;
+};
+
 /** Aplica a carta jogada pelo time da vez e diz o que aconteceu. */
 export const resolveCard = (state: GameState, card: Card) => {
   const self = state.currentTeam;

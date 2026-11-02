@@ -19,14 +19,17 @@ const TURN_START_MS = 1300;
  */
 export const TurnBanner = ({ game }: { game: GameEngine }) => {
   const { currentTeam, turnPhase, countdown } = game.state;
-  const { dispatch } = game;
+  const { dispatch, dealing } = game;
   const theme = useGameTheme(currentTeam);
 
   useEffect(() => {
-    if (turnPhase !== "COUNTDOWN") return;
+    if (turnPhase !== "COUNTDOWN" || dealing) return;
     const timer = window.setTimeout(() => dispatch({ type: "SELECT_ACTION" }), TURN_START_MS);
     return () => window.clearTimeout(timer);
-  }, [turnPhase, currentTeam, countdown.round, dispatch]);
+  }, [turnPhase, currentTeam, countdown.round, dispatch, dealing]);
+
+  // O aviso do primeiro turno entra depois da distribuição das cartas.
+  if (dealing) return null;
 
   return (
     <div
