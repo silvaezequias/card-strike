@@ -1,7 +1,7 @@
 import { Tool } from "@/game/game-types";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
-import { ArrowLeft, Dices, Sun } from "lucide-react";
+import { ArrowLeft, Dices } from "lucide-react";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { ArtPalette, factionPalette, getPalette, policePalette } from "@/components/art/palette";
 import { HIGHLIGHT_CLASS, useGate } from "./tutorial-gate";
@@ -15,164 +15,11 @@ type ChoiceButtonProps = {
   onChoose: (mode: Tool) => void;
 };
 
-type SpinnerProps = {
-  game: GameEngine;
-};
-
-export const Action = ({ game }: ActionProps) => {
-  const theme = useGameTheme(game.state.currentTeam);
-  const rollGate = useGate("roll");
-  const backGate = useGate("back");
-
-  if (!game.state.tool.selected)
-    return (
-      <ChoiceButton
-        game={game}
-        onChoose={(mode) => game.dispatch({ type: "SET_TOOL", payload: mode })}
-      />
-    );
-
-  return (
-    <div className="flex items-center justify-center animate-in h-full w-full gap-4 flex-col fade-in duration-300">
-      <div className={`rounded-2xl p-6 max-w-sm w-full text-center`}>
-        {/* Title */}
-        <h3
-          className={`text-xl font-black tracking-[0.2em] uppercase mb-1 ${theme.text}`}
-        >
-          Definir Posição
-        </h3>
-        <p className="text-zinc-500 text-[10px] font-bold tracking-wider mb-6">
-          Gire a roleta para se mover a um Bombsite
-        </p>
-
-        <div className="w-full flex items-center justify-center h-44 rounded">
-          <Spinner game={game} />
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-4">
-        <button
-          disabled={game.state.tool.isRolling || !backGate.allowed}
-          onClick={() => game.dispatch({ type: "SELECT_ACTION" })}
-          className={`p-3 disabled:hidden rounded-lg text-sm font-bold text-white tracking-wider disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg`}
-        >
-          <ArrowLeft size={16} className="mr-2" />
-          Voltar para ações
-        </button>
-
-        {/* Roll button */}
-        <button
-          onClick={() => game.tool.roll()}
-          disabled={game.state.tool.isRolling || !rollGate.allowed}
-          className={`${rollGate.highlighted ? HIGHLIGHT_CLASS : ""} p-3 ${theme.overlayScrim} rounded-lg text-sm font-bold text-white tracking-wider transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg`}
-        >
-          {game.state.tool.isRolling ? (
-            "GIRANDO..."
-          ) : (
-            <>
-              <Sun size={16} className="mr-2" /> GIRAR ROLETA
-            </>
-          )}
-        </button>
-      </div>
-    </div>
+/** Escolha da ação do turno; a roleta e o dado têm a própria mesa. */
+export const Action = ({ game }: ActionProps) =>
+  game.state.tool.selected ? null : (
+    <ChoiceButton game={game} onChoose={(mode) => game.dispatch({ type: "SET_TOOL", payload: mode })} />
   );
-};
-
-/** Ponto no disco da roleta; o ângulo conta a partir do topo, em sentido horário. */
-const dialPoint = (radius: number, degrees: number) => {
-  const angle = (degrees * Math.PI) / 180;
-  return {
-    x: (100 + radius * Math.sin(angle)).toFixed(2),
-    y: (100 - radius * Math.cos(angle)).toFixed(2),
-  };
-};
-
-const DIAL_RADIUS = 86;
-const DIAL_SITES = [
-  { site: "A", angle: 0 },
-  { site: "B", angle: 120 },
-  { site: "C", angle: 240 },
-];
-
-const sectorPath = (angle: number) => {
-  const from = dialPoint(DIAL_RADIUS, angle - 60);
-  const to = dialPoint(DIAL_RADIUS, angle + 60);
-  return `M100,100 L${from.x},${from.y} A${DIAL_RADIUS},${DIAL_RADIUS} 0 0 1 ${to.x},${to.y} Z`;
-};
-
-/** Roleta dos bombsites, no visual do mapa tático. */
-const Spinner = ({ game }: SpinnerProps) => {
-  const p = getPalette(game.state.currentTeam);
-
-  return (
-    <div className="relative h-44 w-44">
-      <svg
-        viewBox="0 0 200 200"
-        className="absolute inset-0 h-full w-full transition-transform"
-        style={{
-          transform: `rotate(${game.tool.rotation.spinner.z}deg)`,
-          transitionDuration: "3000ms",
-          transitionTimingFunction: "cubic-bezier(0.1, 0.8, 0.1, 1)",
-        }}
-        aria-hidden="true"
-      >
-        {DIAL_SITES.map(({ site, angle }, i) => (
-          <path key={site} d={sectorPath(angle)} fill={i === 0 ? p.bg2 : i === 1 ? p.bg1 : "#17132a"} />
-        ))}
-        {DIAL_SITES.map(({ site, angle }) => {
-          const edge = dialPoint(DIAL_RADIUS, angle + 60);
-          return (
-            <path key={site} d={`M100,100 L${edge.x},${edge.y}`} stroke={p.rim} strokeOpacity={0.55} strokeWidth={1.5} />
-          );
-        })}
-        {DIAL_SITES.map(({ site, angle }) => {
-          const badge = dialPoint(58, angle);
-          return (
-            <g key={site} transform={`translate(${badge.x} ${badge.y}) rotate(${angle})`}>
-              <circle r="17" fill="#07060c" stroke="#c9bcff" strokeOpacity={0.6} strokeWidth={1.5} />
-              <text y="8" textAnchor="middle" fontSize="23" fontWeight={900} fill="#ffffff" fontFamily="'Arial Black', Impact, sans-serif">
-                {site}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Moldura fixa: aro, marcações, centro e ponteiro */}
-      <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden="true">
-        <defs>
-          <linearGradient id="dial-rim" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stopColor={policePalette.rim} />
-            <stop offset="0.5" stopColor="#c9bcff" />
-            <stop offset="1" stopColor={factionPalette.rim} />
-          </linearGradient>
-        </defs>
-        <circle cx="100" cy="100" r="92" fill="none" stroke="#0b0a12" strokeWidth={12} />
-        <circle cx="100" cy="100" r="97" fill="none" stroke="url(#dial-rim)" strokeWidth={2.5} />
-        <circle cx="100" cy="100" r="87" fill="none" stroke="url(#dial-rim)" strokeOpacity={0.5} strokeWidth={1} />
-        {Array.from({ length: 36 }).map((_, i) => {
-          const degrees = i * 10;
-          const inner = dialPoint(i % 3 === 0 ? 89 : 91, degrees);
-          const outer = dialPoint(94, degrees);
-          return (
-            <path key={degrees} d={`M${inner.x},${inner.y} L${outer.x},${outer.y}`} stroke="#c9bcff" strokeOpacity={0.4} strokeWidth={1} />
-          );
-        })}
-        <circle cx="100" cy="100" r="15" fill="#07060c" stroke={p.rim} strokeWidth={2} />
-        <path d="M100,91 V109 M91,100 H109" stroke={p.rim} strokeWidth={2} strokeLinecap="round" />
-        <path
-          d="M100,16 L90,-4 H110 Z"
-          fill={p.rim}
-          stroke="#07060c"
-          strokeWidth={2}
-          strokeLinejoin="round"
-          style={{ filter: `drop-shadow(0 0 5px ${p.glow})` }}
-        />
-      </svg>
-    </div>
-  );
-};
 
 /** Barra do dado: segurar balança na mão, soltar lança sobre o tabuleiro. */
 export const DiceDock = ({ game }: { game: GameEngine }) => {

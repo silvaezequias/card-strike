@@ -10,23 +10,26 @@ import {
   quaternionToMatrix,
   simulateThrow,
 } from "@/lib/dice-physics";
-import { gridFrame } from "@/components/art/tactical-board";
+import { BOARD_H, BOARD_W } from "@/components/art/tactical-board";
 
 /* ═══════════════════════════════════════════════
    DADO 3D
    Um cubo em CSS dentro do plano do tabuleiro: usa a
    mesma câmera e perspectiva das cartas. Balança no
-   ar enquanto o jogador segura e rola sobre a grade
-   dele quando é lançado.
+   ar na borda de quem joga e, lançado, pode rolar
+   pela mesa inteira.
    ═══════════════════════════════════════════════ */
 
 const HALF = DIE_SIZE / 2;
 const HOLD_HEIGHT = 230;
-const HOLD_OUTSIDE = 90; // além da borda da grade, do lado do jogador
-const THROW_SPEED = 620;
-const SIDE_SPEED = 260;
+const HOLD_EDGE = 90; // distância da borda da mesa, do lado de quem joga
+const THROW_SPEED = [650, 1600] as const;
+const SIDE_SPEED = 420;
 const SHAKE_RADIUS = 30;
-const REST_MS = 1300;
+/** Tempo que o dado fica parado na mesa para o número ser lido. */
+export const DICE_REST_MS = 2200;
+
+export type DiceStage = "hidden" | "moving" | "resting";
 
 const FACE_TRANSFORM: Record<number, string> = {
   1: "rotateY(0deg)",
@@ -46,25 +49,27 @@ const PIPS: Record<number, [number, number][]> = {
   6: [[28, 24], [72, 24], [28, 50], [72, 50], [28, 76], [72, 76]],
 };
 
-const throwSetup = (team: TeamName) => {
-  const grid = gridFrame(team);
-  // A grade é vista deitada: a profundidade corre em x e a largura em y.
+/** Mesa inteira: as bordas do tabuleiro são as paredes. */
+export const DICE_BOUNDS = { x0: 0, y0: 0, x1: BOARD_W, y1: BOARD_H };
+
+export const throwSetup = (team: TeamName) => {
+  // Polícia na borda esquerda, Facção na direita; o dado vai para o outro lado.
   const dir = team === "police" ? 1 : -1;
   return {
     dir,
     hold: {
-      x: grid.center.x - dir * (grid.h / 2 + HOLD_OUTSIDE),
-      y: grid.center.y,
+      x: team === "police" ? HOLD_EDGE : BOARD_W - HOLD_EDGE,
+      y: BOARD_H / 2,
       z: HOLD_HEIGHT,
-    },
-    bounds: {
-      x0: grid.center.x - grid.h / 2 - HOLD_OUTSIDE * 2,
-      x1: grid.center.x + grid.h / 2,
-      y0: grid.center.y - grid.w / 2,
-      y1: grid.center.y + grid.w / 2,
     },
   };
 };
+
+export const randomThrowVelocity = (dir: number) => ({
+  x: dir * (THROW_SPEED[0] + Math.random() * (THROW_SPEED[1] - THROW_SPEED[0])),
+  y: (Math.random() - 0.5) * 2 * SIDE_SPEED,
+  z: -120,
+});
 
 export type DiceRoll = { id: number; value: number; team: TeamName };
 
@@ -74,6 +79,7 @@ export const BoardDice = ({
   roll,
   onHit,
   onSettled,
+  onStage,
 }: {
   team: TeamName;
   shaking: boolean;
@@ -81,6 +87,8 @@ export const BoardDice = ({
   /** Dado bateu na mesa. */
   onHit?: () => void;
   onSettled: () => void;
+  /** Dado sumiu, está no ar/rolando ou parado mostrando o número. */
+  onStage?: (stage: DiceStage) => void;
 }) => {
   const p = getPalette(roll?.team ?? team);
   const cube = useRef<HTMLDivElement>(null);
@@ -109,12 +117,8 @@ export const BoardDice = ({
     const setup = throwSetup(roll.team);
     return simulateThrow({
       start: setup.hold,
-      velocity: {
-        x: setup.dir * THROW_SPEED,
-        y: (Math.random() - 0.5) * 2 * SIDE_SPEED,
-        z: -120,
-      },
-      bounds: setup.bounds,
+      velocity: randomThrowVelocity(setup.dir),
+      bounds: DICE_BOUNDS,
       value: roll.value,
     });
     // Cada jogada simula uma vez só.
@@ -176,12 +180,17 @@ export const BoardDice = ({
   // Fica um instante na mesa para o número ser lido.
   useEffect(() => {
     if (!resting) return;
-    const timer = window.setTimeout(() => setResting(null), REST_MS);
+    const timer = window.setTimeout(() => setResting(null), DICE_REST_MS);
     return () => window.clearTimeout(timer);
   }, [resting]);
 
   const flying = !!roll && finished !== roll.id;
-  if (!shaking && !flying && !resting) return null;
+  const stage: DiceStage = shaking || flying ? "moving" : resting ? "resting" : "hidden";
+  const stageRef = useRef(onStage);
+  stageRef.current = onStage;
+  useEffect(() => stageRef.current?.(stage), [stage]);
+
+  if (stage === "hidden") return null;
 
   return (
     <>

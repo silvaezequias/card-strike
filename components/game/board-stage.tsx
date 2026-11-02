@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
 import { NoirCard } from "@/components/art/noir-card";
-import { BoardDice, DiceRoll } from "@/components/game/board-dice";
+import { BoardDice, DiceRoll, DiceStage } from "@/components/game/board-dice";
 import { getPalette } from "@/components/art/palette";
 import {
   BOARD_H,
@@ -383,6 +383,7 @@ export type BoardStageProps = {
   dice?: { shaking: boolean; roll: DiceRoll | null };
   onDiceHit?: () => void;
   onDiceSettled?: () => void;
+  onDiceStage?: (stage: DiceStage) => void;
   /** Baralho em destaque (hora de posicionar) e se dá para comprar. */
   deck?: { team: TeamName; canBuy: boolean; strong?: boolean; blockedLabel: string } | null;
   onDeckClick?: () => void;
@@ -408,6 +409,7 @@ export const BoardStage = ({
   dice,
   onDiceHit,
   onDiceSettled,
+  onDiceStage,
   deck,
   onDeckClick,
 }: BoardStageProps) => {
@@ -681,6 +683,7 @@ export const BoardStage = ({
             roll={dice.roll}
             onHit={onDiceHit}
             onSettled={() => onDiceSettled?.()}
+            onStage={onDiceStage}
           />
         )}
       </div>

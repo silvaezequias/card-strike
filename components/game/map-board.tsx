@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { Card } from "@/lib/types";
 import { TeamName } from "@/game/game-types";
 import { Portrait } from "@/components/art/noir";
@@ -481,14 +481,21 @@ const zoomFrame = (positions: Record<TeamName, MapSpot>, bomb: Bombsite | null) 
   return { scale, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
 };
 
-/** Transform (origem no canto) que centraliza o enquadramento sem mostrar fora do mapa. */
-const zoomTransform = (frame: ReturnType<typeof zoomFrame>) => {
-  if (!frame) return "translate(0%, 0%) scale(1)";
+/**
+ * Caixa do mapa ampliado que centraliza o enquadramento sem mostrar fora do
+ * mapa. O zoom muda o tamanho de verdade (não um scale): o mapa é desenhado
+ * de novo no tamanho final e textos e linhas ficam nítidos.
+ */
+const zoomBox = (frame: ReturnType<typeof zoomFrame>): CSSProperties => {
+  if (!frame) return { left: "0%", top: "0%", width: "100%", height: "100%" };
   const { scale: s, cx, cy } = frame;
   const clamp = (v: number) => Math.min(0, Math.max(100 - 100 * s, v));
-  const tx = clamp(50 - (cx / MAP_W) * 100 * s);
-  const ty = clamp(50 - (cy / MAP_H) * 100 * s);
-  return `translate(${tx}%, ${ty}%) scale(${s})`;
+  return {
+    left: `${clamp(50 - (cx / MAP_W) * 100 * s)}%`,
+    top: `${clamp(50 - (cy / MAP_H) * 100 * s)}%`,
+    width: `${100 * s}%`,
+    height: `${100 * s}%`,
+  };
 };
 
 /** Parte do mapa que o tutorial pede para focar. */
@@ -609,7 +616,7 @@ export const MapBoard = ({
   // No mapa grande, o site do confronto se expande sozinho.
   const conflictFocus: MapCameraFocus | null = !flat && conflict ? { area: conflict } : null;
   const shownFocus = focus ?? fxFocus ?? conflictFocus;
-  const transform = zoomTransform(
+  const zoom = zoomBox(
     shownFocus ? focusFrame(shownFocus) : autoZoom ? zoomFrame(positions, bomb) : null,
   );
   const detail = !flat && shownFocus && isSite(shownFocus.area) ? shownFocus.area : null;
@@ -628,8 +635,13 @@ export const MapBoard = ({
       >
         <div className="absolute inset-0 overflow-hidden" style={{ clipPath: MAP_CLIP }}>
           <div
-            className="absolute inset-0"
-            style={{ transform, transformOrigin: "0 0", transition: "transform 700ms cubic-bezier(0.4, 0, 0.2, 1)" }}
+            className="absolute"
+            style={{
+              ...zoom,
+              transition: ["left", "top", "width", "height"]
+                .map((prop) => `${prop} 700ms cubic-bezier(0.4, 0, 0.2, 1)`)
+                .join(", "),
+            }}
           >
             <MapArt conflict={conflict} bomb={bomb} detail={detail} fighters={fighters} />
             {ring && (

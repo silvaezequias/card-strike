@@ -10,6 +10,9 @@ import { InventoryPanel } from "@/components/game/inventory-panel";
 import { TurnBanner } from "@/components/game/turn-banner";
 import { Action, ActionFrame, DiceDock } from "@/components/game/action";
 import { BoardStage } from "@/components/game/board-stage";
+import { DiceResult } from "@/components/game/dice-result";
+import { DiceStage } from "@/components/game/board-dice";
+import { RouletteBoard, RouletteDock } from "@/components/game/roulette-board";
 import { CSSProperties, ReactNode, useEffect, useRef, useState } from "react";
 import { Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
@@ -79,18 +82,24 @@ const BOARD_BOTTOM_GAP = 48;
 const HUD_SIDE_GAP = 32;
 const HUD_Y_INSET = 48;
 
+/** Mesas lado a lado, da esquerda para a direita. */
+const BOARD_ORDER = ["roulette", "cards", "map"] as const;
+type ShownBoard = (typeof BOARD_ORDER)[number];
+
 /**
- * Camada de um tabuleiro na troca cartas ↔ mapa: o ativo fica no centro; o
- * outro fica fora da tela, do lado `side` (-1 esquerda, 1 direita), menor e
- * apagado. A transição dá a sensação da câmera indo de um para o outro.
+ * Camada de um tabuleiro na troca entre mesas: o ativo fica no centro; os
+ * outros ficam fora da tela, do seu lado, menores e apagados. A transição dá
+ * a sensação da câmera indo de um para o outro.
  */
-const boardLayer = (active: boolean, side: -1 | 1): CSSProperties => ({
-  transform: active ? "translateX(0) scale(1)" : `translateX(${side * 115}%) scale(0.75)`,
-  opacity: active ? 1 : 0,
-  pointerEvents: active ? "auto" : "none",
-  transition:
-    "transform 900ms cubic-bezier(0.65, 0, 0.35, 1), opacity 700ms ease",
-});
+const boardLayer = (board: ShownBoard, shown: ShownBoard): CSSProperties => {
+  const offset = BOARD_ORDER.indexOf(board) - BOARD_ORDER.indexOf(shown);
+  return {
+    transform: offset === 0 ? "translateX(0) scale(1)" : `translateX(${offset * 115}%) scale(0.75)`,
+    opacity: offset === 0 ? 1 : 0,
+    pointerEvents: offset === 0 ? "auto" : "none",
+    transition: "transform 900ms cubic-bezier(0.65, 0, 0.35, 1), opacity 700ms ease",
+  };
+};
 
 /** Interface apagada (e sem clique) durante o foco de câmera do tutorial. */
 const DIMMED = "pointer-events-none opacity-20";
@@ -175,8 +184,13 @@ export function GameScreen({
   const [view, setView] = useState<CameraView | null>(null);
   useEffect(() => setView(null), [turnPhase]);
 
+  // Escolhendo a ação ou com o dado no ar/parado: a câmera abre a mesa inteira.
+  const [diceStage, setDiceStage] = useState<DiceStage>("hidden");
+  const choosing = turnPhase === "CHOOSING" || turnPhase === "ACTING";
+  const wideShot = diceStage !== "hidden" || choosing;
+
   const shot =
-    cardFlying || turnPhase === "COUNTDOWN" || view?.board === "cards" ? "overview" : "focus";
+    cardFlying || wideShot || turnPhase === "COUNTDOWN" || view?.board === "cards" ? "overview" : "focus";
 
   const plantedSite = state.bomb.planted ? state.bomb.position : null;
 
@@ -204,6 +218,12 @@ export function GameScreen({
     if (selectedTool === "spinner") setMainView("map");
     else if (turnPhase !== "IDLE") setMainView("cards");
   }, [selectedTool, turnPhase, cameraBoard]);
+
+  // Dado lançado (do jogador ou do bot) sempre aparece na mesa.
+  const diceMoving = diceStage === "moving";
+  useEffect(() => {
+    if (diceMoving && !cameraBoard) setMainView("cards");
+  }, [diceMoving, cameraBoard]);
 
   // Carta jogada: mostra o voo, vai ao mapa para a ação e volta às cartas.
   const fx = useCombatFx(state.combatEvent);
@@ -322,9 +342,23 @@ export function GameScreen({
   };
 
   const showAction = board.activeTab === "actionTab";
+  const actionPending = turnPhase === "CHOOSING" || turnPhase === "ACTING";
+
+  // Mesa da roleta: só na hora de girar (minimizar as ações a tira da frente);
+  // girando, todo mundo vê, inclusive o giro do bot.
+  const spinnerChosen = selectedTool === "spinner" && actionPending;
+  const rouletteShown =
+    !cameraBoard && spinnerChosen && (state.tool.isRolling || showAction || botTurn);
+  const shownBoard: ShownBoard = rouletteShown ? "roulette" : mainView;
+
+  // Fim do giro: o mapa entra para mostrar o peão indo ao site sorteado.
+  const wasRoulette = useRef(false);
+  useEffect(() => {
+    if (wasRoulette.current && !rouletteShown && turnPhase === "IDLE") setMainView("map");
+    wasRoulette.current = rouletteShown;
+  }, [rouletteShown, turnPhase]);
   // Painel de ação minimizado: o jogador olha os tabuleiros e volta quando quiser.
   const canMinimizeAction = board.enabledTabs.battlefieldTab && tabsGate.allowed;
-  const actionPending = turnPhase === "CHOOSING" || turnPhase === "ACTING";
   // Olhar outro tabuleiro tira o painel da frente.
   const minimizeAction = () => {
     if (showAction && canMinimizeAction) dispatch({ type: "SWITCH_TAB", payload: "battlefieldTab" });
@@ -374,6 +408,14 @@ export function GameScreen({
         </div>
       </div>
 
+      {diceStage === "resting" && game.tool.dice.roll && !focusMode && (
+        <DiceResult
+          roll={game.tool.dice.roll}
+          playerName={teams[game.tool.dice.roll.team].playerName}
+          card={slots[game.tool.dice.roll.team][game.tool.dice.roll.value - 1]}
+        />
+      )}
+
       <GameOverOverlay
         visible={game.gameOver && !fx.active && !bombFxPlaying}
         message="MISSAO FALHOU"
@@ -411,7 +453,7 @@ export function GameScreen({
         <div className={`absolute inset-0 transition-opacity duration-500 ${hudFocus?.dim ? DIMMED : ""}`}>
           {/* Os dois tabuleiros ficam lado a lado e a câmera desliza de um para o
               outro; o que sai se afasta. Ambos seguem montados (estado e animações). */}
-          <div className="absolute inset-0" style={boardLayer(mainView === "cards", -1)}>
+          <div className="absolute inset-0" style={boardLayer("cards", shownBoard)}>
             <BoardStage
               turn={currentTeam}
               shot={shot}
@@ -424,6 +466,7 @@ export function GameScreen({
               dice={game.tool.dice}
               onDiceHit={playDiceHit}
               onDiceSettled={game.tool.finishRoll}
+              onDiceStage={setDiceStage}
               onSlotClick={handleSlotClick}
               onHandCardDrop={handleHandCardDrop}
               deck={deck}
@@ -431,10 +474,15 @@ export function GameScreen({
             />
           </div>
 
+          {/* Mesa da roleta, à esquerda das cartas */}
+          <div className="absolute px-4 pb-24 pt-16" style={{ ...centerArea, ...boardLayer("roulette", shownBoard) }}>
+            <RouletteBoard game={game} />
+          </div>
+
           {/* Mapa tático em destaque */}
           <div
             className="absolute flex items-center justify-center px-4 pb-6 pt-14 [container-type:size]"
-            style={{ ...centerArea, ...boardLayer(mainView === "map", 1) }}
+            style={{ ...centerArea, ...boardLayer("map", shownBoard) }}
           >
             <MapBoard
               positions={positions}
@@ -450,7 +498,7 @@ export function GameScreen({
 
         <div className="pointer-events-none absolute z-10" style={centerArea}>
           {/* Atalhos de câmera */}
-          {!boardClear && cameraGate.allowed && (
+          {!boardClear && cameraGate.allowed && !rouletteShown && (
             <div className="pointer-events-auto absolute left-1/2 top-2 z-20 -translate-x-1/2">
               <CameraNav board={mainView} view={shownView} activeClass={theme.text} onSelect={showView} />
             </div>
@@ -468,7 +516,7 @@ export function GameScreen({
             </div>
           )}
 
-          {!boardClear && !botTurn && turnPhase === "PLACING" && d6 && !rangeWarning && (
+          {!boardClear && !botTurn && turnPhase === "PLACING" && d6 && !rangeWarning && diceStage !== "resting" && (
             <div className="pointer-events-none absolute inset-x-0 top-12 z-10 flex flex-col items-center gap-1">
               <h2 className={`text-2xl font-black tracking-widest drop-shadow-lg ${theme.text}`}>
                 {slots[currentTeam][d6 - 1]
@@ -500,7 +548,9 @@ export function GameScreen({
         {/* Com o dado o tabuleiro fica livre: é onde ele rola. */}
         {!boardClear && !botTurn && showAction && state.tool.selected === "d6" && <DiceDock game={game} />}
 
-        {!boardClear && !botTurn && showAction && state.tool.selected !== "d6" && (
+        {!boardClear && !botTurn && rouletteShown && <RouletteDock game={game} />}
+
+        {!boardClear && !botTurn && showAction && !state.tool.selected && (
           <div
             className="absolute inset-0 z-10 flex items-center justify-center bg-black/30"
             style={{ paddingLeft: centerArea.left, paddingRight: centerArea.right }}

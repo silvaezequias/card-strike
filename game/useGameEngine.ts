@@ -5,6 +5,7 @@ import { createInitialGameState } from "./game-initital-state";
 import { getSpinnerRotation } from "@/lib/game-helpers";
 import { GameAction } from "./game-actions";
 import { isGameOver } from "./card-effects";
+import { SPIN_MS, SPIN_READ_MS } from "@/components/game/roulette-board";
 
 /** Resultados forçados para as próximas jogadas (tutorial roteirizado). */
 export type ScriptedOutcomes = {
@@ -15,7 +16,8 @@ export type ScriptedOutcomes = {
 };
 
 const BOMBSITES: Bombsite[] = ["A", "B", "C"];
-const SPINNER_MS = 3000;
+/** Giro da roleta mais um instante parada mostrando o site. */
+const SPINNER_MS = SPIN_MS + SPIN_READ_MS;
 /** Segurança: aba em segundo plano para o dado, e o jogo não pode travar. */
 const DICE_FALLBACK_MS = 7000;
 
