@@ -17,7 +17,6 @@ import {
 } from "@/components/art/characters";
 import { NoirCard } from "@/components/art/noir-card";
 import { generateRandomCard } from "@/lib/game-helpers";
-import { playDiceHit } from "@/game/useGameSounds";
 import {
   ColorMode,
   Settings,
@@ -396,7 +395,7 @@ const Operator = ({ team }: { team: "police" | "faction" }) => {
 };
 
 /** Cena do jogo com as configurações aplicadas na hora, e um detalhe ampliado embaixo. */
-const Preview = ({ tab }: { tab: SettingsTab }) => {
+const Preview = () => {
   const card = useMemo(() => generateRandomCard("police"), []);
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -425,48 +424,25 @@ const Preview = ({ tab }: { tab: SettingsTab }) => {
       </div>
 
       <div className="flex min-h-0 flex-[2] flex-col gap-3 bg-black/40 p-4">
-        {tab === "audio" ? (
-          <>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">
-              Teste de som
-            </p>
-            <button
-              type="button"
-              onClick={playDiceHit}
-              className="flex w-fit items-center gap-2 rounded-sm border border-white/20 bg-black/40 px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-200 hover:border-white/50 hover:text-white"
-            >
-              <Volume2 size={14} /> Tocar efeito do dado
-            </button>
-            <p className="text-[11px] text-zinc-500">
-              A música do menu já toca com o volume escolhido.
-            </p>
-          </>
-        ) : (
-          <>
-            <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">
-              Cores do jogo
-            </p>
-            <div className="grid grid-cols-5 gap-2">
-              {SWATCHES.map(({ label, color }) => (
-                <span
-                  key={label}
-                  className="flex flex-col items-center gap-1.5"
-                >
-                  <span
-                    className="h-10 w-full rounded-sm"
-                    style={{
-                      background: color,
-                      boxShadow: `0 0 14px ${color}88`,
-                    }}
-                  />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">
-                    {label}
-                  </span>
-                </span>
-              ))}
-            </div>
-          </>
-        )}
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-400">
+          Cores do jogo
+        </p>
+        <div className="grid grid-cols-5 gap-2">
+          {SWATCHES.map(({ label, color }) => (
+            <span key={label} className="flex flex-col items-center gap-1.5">
+              <span
+                className="h-10 w-full rounded-sm"
+                style={{
+                  background: color,
+                  boxShadow: `0 0 14px ${color}88`,
+                }}
+              />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-300">
+                {label}
+              </span>
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -533,11 +509,16 @@ export const SettingsView = () => {
         <SettingsTabs tab={tab} onTab={setTab} />
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="hidden min-h-0 w-[45%] border-r border-white/10 md:block">
-          <Preview tab={tab} />
-        </div>
+        {/* Pré-visualização só em Acessibilidade: mostra o efeito do modo daltônico. */}
+        {tab === "access" && (
+          <div className="hidden min-h-0 w-[45%] border-r border-white/10 md:block">
+            <Preview />
+          </div>
+        )}
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-4 lg:px-10">
+          <div
+            className={`min-h-0 flex-1 overflow-y-auto px-6 py-4 lg:px-10 ${tab === "access" ? "" : "mx-auto w-full max-w-4xl"}`}
+          >
             <h2 className="mb-1 text-lg font-bold text-zinc-400">
               {SETTINGS_TABS.find((t) => t.id === tab)?.label}
             </h2>

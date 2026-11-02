@@ -31,7 +31,7 @@ import { useOnline } from "@/lib/online/online-context";
 import { AccountPanel } from "@/components/online/account-panel";
 import { FriendsPanel } from "@/components/online/friends-panel";
 import { InviteToasts } from "@/components/online/invite-toasts";
-import { Avatar } from "@/components/online/ui";
+import { Avatar, STATUS_COLOR, STATUS_LABEL } from "@/components/online/ui";
 
 /* ═══════════════════════════════════════════════
    MENU PRINCIPAL
@@ -183,6 +183,57 @@ const HistoryPanel = () => (
   </div>
 );
 
+/** Linha da lateral: ícone fixo na coluna estreita e o texto que aparece quando ela abre. */
+const SideRow = ({
+  icon,
+  label,
+  detail,
+  detailColor,
+  steam = false,
+  title,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  detail?: string;
+  detailColor?: string;
+  /** Selo da Steam, só para quem tem a conta ligada. */
+  steam?: boolean;
+  title: string;
+  onClick?: () => void;
+}) => {
+  const Tag = onClick ? "button" : "div";
+  return (
+    <Tag
+      {...(onClick ? { type: "button" as const, onClick } : {})}
+      title={title}
+      className={`flex w-64 shrink-0 items-center text-left ${onClick ? "transition-colors hover:bg-white/10" : ""}`}
+    >
+      <span className="flex h-11 w-14 shrink-0 items-center justify-center">
+        {icon}
+      </span>
+      <span className="min-w-0 flex-1 pr-3 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+        <span className="flex items-center gap-1.5">
+          <span className="truncate text-sm font-bold text-white">{label}</span>
+          {steam && (
+            <span className="shrink-0 rounded-sm bg-[#1b2838] px-1 py-px text-[8px] font-black tracking-widest text-[#66c0f4]">
+              STEAM
+            </span>
+          )}
+        </span>
+        {detail && (
+          <span
+            className="block truncate text-[10px] uppercase tracking-widest"
+            style={{ color: detailColor ?? "#a1a1aa" }}
+          >
+            {detail}
+          </span>
+        )}
+      </span>
+    </Tag>
+  );
+};
+
 export const GameMenu = ({
   onStart,
 }: {
@@ -300,106 +351,134 @@ export const GameMenu = ({
         </nav>
       </header>
 
-      {/* Lateral direita: jogadores */}
-      <aside className="absolute bottom-0 right-0 top-0 z-30 flex w-14 flex-col items-center gap-2 border-l border-white/10 bg-black/55 py-3 backdrop-blur-md">
-        {/* Conta e amigos (online) */}
-        <button
-          type="button"
+      {/* Lateral direita: conta, amigos e jogadores. Com o mouse em cima,
+          abre para mostrar nomes, status e o selo da Steam. */}
+      <aside className="group absolute bottom-0 right-0 top-0 z-30 flex w-14 flex-col gap-1 overflow-hidden border-l border-white/10 bg-black/55 py-3 backdrop-blur-md transition-[width,background-color] duration-200 hover:w-64 hover:bg-[#07060c]/95">
+        <SideRow
           onClick={() => setPanel("account")}
           title={
             online.me
               ? `${online.me.handle} · sua conta`
               : "Entrar para jogar online"
           }
-          className="flex h-10 w-10 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-        >
-          {online.me ? (
-            <Avatar user={online.me} size={34} />
-          ) : (
-            <LogIn size={18} />
-          )}
-        </button>
+          icon={
+            online.me ? (
+              <Avatar user={online.me} size={34} />
+            ) : (
+              <LogIn size={18} />
+            )
+          }
+          label={online.me ? online.me.handle : "Entrar"}
+          detail={
+            online.me
+              ? online.me.kind === "account"
+                ? "Sua conta"
+                : "Convidado"
+              : "Jogar online"
+          }
+          steam={!!online.me?.steam}
+        />
         {online.me && (
-          <button
-            type="button"
+          <SideRow
             onClick={() => setPanel("friends")}
-            title={
-              pendingRequests
-                ? `Amigos · ${pendingRequests} pedido(s)`
-                : "Amigos"
-            }
-            className="relative flex h-9 w-9 flex-col items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <UserRound size={17} />
-            <span className="text-[9px]">
-              {online.me.kind === "account" ? onlineFriends.length : "–"}
-            </span>
-            {pendingRequests > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ffb020] px-1 text-[9px] font-black text-black">
-                {pendingRequests}
+            title="Amigos"
+            icon={
+              <span className="relative flex flex-col items-center text-zinc-300">
+                <UserRound size={17} />
+                <span className="text-[9px]">
+                  {online.me.kind === "account" ? onlineFriends.length : "–"}
+                </span>
+                {pendingRequests > 0 && (
+                  <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ffb020] px-1 text-[9px] font-black text-black">
+                    {pendingRequests}
+                  </span>
+                )}
               </span>
-            )}
-          </button>
+            }
+            label="Amigos"
+            detail={
+              online.me.kind !== "account"
+                ? "Só para contas"
+                : `${onlineFriends.length} online${pendingRequests ? ` · ${pendingRequests} pedido(s)` : ""}`
+            }
+          />
         )}
         {onlineFriends.slice(0, 6).map((f) => (
-          <button
+          <SideRow
             key={f.id}
-            type="button"
             onClick={() => setPanel("friends")}
             title={`${f.handle} · amigo`}
-            className="transition-transform hover:scale-105"
-          >
-            <Avatar user={f} size={32} />
-          </button>
+            icon={<Avatar user={f} size={32} />}
+            label={f.handle}
+            detail={STATUS_LABEL[f.status] ?? "Online"}
+            detailColor={STATUS_COLOR[f.status]}
+            steam={f.steam}
+          />
         ))}
-        <span className="h-px w-8 bg-white/15" />
-        <span
-          className="flex flex-col items-center text-zinc-300"
+        <span className="mx-3 my-1 h-px bg-white/15" />
+        <SideRow
           title="Jogadores"
-        >
-          <Users size={18} />
-          <span className="text-[9px]">{roster.length}</span>
-        </span>
-        <span className="h-px w-8 bg-white/15" />
+          icon={
+            <span className="flex flex-col items-center text-zinc-300">
+              <Users size={18} />
+              <span className="text-[9px]">{roster.length}</span>
+            </span>
+          }
+          label="Jogadores"
+          detail="Desta partida"
+        />
         {roster.map(({ key, name, team, bot }) => {
           const color = team ? getPalette(team).rim : "#71717a";
           return (
-            <button
+            <SideRow
               key={key}
-              type="button"
               onClick={() => setView("play")}
               title={`${name}${team ? ` · ${TEAM_LABEL[team]}` : " · sem time"}`}
-              className="relative h-10 w-10 overflow-hidden rounded-md border-2 bg-black transition-transform hover:scale-105"
-              style={{ borderColor: color }}
-            >
-              {team ? (
-                <Portrait
-                  team={team}
-                  crop="head"
-                  flip={team === "police"}
-                  className="block h-full w-full"
-                />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-sm font-black text-zinc-400">
-                  {name.slice(0, 1).toUpperCase()}
+              icon={
+                <span
+                  className="relative block h-10 w-10 overflow-hidden rounded-md border-2 bg-black"
+                  style={{ borderColor: color }}
+                >
+                  {team ? (
+                    <Portrait
+                      team={team}
+                      crop="head"
+                      flip={team === "police"}
+                      className="block h-full w-full"
+                    />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-sm font-black text-zinc-400">
+                      {name.slice(0, 1).toUpperCase()}
+                    </span>
+                  )}
+                  {bot && (
+                    <Bot
+                      size={12}
+                      className="absolute bottom-0 right-0 rounded-tl bg-black/80 p-0.5 text-white"
+                    />
+                  )}
                 </span>
-              )}
-              {bot && (
-                <Bot
-                  size={12}
-                  className="absolute bottom-0 right-0 rounded-tl bg-black/80 p-0.5 text-white"
-                />
-              )}
-            </button>
+              }
+              label={name}
+              detail={team ? TEAM_LABEL[team] : "Sem time"}
+              detailColor={team ? color : undefined}
+            />
           );
         })}
-        <div className="mt-auto flex flex-col items-center gap-2">
-          <TopIcon
-            label={settings.muted ? "Ligar som" : "Desligar som"}
+        <div className="mt-auto">
+          <SideRow
             onClick={() => updateSettings({ muted: !settings.muted })}
-          >
-            {settings.muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
-          </TopIcon>
+            title={settings.muted ? "Ligar som" : "Desligar som"}
+            icon={
+              settings.muted ? (
+                <VolumeX size={17} className="text-zinc-300" />
+              ) : (
+                <Volume2 size={17} className="text-zinc-300" />
+              )
+            }
+            label={settings.muted ? "Som desligado" : "Som ligado"}
+            detail="Clique para trocar"
+          />
         </div>
       </aside>
 
