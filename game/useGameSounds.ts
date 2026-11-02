@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { SoundName, playSound, setLoopVolume, startAudio, startMusic, stopMusic } from "@/lib/game-audio";
+import { MusicMode, SoundName, playSound, resumeMusic, setLoopVolume, setMusic, startAudio } from "@/lib/game-audio";
 import { Card } from "@/lib/types";
 import { BULLET_GAP_MS, THROW_MS, fxKind, shotCount } from "./card-fx";
 import { GameState, MapEffect, TeamName } from "./game-types";
@@ -50,6 +50,25 @@ const playCardSound = (card: Card) => {
   }
 };
 
+/** Música de fundo do momento; o primeiro clique libera o áudio no navegador. */
+export const useMusic = (mode: MusicMode | null) => {
+  useEffect(() => {
+    const start = () => {
+      startAudio();
+      resumeMusic();
+    };
+    start();
+    window.addEventListener("pointerdown", start);
+    return () => {
+      window.removeEventListener("pointerdown", start);
+      // Saiu da tela: a próxima escolhe a sua música.
+      setMusic(null);
+    };
+  }, []);
+
+  useEffect(() => setMusic(mode), [mode]);
+};
+
 export const playDiceHit = () =>
   playSound("dice-hit", { rate: 0.85 + Math.random() * 0.4, volume: 0.7 + Math.random() * 0.3 });
 
@@ -57,16 +76,14 @@ export const playDiceHit = () =>
 export const useGameSounds = (state: GameState, fx: CombatFx, shaking: boolean, over: boolean) => {
   const { bomb, currentTeam } = state;
 
+  // Guerra na partida, a mesma acelerada com a bomba armada e calma no fim.
+  useMusic(over ? "menu" : bomb.planted && !bomb.exploded ? "bomb" : "game");
+
   useEffect(() => {
-    const start = () => {
-      startAudio();
-      startMusic();
-    };
-    start();
-    window.addEventListener("pointerdown", start);
+    startAudio();
+    window.addEventListener("pointerdown", startAudio);
     return () => {
-      window.removeEventListener("pointerdown", start);
-      stopMusic();
+      window.removeEventListener("pointerdown", startAudio);
       (["smoke-loop", "fire-loop", "dice-shake"] as SoundName[]).forEach((name) => setLoopVolume(name, 0));
     };
   }, []);

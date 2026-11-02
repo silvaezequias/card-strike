@@ -16,4 +16,8 @@ as origens ficam aqui para consulta.
 
 ## Música
 
-- `music-1.ogg` e `music-2.ogg`: "Card Strike - Operação Tática", criadas no Suno (suno.com) na conta do autor do jogo, em 2 de novembro de 2026, e convertidas para OGG. O uso segue os termos do plano do Suno dessa conta.
+Criadas no Suno (suno.com) na conta do autor do jogo, em 2 de novembro de 2026, e convertidas para OGG. O uso segue os termos do plano do Suno dessa conta.
+
+- `menu-1.ogg`, `menu-2.ogg`: "Card Strike - Operação Tática" (menu e tela de fim).
+- `war-1.ogg`, `war-2.ogg`: "Card Strike - Zona de Guerra" (durante a partida).
+- `war-1-fast.ogg`, `war-2-fast.ogg`: as mesmas faixas de guerra 25% mais rápidas, no mesmo tom (bomba plantada).

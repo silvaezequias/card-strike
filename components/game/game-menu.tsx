@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import Link from "next/link";
+import { useMusic } from "@/game/useGameSounds";
 import {
   ArrowLeftRight,
   BookOpen,
@@ -86,6 +87,7 @@ export const GameMenu = ({
   onStart: (setup: SetupSettings) => void;
 }) => {
   const lobby = useGameSetup();
+  useMusic("menu");
   const { mode, seats, botTeam, isShuffling, namesFilled, canStart } = lobby;
 
   const handleStart = () => {
