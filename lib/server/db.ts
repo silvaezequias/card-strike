@@ -21,14 +21,21 @@ type Global = typeof globalThis & { __cardStrikeDb?: Promise<Db> };
 const connectPostgres = async (): Promise<Db> => {
   const postgres = (await import("postgres")).default;
   // prepare: false é exigido pelo pooler do Supabase em modo transação.
-  const sql = postgres(env.databaseUrl, { prepare: false, max: 3, idle_timeout: 20 });
+  const sql = postgres(env.databaseUrl, {
+    prepare: false,
+    max: 3,
+    idle_timeout: 20,
+  });
   const query = async <T extends Row>(text: string, params: unknown[] = []) =>
     (await sql.unsafe(text, params as never[])) as unknown as T[];
   return {
     query,
     tx: (fn) =>
       sql.begin(async (tx) =>
-        fn({ query: async <T extends Row>(text: string, params: unknown[] = []) => (await tx.unsafe(text, params as never[])) as unknown as T[] }),
+        fn({
+          query: async <T extends Row>(text: string, params: unknown[] = []) =>
+            (await tx.unsafe(text, params as never[])) as unknown as T[],
+        }),
       ) as never,
   };
 };
@@ -39,25 +46,37 @@ const connectPglite = async (): Promise<Db> => {
   await mkdir("./.data", { recursive: true });
   const pg = new PGlite("./.data/pglite");
   await pg.waitReady;
-  const query = async <T extends Row>(text: string, params: unknown[] = []) => (await pg.query<T>(text, params)).rows;
+  const query = async <T extends Row>(text: string, params: unknown[] = []) =>
+    (await pg.query<T>(text, params)).rows;
   return {
     query,
     tx: (fn) =>
       pg.transaction(async (tx) =>
-        fn({ query: async <T extends Row>(text: string, params: unknown[] = []) => (await tx.query<T>(text, params)).rows }),
+        fn({
+          query: async <T extends Row>(text: string, params: unknown[] = []) =>
+            (await tx.query<T>(text, params)).rows,
+        }),
       ),
   };
 };
 
 const migrate = async (db: Db) => {
-  await db.query(`create table if not exists _cs_migrations (id int primary key, applied_at timestamptz not null default now())`);
+  await db.query(
+    `create table if not exists _cs_migrations (id int primary key, applied_at timestamptz not null default now())`,
+  );
   for (const [i, sql] of MIGRATIONS.entries()) {
     await db.tx(async (tx) => {
       // Trava: duas funções serverless subindo juntas não aplicam a mesma migração.
       await tx.query(`select pg_advisory_xact_lock(4242)`);
-      const done = await tx.query(`select 1 from _cs_migrations where id = $1`, [i]);
+      const done = await tx.query(
+        `select 1 from _cs_migrations where id = $1`,
+        [i],
+      );
       if (done.length) return;
-      for (const statement of sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean)) {
+      for (const statement of sql
+        .split(/;\s*\n/)
+        .map((s) => s.trim())
+        .filter(Boolean)) {
         await tx.query(statement);
       }
       await tx.query(`insert into _cs_migrations (id) values ($1)`, [i]);
@@ -79,7 +98,9 @@ export const getDb = async (): Promise<Db> => {
 
 const connect = (g: Global): Promise<Db> => {
   g.__cardStrikeDb ??= (async () => {
-    const db = env.databaseUrl ? await connectPostgres() : await connectPglite();
+    const db = env.databaseUrl
+      ? await connectPostgres()
+      : await connectPglite();
     return db;
   })().catch((error) => {
     // Falhou ao conectar: a próxima chamada tenta de novo.

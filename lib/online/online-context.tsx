@@ -1,8 +1,24 @@
 "use client";
 
-import { ReactNode, createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
-import { FriendsView, InviteView, MeResponse, PublicUser, RoomView, api } from "./api";
+import {
+  FriendsView,
+  InviteView,
+  MeResponse,
+  PublicUser,
+  RoomView,
+  api,
+} from "./api";
 import { subscribe } from "./realtime";
 import { steam } from "@/lib/platform/steam";
 
@@ -32,6 +48,8 @@ type OnlineState = {
   refreshFriends: () => Promise<void>;
   refreshInvites: () => Promise<void>;
   logout: () => Promise<void>;
+  /** Convida o amigo para o seu lobby; sem sala aberta, cria uma antes. */
+  inviteToLobby: (friendId: string) => Promise<void>;
   /** "em partida" enquanto a tela da partida estiver aberta. */
   setInMatch: (inMatch: boolean) => void;
 };
@@ -49,7 +67,11 @@ export const OnlineProvider = ({ children }: { children: ReactNode }) => {
   const [me, setMe] = useState<PublicUser | null>(null);
   const [ready, setReady] = useState(false);
   const [available, setAvailable] = useState(false);
-  const [providers, setProviders] = useState<MeResponse["providers"]>({ google: false, discord: false, steam: false });
+  const [providers, setProviders] = useState<MeResponse["providers"]>({
+    google: false,
+    discord: false,
+    steam: false,
+  });
   const [friends, setFriends] = useState<FriendsView>(EMPTY_FRIENDS);
   const [invites, setInvites] = useState<InviteView[]>([]);
   const [room, setRoom] = useState<RoomView | null>(null);
@@ -92,7 +114,8 @@ export const OnlineProvider = ({ children }: { children: ReactNode }) => {
     try {
       const fresh = (await api.room(room.id)).room;
       setRoom(fresh.status === "closed" ? null : fresh);
-      if (fresh.status === "started" && fresh.matchId) router.push(`/partida/${fresh.matchId}`);
+      if (fresh.status === "started" && fresh.matchId)
+        router.push(`/partida/${fresh.matchId}`);
     } catch {
       setRoom(null);
     }
@@ -141,7 +164,11 @@ export const OnlineProvider = ({ children }: { children: ReactNode }) => {
     window.addEventListener("pointermove", touch);
     window.addEventListener("keydown", touch);
     const beat = () => {
-      const status = inMatch.current ? "in_match" : Date.now() - lastInput.current > AWAY_AFTER_MS ? "away" : "online";
+      const status = inMatch.current
+        ? "in_match"
+        : Date.now() - lastInput.current > AWAY_AFTER_MS
+          ? "away"
+          : "online";
       api.presence(status).catch(() => {});
     };
     beat();
@@ -158,6 +185,18 @@ export const OnlineProvider = ({ children }: { children: ReactNode }) => {
       window.clearInterval(refresh);
     };
   }, [me, refreshFriends, refreshInvites]);
+
+  const inviteToLobby = useCallback(
+    async (friendId: string) => {
+      let lobby = room?.status === "open" ? room : null;
+      if (!lobby) {
+        lobby = (await api.createRoom("police")).room;
+        setRoom(lobby);
+      }
+      await api.invite(lobby.id, friendId);
+    },
+    [room],
+  );
 
   const logout = useCallback(async () => {
     await api.logout().catch(() => {});
@@ -181,13 +220,29 @@ export const OnlineProvider = ({ children }: { children: ReactNode }) => {
       refreshFriends,
       refreshInvites,
       logout,
+      inviteToLobby,
       setInMatch: (value) => {
         inMatch.current = value;
         if (me) api.presence(value ? "in_match" : "online").catch(() => {});
       },
     }),
-    [ready, available, providers, me, friends, invites, room, refreshMe, refreshFriends, refreshInvites, logout],
+    [
+      ready,
+      available,
+      providers,
+      me,
+      friends,
+      invites,
+      room,
+      refreshMe,
+      refreshFriends,
+      refreshInvites,
+      logout,
+      inviteToLobby,
+    ],
   );
 
-  return <OnlineContext.Provider value={value}>{children}</OnlineContext.Provider>;
+  return (
+    <OnlineContext.Provider value={value}>{children}</OnlineContext.Provider>
+  );
 };

@@ -26,10 +26,10 @@ import {
   X,
 } from "lucide-react";
 import { factionPalette, policePalette } from "@/components/art/palette";
-import { PublicUser, api } from "@/lib/online/api";
+import { PublicUser, RoomView, api } from "@/lib/online/api";
 import { useOnline } from "@/lib/online/online-context";
 import { steam } from "@/lib/platform/steam";
-import { TeamName } from "@/game/game-types";
+import { GameRules, TeamName } from "@/game/game-types";
 import { AccountPanel } from "./account-panel";
 import { FriendsPanel } from "./friends-panel";
 import { Avatar, FieldError, ghostButton, inputClass } from "./ui";
@@ -124,6 +124,104 @@ const GoButton = ({
     {children}
   </button>
 );
+
+/** Modos online: por enquanto só o Bombsite. */
+const ONLINE_MODES = [
+  {
+    id: "bombsite",
+    label: "Bombsite",
+    detail: "Polícia x Facção · rodadas de 60 s",
+    ready: true,
+  },
+  { id: "soon-1", label: "Em breve", detail: "Novo modo", ready: false },
+  { id: "soon-2", label: "Em breve", detail: "Novo modo", ready: false },
+];
+
+/** Modo de jogo e regras da sala: o dono escolhe, o convidado só vê. */
+const RoomOptions = ({
+  room,
+  disabled,
+  onChange,
+}: {
+  room: RoomView;
+  disabled: boolean;
+  onChange: (changes: { mode?: string; rules?: GameRules }) => void;
+}) => {
+  const editable = room.youAreHost && !disabled;
+  return (
+    <section className="flex w-full max-w-xl flex-col gap-3 rounded-md border border-white/10 bg-black/50 p-4">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-xs font-black uppercase tracking-widest">
+          Modo de jogo
+        </h3>
+        {!room.youAreHost && (
+          <span className="text-[10px] uppercase tracking-widest text-zinc-500">
+            O dono da sala escolhe
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        {ONLINE_MODES.map((m) => {
+          const selected = m.ready && room.mode === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              disabled={!editable || !m.ready}
+              onClick={() => onChange({ mode: m.id })}
+              className="flex flex-col items-start gap-0.5 rounded-sm border px-3 py-2 text-left transition-colors disabled:cursor-default"
+              style={{
+                borderColor: selected ? GO : "rgba(255,255,255,0.12)",
+                background: selected ? `${GO}1f` : "rgba(0,0,0,0.3)",
+                opacity: m.ready ? 1 : 0.4,
+              }}
+            >
+              <span className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wider">
+                {selected && <Check size={14} style={{ color: GO }} />}
+                {m.label}
+              </span>
+              <span className="text-[10px] text-zinc-400">{m.detail}</span>
+            </button>
+          );
+        })}
+      </div>
+      <h3 className="mt-1 text-xs font-black uppercase tracking-widest">
+        Regras
+      </h3>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={room.rules.hiddenCards}
+        disabled={!editable}
+        onClick={() =>
+          onChange({
+            rules: { ...room.rules, hiddenCards: !room.rules.hiddenCards },
+          })
+        }
+        className="flex items-start gap-3 rounded-sm border border-white/10 bg-black/40 p-2.5 text-left transition-colors enabled:hover:border-white/30 disabled:cursor-default"
+      >
+        <span
+          className="relative mt-0.5 h-4 w-8 shrink-0 rounded-full transition-colors"
+          style={{ background: room.rules.hiddenCards ? GO : "#3f3f46" }}
+        >
+          <span
+            className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-[left]"
+            style={{ left: room.rules.hiddenCards ? 18 : 2 }}
+          />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <span className="text-xs font-bold uppercase tracking-wider">
+            Cartas ocultas
+          </span>
+          <span className="text-[11px] leading-snug text-zinc-400">
+            Ninguém vê as cartas do oponente, nem na mão nem nos 6 slots, até
+            ele jogar.
+          </span>
+        </span>
+      </button>
+    </section>
+  );
+};
 
 export const OnlinePlay = () => {
   const router = useRouter();
@@ -302,6 +400,16 @@ export const OnlinePlay = () => {
               label={room.guest && !room.youAreHost ? "Você" : "Convidado"}
             />
           </div>
+
+          <RoomOptions
+            room={room}
+            disabled={busy}
+            onChange={(changes) =>
+              run(async () =>
+                setRoom((await api.updateRoom(room.id, changes)).room),
+              )
+            }
+          />
 
           <div className="flex flex-wrap justify-center gap-2">
             {room.youAreHost && (

@@ -13,18 +13,24 @@ import { HttpError } from "./users";
 const API = "https://partner.steam-api.com";
 
 export const verifySteamTicket = async (ticketHex: string) => {
-  if (!env.steamAppId || !env.steamWebApiKey) throw new HttpError(503, "Login pela Steam ainda não configurado.");
-  if (!/^[0-9a-fA-F]{20,4096}$/.test(ticketHex)) throw new HttpError(400, "Ticket da Steam inválido.");
+  if (!env.steamAppId || !env.steamWebApiKey)
+    throw new HttpError(503, "Login pela Steam ainda não configurado.");
+  if (!/^[0-9a-fA-F]{20,4096}$/.test(ticketHex))
+    throw new HttpError(400, "Ticket da Steam inválido.");
 
   const auth = new URL(`${API}/ISteamUserAuth/AuthenticateUserTicket/v1/`);
   auth.searchParams.set("key", env.steamWebApiKey);
   auth.searchParams.set("appid", env.steamAppId);
   auth.searchParams.set("ticket", ticketHex);
   const result = (await (await fetch(auth)).json()) as {
-    response?: { params?: { result: string; steamid: string; vacbanned?: boolean }; error?: { errordesc: string } };
+    response?: {
+      params?: { result: string; steamid: string; vacbanned?: boolean };
+      error?: { errordesc: string };
+    };
   };
   const params = result.response?.params;
-  if (!params || params.result !== "OK") throw new HttpError(401, "A Steam não confirmou a sessão.");
+  if (!params || params.result !== "OK")
+    throw new HttpError(401, "A Steam não confirmou a sessão.");
 
   const summary = new URL(`${API}/ISteamUser/GetPlayerSummaries/v2/`);
   summary.searchParams.set("key", env.steamWebApiKey);
@@ -33,5 +39,9 @@ export const verifySteamTicket = async (ticketHex: string) => {
     response?: { players?: { personaname: string; avatarfull?: string }[] };
   };
   const player = players.response?.players?.[0];
-  return { steamId: params.steamid, name: player?.personaname ?? "Operador", avatarUrl: player?.avatarfull ?? null };
+  return {
+    steamId: params.steamid,
+    name: player?.personaname ?? "Operador",
+    avatarUrl: player?.avatarfull ?? null,
+  };
 };

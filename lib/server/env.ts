@@ -6,13 +6,17 @@
    que só serve para desenvolvimento.
    ═══════════════════════════════════════════════ */
 
-const isProd = process.env.VERCEL_ENV === "production" || process.env.NODE_ENV === "production";
+const isProd =
+  process.env.VERCEL_ENV === "production" ||
+  process.env.NODE_ENV === "production";
 
 export const env = {
   /** Postgres do Supabase (string de conexão do pooler, modo transação). */
   databaseUrl: process.env.DATABASE_URL ?? "",
   /** Segredo das sessões (cookie assinado). Obrigatório em produção. */
-  authSecret: process.env.AUTH_SECRET ?? (isProd ? "" : "card-strike-dev-secret-troque-em-producao"),
+  authSecret:
+    process.env.AUTH_SECRET ??
+    (isProd ? "" : "card-strike-dev-secret-troque-em-producao"),
   /** Endereço público do site, usado nos retornos do login. */
   appUrl: process.env.APP_URL ?? "",
 
@@ -37,12 +41,14 @@ export const env = {
  * Os avisos são só sinais ("mudou, busque de novo"): o estado de verdade sempre vem
  * da API, então a chave pública basta e um aviso falso não altera nada.
  */
-export const useSupabaseRealtime = () => !!env.supabaseUrl && !!(env.supabaseServiceKey || env.supabaseAnonKey);
+export const useSupabaseRealtime = () =>
+  !!env.supabaseUrl && !!(env.supabaseServiceKey || env.supabaseAnonKey);
 
 export const realtimeKey = () => env.supabaseServiceKey || env.supabaseAnonKey;
 
 /** O online só funciona com banco de verdade em produção. */
-export const onlineAvailable = () => !!env.authSecret && (!env.isProd || !!env.databaseUrl);
+export const onlineAvailable = () =>
+  !!env.authSecret && (!env.isProd || !!env.databaseUrl);
 
 export const providers = () => ({
   google: !!env.googleClientId && !!env.googleClientSecret,

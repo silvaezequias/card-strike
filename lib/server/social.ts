@@ -1,6 +1,12 @@
 import { getDb } from "./db";
 import { publish } from "./realtime";
-import { HttpError, ONLINE_WINDOW_MS, PublicUser, User, publicUser } from "./users";
+import {
+  HttpError,
+  ONLINE_WINDOW_MS,
+  PublicUser,
+  User,
+  publicUser,
+} from "./users";
 
 /* ═══════════════════════════════════════════════
    AMIGOS E PRESENÇA
@@ -28,15 +34,21 @@ const friendIds = async (userId: string) => {
 
 /** Avisa os amigos (sinal para buscar a lista de novo). */
 const notifyFriends = async (userId: string) => {
-  for (const id of await friendIds(userId)) await publish(`user:${id}`, "friends_changed");
+  for (const id of await friendIds(userId))
+    await publish(`user:${id}`, "friends_changed");
 };
 
 export const heartbeat = async (user: User, status: string) => {
   const next = PRESENCE.includes(status as PresenceStatus) ? status : "online";
   const db = await getDb();
-  const wasOnline = Date.now() - new Date(user.last_seen).getTime() < ONLINE_WINDOW_MS;
-  await db.query(`update users set status = $2, last_seen = now() where id = $1`, [user.id, next]);
-  if (user.kind === "account" && (!wasOnline || user.status !== next)) await notifyFriends(user.id);
+  const wasOnline =
+    Date.now() - new Date(user.last_seen).getTime() < ONLINE_WINDOW_MS;
+  await db.query(
+    `update users set status = $2, last_seen = now() where id = $1`,
+    [user.id, next],
+  );
+  if (user.kind === "account" && (!wasOnline || user.status !== next))
+    await notifyFriends(user.id);
 };
 
 export type FriendsView = {
@@ -47,7 +59,9 @@ export type FriendsView = {
 
 export const listFriends = async (user: User): Promise<FriendsView> => {
   const db = await getDb();
-  const rows = await db.query<User & { f_status: string; requested_by: string }>(
+  const rows = await db.query<
+    User & { f_status: string; requested_by: string }
+  >(
     `select u.id, u.kind, u.name, u.tag, u.avatar_url, u.status, u.last_seen, u.steam_id,
             f.status as f_status, f.requested_by
        from friendships f
@@ -64,7 +78,9 @@ export const listFriends = async (user: User): Promise<FriendsView> => {
   }
   // Online primeiro, depois em ordem alfabética.
   const rank = (u: PublicUser) => (u.status === "offline" ? 1 : 0);
-  view.friends.sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
+  view.friends.sort(
+    (a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name),
+  );
   return view;
 };
 
@@ -85,21 +101,29 @@ export const requestFriend = async (user: User, rawHandle: string) => {
     `select status, requested_by from friendships where user_low = $1 and user_high = $2`,
     [low, high],
   );
-  if (existing?.status === "accepted") throw new HttpError(409, "Vocês já são amigos.");
-  if (existing && existing.requested_by === user.id) throw new HttpError(409, "Pedido já enviado.");
+  if (existing?.status === "accepted")
+    throw new HttpError(409, "Vocês já são amigos.");
+  if (existing && existing.requested_by === user.id)
+    throw new HttpError(409, "Pedido já enviado.");
   if (existing) {
-    await db.query(`update friendships set status = 'accepted' where user_low = $1 and user_high = $2`, [low, high]);
+    await db.query(
+      `update friendships set status = 'accepted' where user_low = $1 and user_high = $2`,
+      [low, high],
+    );
   } else {
-    await db.query(`insert into friendships (user_low, user_high, requested_by, status) values ($1, $2, $3, 'pending')`, [
-      low,
-      high,
-      user.id,
-    ]);
+    await db.query(
+      `insert into friendships (user_low, user_high, requested_by, status) values ($1, $2, $3, 'pending')`,
+      [low, high, user.id],
+    );
   }
   await publish(`user:${target.id}`, "friends_changed");
 };
 
-export const respondFriend = async (user: User, otherId: string, accept: boolean) => {
+export const respondFriend = async (
+  user: User,
+  otherId: string,
+  accept: boolean,
+) => {
   const db = await getDb();
   const [low, high] = pair(user.id, otherId);
   const rows = accept
@@ -107,7 +131,10 @@ export const respondFriend = async (user: User, otherId: string, accept: boolean
         `update friendships set status = 'accepted' where user_low = $1 and user_high = $2 and status = 'pending' and requested_by <> $3 returning 1`,
         [low, high, user.id],
       )
-    : await db.query(`delete from friendships where user_low = $1 and user_high = $2 and status = 'pending' returning 1`, [low, high]);
+    : await db.query(
+        `delete from friendships where user_low = $1 and user_high = $2 and status = 'pending' returning 1`,
+        [low, high],
+      );
   if (rows.length === 0) throw new HttpError(404, "Pedido não encontrado.");
   await publish(`user:${otherId}`, "friends_changed");
 };
@@ -115,13 +142,19 @@ export const respondFriend = async (user: User, otherId: string, accept: boolean
 export const removeFriend = async (user: User, otherId: string) => {
   const db = await getDb();
   const [low, high] = pair(user.id, otherId);
-  await db.query(`delete from friendships where user_low = $1 and user_high = $2`, [low, high]);
+  await db.query(
+    `delete from friendships where user_low = $1 and user_high = $2`,
+    [low, high],
+  );
   await publish(`user:${otherId}`, "friends_changed");
 };
 
 export const areFriends = async (a: string, b: string) => {
   const db = await getDb();
   const [low, high] = pair(a, b);
-  const rows = await db.query(`select 1 from friendships where user_low = $1 and user_high = $2 and status = 'accepted'`, [low, high]);
+  const rows = await db.query(
+    `select 1 from friendships where user_low = $1 and user_high = $2 and status = 'accepted'`,
+    [low, high],
+  );
   return rows.length > 0;
 };

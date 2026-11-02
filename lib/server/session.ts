@@ -13,7 +13,10 @@ export const SESSION_COOKIE = "cs_session";
 
 const key = () => new TextEncoder().encode(env.authSecret);
 
-export const createSession = async (userId: string, kind: "guest" | "account") => {
+export const createSession = async (
+  userId: string,
+  kind: "guest" | "account",
+) => {
   const days = kind === "guest" ? 30 : 180;
   const token = await new SignJWT({ kind })
     .setProtectedHeader({ alg: "HS256" })
@@ -30,7 +33,8 @@ export const createSession = async (userId: string, kind: "guest" | "account") =
   });
 };
 
-export const clearSession = async () => (await cookies()).delete(SESSION_COOKIE);
+export const clearSession = async () =>
+  (await cookies()).delete(SESSION_COOKIE);
 
 /** Id do usuário da sessão, ou null. */
 export const sessionUserId = async (): Promise<string | null> => {

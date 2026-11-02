@@ -1,10 +1,11 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, MouseEvent, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Send, UserMinus, UserPlus, X } from "lucide-react";
 import { PublicUser, api } from "@/lib/online/api";
 import { useOnline } from "@/lib/online/online-context";
+import { FriendMenu, useFriendMenu } from "./friend-menu";
 import { SteamFriend, steam } from "@/lib/platform/steam";
 import {
   Avatar,
@@ -29,15 +30,21 @@ const FriendRow = ({
   canInvite,
   onInvite,
   onRemove,
+  onMenu,
 }: {
   user: PublicUser;
   canInvite: boolean;
   onInvite: () => void;
   onRemove: () => void;
+  /** Botão direito: menu de convidar/remover. */
+  onMenu: (event: MouseEvent) => void;
 }) => {
   const [sent, setSent] = useState(false);
   return (
-    <li className="group flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-white/5">
+    <li
+      onContextMenu={onMenu}
+      className="group flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-white/5"
+    >
       <Avatar user={user} size={34} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold">{user.handle}</p>
@@ -51,7 +58,7 @@ const FriendRow = ({
       {canInvite && user.status !== "offline" && (
         <button
           className="rounded-md p-1.5 text-zinc-300 hover:bg-white/10 hover:text-white disabled:opacity-50"
-          title="Convidar para a sala"
+          title="Convidar para o lobby"
           disabled={sent}
           onClick={() => {
             onInvite();
@@ -124,7 +131,8 @@ const SteamFriends = ({ roomCode }: { roomCode: string | null }) => {
 };
 
 export const FriendsPanel = ({ onClose }: { onClose: () => void }) => {
-  const { me, friends, room, refreshFriends } = useOnline();
+  const { me, friends, room, refreshFriends, inviteToLobby } = useOnline();
+  const friendMenu = useFriendMenu();
   const [tab, setTab] = useState<Tab>("friends");
   const [handle, setHandle] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -238,12 +246,15 @@ export const FriendsPanel = ({ onClose }: { onClose: () => void }) => {
             <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-2">
               {tab === "friends" && (
                 <>
-                  {roomOpen && (
-                    <p className="rounded-md bg-white/5 px-2 py-1.5 text-[11px] text-zinc-300">
-                      Sala <b className="text-white">{roomOpen.code}</b> aberta:
-                      use o ícone de enviar para convidar.
-                    </p>
-                  )}
+                  <p className="rounded-md bg-white/5 px-2 py-1.5 text-[11px] text-zinc-300">
+                    {roomOpen ? (
+                      <>
+                        Lobby <b className="text-white">{roomOpen.code}</b>{" "}
+                        aberto.{" "}
+                      </>
+                    ) : null}
+                    Botão direito num amigo: convidar para o lobby ou remover.
+                  </p>
                   {[
                     ["ONLINE", online],
                     ["OFFLINE", offline],
@@ -258,12 +269,10 @@ export const FriendsPanel = ({ onClose }: { onClose: () => void }) => {
                             <FriendRow
                               key={f.id}
                               user={f}
-                              canInvite={!!roomOpen}
-                              onInvite={() =>
-                                roomOpen &&
-                                run(() => api.invite(roomOpen.id, f.id))
-                              }
+                              canInvite
+                              onInvite={() => run(() => inviteToLobby(f.id))}
                               onRemove={() => run(() => api.removeFriend(f.id))}
+                              onMenu={(e) => friendMenu.open(e, f)}
                             />
                           ))}
                         </ul>
@@ -384,6 +393,7 @@ export const FriendsPanel = ({ onClose }: { onClose: () => void }) => {
             </div>
           </>
         )}
+        <FriendMenu menu={friendMenu.menu} onClose={friendMenu.close} />
       </aside>
     </div>,
     document.body,

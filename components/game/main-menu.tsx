@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useCallback, useEffect, useState } from "react";
+import { MouseEvent, ReactNode, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bot,
@@ -31,6 +31,7 @@ import { useOnline } from "@/lib/online/online-context";
 import { AccountPanel } from "@/components/online/account-panel";
 import { FriendsPanel } from "@/components/online/friends-panel";
 import { InviteToasts } from "@/components/online/invite-toasts";
+import { FriendMenu, useFriendMenu } from "@/components/online/friend-menu";
 import { Avatar, STATUS_COLOR, STATUS_LABEL } from "@/components/online/ui";
 
 /* ═══════════════════════════════════════════════
@@ -192,6 +193,7 @@ const SideRow = ({
   steam = false,
   title,
   onClick,
+  onContextMenu,
 }: {
   icon: ReactNode;
   label: string;
@@ -200,12 +202,14 @@ const SideRow = ({
   /** Selo da Steam, só para quem tem a conta ligada. */
   steam?: boolean;
   title: string;
-  onClick?: () => void;
+  onClick?: (event: MouseEvent) => void;
+  onContextMenu?: (event: MouseEvent) => void;
 }) => {
   const Tag = onClick ? "button" : "div";
   return (
     <Tag
       {...(onClick ? { type: "button" as const, onClick } : {})}
+      onContextMenu={onContextMenu}
       title={title}
       className={`flex w-64 shrink-0 items-center text-left ${onClick ? "transition-colors hover:bg-white/10" : ""}`}
     >
@@ -247,6 +251,7 @@ export const GameMenu = ({
   const online = useOnline();
   const [panel, setPanel] = useState<"account" | "friends" | null>(null);
   const closePanel = useCallback(() => setPanel(null), []);
+  const friendMenu = useFriendMenu();
   const onlineFriends = online.friends.friends.filter(
     (f) => f.status !== "offline",
   );
@@ -406,8 +411,9 @@ export const GameMenu = ({
         {onlineFriends.slice(0, 6).map((f) => (
           <SideRow
             key={f.id}
-            onClick={() => setPanel("friends")}
-            title={`${f.handle} · amigo`}
+            onClick={(e) => friendMenu.open(e, f)}
+            onContextMenu={(e) => friendMenu.open(e, f)}
+            title={`${f.handle} · clique para convidar ou remover`}
             icon={<Avatar user={f} size={32} />}
             label={f.handle}
             detail={STATUS_LABEL[f.status] ?? "Online"}
@@ -520,6 +526,7 @@ export const GameMenu = ({
       </main>
 
       <InviteToasts />
+      <FriendMenu menu={friendMenu.menu} onClose={friendMenu.close} />
       {panel === "account" && <AccountPanel onClose={closePanel} />}
       {panel === "friends" && <FriendsPanel onClose={closePanel} />}
 
