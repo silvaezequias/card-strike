@@ -1,28 +1,19 @@
 "use client";
 
-import { CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Settings as SettingsIcon, X } from "lucide-react";
-import { factionPalette, policePalette } from "@/components/art/palette";
-import {
-  ACCENT,
-  ResetButton,
-  SettingsList,
-  SettingsTab,
-  SettingsTabs,
-} from "./settings-view";
+import { SettingsView } from "./settings-view";
 
 export { useFullscreen } from "./use-fullscreen";
 
 /* ═══════════════════════════════════════════════
    CONFIGURAÇÕES NA PARTIDA
-   Janela por cima do jogo com as mesmas abas e
-   opções da tela do menu (settings-view.tsx).
+   A mesma tela do menu (settings-view.tsx), em tela
+   cheia por cima do jogo, com uma barra para fechar.
    ═══════════════════════════════════════════════ */
 
 export const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
-  const [tab, setTab] = useState<SettingsTab>("video");
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -31,60 +22,23 @@ export const SettingsPanel = ({ onClose }: { onClose: () => void }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
+      role="dialog"
+      aria-label="Configurações"
+      className="fixed inset-0 z-[120] flex flex-col bg-[#06050c]/95 font-mono text-white animate-in fade-in duration-200"
     >
-      <div
-        role="dialog"
-        aria-label="Configurações"
-        onClick={(e) => e.stopPropagation()}
-        className="tactical-cut w-full max-w-2xl p-[2px]"
-        style={
-          {
-            "--cut": "22px",
-            background: `linear-gradient(90deg, ${policePalette.rim}, ${ACCENT}, ${factionPalette.rim})`,
-          } as CSSProperties
-        }
-      >
-        <div
-          className="tactical-cut flex h-[min(640px,85vh)] flex-col gap-4 p-6 font-mono"
-          style={
-            {
-              "--cut": "21px",
-              background:
-                "radial-gradient(ellipse at 50% 0%, #121a2e, #06070c 75%)",
-            } as CSSProperties
-          }
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-black/45 px-4">
+        <h2 className="text-lg font-light uppercase tracking-[0.25em]">
+          Configurações
+        </h2>
+        <button
+          onClick={onClose}
+          className="flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-zinc-300 transition-colors hover:bg-white/10 hover:text-white"
         >
-          <header className="flex items-center justify-between">
-            <h2 className="text-2xl font-black uppercase tracking-[0.2em] text-white">
-              Configurações
-            </h2>
-            <button
-              onClick={onClose}
-              aria-label="Fechar"
-              className="rounded-lg p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white"
-            >
-              <X size={20} />
-            </button>
-          </header>
-
-          <SettingsTabs tab={tab} onTab={setTab} />
-
-          <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-            <SettingsList tab={tab} />
-          </div>
-
-          <footer className="flex items-center justify-between gap-3">
-            <ResetButton />
-            <button
-              onClick={onClose}
-              className="rounded-sm bg-white px-6 py-2.5 text-xs font-bold uppercase tracking-[0.2em] text-black transition-colors hover:bg-zinc-200"
-            >
-              Pronto
-            </button>
-          </footer>
-        </div>
+          Voltar ao jogo <X size={18} />
+        </button>
+      </header>
+      <div className="min-h-0 flex-1">
+        <SettingsView />
       </div>
     </div>
   );
