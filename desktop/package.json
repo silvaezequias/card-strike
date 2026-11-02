@@ -1,0 +1,18 @@
+{
+  "name": "card-strike-desktop",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Card Strike para a Steam: janela Electron com a ponte do steamworks.js.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env CARD_STRIKE_URL=http://localhost:3000 electron ."
+  },
+  "dependencies": {
+    "steamworks.js": "^0.4.0"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron": "^33.0.0"
+  }
+}

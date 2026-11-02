@@ -111,7 +111,7 @@ const SLOT_FOCUS_MS = 1100;
 const DIMMED = "pointer-events-none opacity-20";
 
 /** Na vez do bot o humano só assiste. */
-const BOT_TURN_GATE: GateState = { allowed: ["camera"], highlight: null };
+export const BOT_TURN_GATE: GateState = { allowed: ["camera"], highlight: null };
 
 export default function SciFiInterface({
   playerSetup,
@@ -139,8 +139,14 @@ export function GameScreen({
   overlay,
   tutorialCamera = null,
   hideBoardOverlays = false,
+  result = null,
+  onExit,
 }: {
   game: GameEngine;
+  /** Fim decidido fora do tabuleiro (online: W.O. por abandono ou saída). */
+  result?: { winner: TeamName; subMessage: string } | null;
+  /** Botão do fim de jogo; sem ele, recarrega para jogar de novo. */
+  onExit?: () => void;
   overlay?: ReactNode;
   /** Foco de câmera pedido pelo tutorial (cartas ou mapa). */
   tutorialCamera?: CameraFocus | null;
@@ -276,7 +282,7 @@ export function GameScreen({
     return () => window.clearTimeout(timer);
   }, [exploded]);
   const bombFxPlaying = exploded && !bombFxDone;
-  const winner = winnerOf(state);
+  const winner = result?.winner ?? winnerOf(state);
 
   useGameSounds(state, fx, game.tool.dice.shaking, game.gameOver && !fx.active && !bombFxPlaying);
 
@@ -443,13 +449,16 @@ export function GameScreen({
           defeat={!!state.botTeam && winner === state.botTeam}
           winnerName={teams[winner].playerName}
           subMessage={
-            state.bomb.exploded
+            result
+              ? result.subMessage
+              : state.bomb.exploded
               ? `CARGA DETONADA NO SITE ${state.bomb.position}`
               : teams.police.health <= 0
                 ? "FORÇAS POLICIAIS ELIMINADAS"
                 : "FACÇÃO ELIMINADA"
           }
-          onRetry={() => window.location.reload()}
+          onRetry={onExit ?? (() => window.location.reload())}
+          retryLabel={onExit ? "VOLTAR AO MENU" : undefined}
         />
       )}
 
