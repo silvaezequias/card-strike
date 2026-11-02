@@ -7,8 +7,10 @@ import {
   Home,
   Layers,
   LogIn,
+  History,
   Maximize2,
   Minimize2,
+  Settings as SettingsIcon,
   UserRound,
   Users,
   Volume2,
@@ -17,10 +19,8 @@ import {
 import { Portrait } from "@/components/art/noir";
 import { getPalette } from "@/components/art/palette";
 import { Arena } from "@/components/game/menu-arena";
-import {
-  SettingsButton,
-  useFullscreen,
-} from "@/components/settings/settings-panel";
+import { useFullscreen } from "@/components/settings/settings-panel";
+import { SettingsView } from "@/components/settings/settings-view";
 import { PlayLobby } from "@/components/game/game-menu";
 import { InventoryView } from "@/components/game/inventory-view";
 import { SetupSettings, TeamName } from "@/game/game-types";
@@ -41,44 +41,12 @@ import { Avatar } from "@/components/online/ui";
    operador em pé no meio da tela, sobre a arena.
    ═══════════════════════════════════════════════ */
 
-type View = "home" | "play" | "news" | "inventory";
+type View = "home" | "play" | "inventory" | "history" | "settings";
 
 const TEAM_LABEL: Record<TeamName, string> = {
   police: "Polícia",
   faction: "Facção",
 };
-
-/** Novidades do jogo, da mais nova para a mais antiga. */
-const NEWS = [
-  {
-    title: "Configurações",
-    text: "Volumes separados com mudo, brilho, contraste, FPS e modo daltônico.",
-  },
-  {
-    title: "Trilha sonora",
-    text: "Música calma no menu, de guerra na partida e acelerada com a bomba plantada.",
-  },
-  {
-    title: "Distribuição das cartas",
-    text: "As mãos começam vazias e três cartas saem do baralho de cada time.",
-  },
-  {
-    title: "Nova escolha de jogada",
-    text: "Posicionar carta ou se posicionar em cartas no estilo do jogo (teclas 1 e 2).",
-  },
-  {
-    title: "Roleta 3D",
-    text: "A roleta dos bombsites ganhou mesa própria, vista por todos os jogadores.",
-  },
-  {
-    title: "Dado 3D com física",
-    text: "Segure para balançar e solte para lançar o dado pela mesa inteira.",
-  },
-  {
-    title: "Modo 1 jogador",
-    text: "Jogue contra o BOT, que rola, compra e ataca sozinho.",
-  },
-];
 
 const TopIcon = ({
   label,
@@ -101,7 +69,7 @@ const TopIcon = ({
 );
 
 const tabClass =
-  "px-3 py-1 text-sm font-semibold uppercase tracking-[0.15em] transition-colors";
+  "px-1.5 py-1 text-xs font-semibold uppercase tracking-[0.12em] transition-colors lg:px-3 lg:text-sm lg:tracking-[0.15em]";
 
 const NavTab = ({
   label,
@@ -200,25 +168,18 @@ const Hero = ({
   );
 };
 
-const NewsPanel = () => (
-  <div className="mx-auto flex h-full w-full max-w-2xl flex-col gap-3 overflow-y-auto px-4 py-8">
-    <h2 className="text-2xl font-black uppercase tracking-[0.25em] text-white">
-      Novidades
-    </h2>
-    {NEWS.map(({ title, text }, i) => (
-      <article
-        key={title}
-        className="rounded-lg border border-white/10 bg-black/55 p-4 backdrop-blur-sm"
-      >
-        <p className="text-[10px] font-bold tracking-[0.3em] text-[#c9bcff]">
-          {i === 0 ? "NOVO" : "ATUALIZAÇÃO"}
-        </p>
-        <h3 className="text-base font-black uppercase tracking-wider text-white">
-          {title}
-        </h3>
-        <p className="text-sm text-zinc-300">{text}</p>
-      </article>
-    ))}
+/** Histórico de partidas: chega numa próxima versão. */
+const HistoryPanel = () => (
+  <div className="flex h-full items-center justify-center bg-black/40">
+    <div className="flex flex-col items-center gap-3 text-center">
+      <History size={40} className="text-zinc-500" />
+      <h2 className="text-2xl font-black uppercase tracking-[0.25em]">
+        Histórico
+      </h2>
+      <p className="max-w-sm text-sm text-zinc-400">
+        Em breve: as suas partidas, vitórias e derrotas aparecem aqui.
+      </p>
+    </div>
   </div>
 );
 
@@ -287,7 +248,9 @@ export const GameMenu = ({
           >
             <Layers size={18} />
           </Link>
-          <SettingsButton className="flex h-9 w-9 items-center justify-center rounded-md text-zinc-300 transition-colors hover:bg-white/10 hover:text-white" />
+          <TopIcon label="Configurações" onClick={() => setView("settings")}>
+            <SettingsIcon size={17} />
+          </TopIcon>
           <TopIcon
             label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
             onClick={toggleFullscreen}
@@ -298,7 +261,7 @@ export const GameMenu = ({
 
         <nav
           aria-label="Menu principal"
-          className="absolute left-1/2 flex -translate-x-1/2 items-center gap-3"
+          className="absolute left-1/2 flex -translate-x-1/2 items-center gap-1.5 lg:gap-3"
         >
           <NavTab
             label="Inventário"
@@ -311,7 +274,7 @@ export const GameMenu = ({
           <button
             type="button"
             onClick={() => setView("play")}
-            className={`px-4 text-2xl font-light uppercase tracking-[0.2em] transition-colors ${
+            className={`px-2 text-xl font-light uppercase tracking-[0.2em] transition-colors lg:px-4 lg:text-2xl ${
               view === "play" ? "text-white" : "text-zinc-200 hover:text-white"
             }`}
             style={
@@ -324,15 +287,15 @@ export const GameMenu = ({
           </button>
           <Divider />
           <NavTab
-            label="Novidades"
-            active={view === "news"}
-            onClick={() => setView("news")}
+            label="Histórico"
+            active={view === "history"}
+            onClick={() => setView("history")}
           />
           <Divider />
           <NavTab
-            label="Início"
-            active={view === "home"}
-            onClick={() => setView("home")}
+            label="Configurações"
+            active={view === "settings"}
+            onClick={() => setView("settings")}
           />
         </nav>
       </header>
@@ -472,7 +435,8 @@ export const GameMenu = ({
             />
           </div>
         )}
-        {view === "news" && <NewsPanel />}
+        {view === "history" && <HistoryPanel />}
+        {view === "settings" && <SettingsView />}
         {view === "inventory" && <InventoryView initialTeam={heroTeam} />}
       </main>
 
