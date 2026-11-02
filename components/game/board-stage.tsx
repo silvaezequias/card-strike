@@ -252,19 +252,62 @@ const FocusDim = ({ rect }: { rect: Rect }) => (
 );
 
 /** Contorno vermelho que pisca uma vez: carta de ataque fora de confronto. */
-const RangeWarning = ({ rect }: { rect: Rect }) => (
-  <div
-    className="range-warning pointer-events-none absolute rounded-2xl"
-    style={{
-      left: rect.x - 8,
-      top: rect.y - 8,
-      width: rect.w + 16,
-      height: rect.h + 16,
-      border: "6px solid #ef4444",
-      boxShadow: "0 0 45px #ef4444, inset 0 0 30px #ef444488",
-    }}
-  />
-);
+/**
+ * Fora de alcance: contorno vermelho no slot e um triângulo de atenção com "?"
+ * por cima da carta (os jogadores não estão no mesmo bombsite).
+ */
+const RangeWarning = ({ rect }: { rect: Rect }) => {
+  const size = rect.w * 0.62;
+  return (
+    <>
+      <div
+        className="range-warning pointer-events-none absolute rounded-2xl"
+        style={{
+          left: rect.x - 8,
+          top: rect.y - 8,
+          width: rect.w + 16,
+          height: rect.h + 16,
+          border: "6px solid #ef4444",
+          boxShadow: "0 0 45px #ef4444, inset 0 0 30px #ef444488",
+        }}
+      />
+      <div
+        className="pointer-events-none absolute animate-pulse"
+        style={{
+          left: rect.x + rect.w / 2 - size / 2,
+          top: rect.y + rect.h / 2 - size / 2,
+          width: size,
+          height: size,
+          // Acima da carta (que sobe da mesa no hover).
+          transform: "translateZ(60px)",
+          filter: "drop-shadow(0 0 18px rgba(239,68,68,0.9)) drop-shadow(0 8px 10px rgba(0,0,0,0.8))",
+        }}
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 100 90" className="h-full w-full">
+          <path
+            d="M50 4 L96 84 Q98 88 93 88 L7 88 Q2 88 4 84 Z"
+            fill="#ef4444"
+            stroke="#fff"
+            strokeWidth="5"
+            strokeLinejoin="round"
+          />
+          <text
+            x="50"
+            y="76"
+            textAnchor="middle"
+            fontSize="58"
+            fontWeight="900"
+            fontFamily="ui-sans-serif, system-ui, sans-serif"
+            fill="#fff"
+          >
+            ?
+          </text>
+        </svg>
+      </div>
+    </>
+  );
+};
 
 /** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 const SlotHighlight = ({
