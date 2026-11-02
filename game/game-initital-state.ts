@@ -1,5 +1,6 @@
 import { generateRandomCard } from "@/lib/game-helpers";
 import { DEFAULT_RULES, GameState, SetupSettings, TeamName } from "./game-types";
+import { MAX_HEALTH } from "./card-effects";
 
 const STARTING_CARDS = 3;
 
@@ -50,14 +51,14 @@ export const createInitialGameState = (
   teams: {
     faction: {
       playerName: setup.faction.playerName,
-      health: 20,
+      health: MAX_HEALTH,
       position: null,
       inventory: { hand: dealHand("faction", startingCards), warZone: Array(6).fill(null) },
       effects: [],
     },
     police: {
       playerName: setup.police.playerName,
-      health: 20,
+      health: MAX_HEALTH,
       position: null,
       inventory: { hand: dealHand("police", startingCards), warZone: Array(6).fill(null) },
       effects: [],

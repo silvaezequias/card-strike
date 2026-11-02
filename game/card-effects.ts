@@ -17,7 +17,7 @@ import {
    vêm das próprias cartas (game-helpers).
    ═══════════════════════════════════════════════ */
 
-export const MAX_HEALTH = 20;
+export const MAX_HEALTH = 10;
 /** A facção abre a rodada; ela fecha quando a polícia termina de jogar. */
 const ROUND_CLOSER: TeamName = "police";
 const BOMB_EXPLOSION_DAMAGE = 10;
