@@ -489,3 +489,12 @@ body {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
+
+/* Item flutuando na inspeção do inventário */
+@keyframes inspect-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+.inspect-float {
+  animation: inspect-float 4s ease-in-out infinite;
+}

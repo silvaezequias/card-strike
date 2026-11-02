@@ -4,10 +4,11 @@ import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { Bot, Home, Layers, Maximize2, Minimize2, Users, Volume2, VolumeX } from "lucide-react";
 import { Portrait } from "@/components/art/noir";
-import { factionPalette, getPalette, policePalette } from "@/components/art/palette";
-import { TacticalBoard } from "@/components/art/tactical-board";
+import { getPalette } from "@/components/art/palette";
+import { Arena } from "@/components/game/menu-arena";
 import { SettingsButton, useFullscreen } from "@/components/settings/settings-panel";
 import { PlayLobby } from "@/components/game/game-menu";
+import { InventoryView } from "@/components/game/inventory-view";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { useMusic } from "@/game/useGameSounds";
 import { BOT_NAME, useGameSetup } from "@/game/useSetupGame";
@@ -21,7 +22,7 @@ import { updateSettings, useSettings } from "@/lib/settings";
    operador em pé no meio da tela, sobre a arena.
    ═══════════════════════════════════════════════ */
 
-type View = "home" | "play" | "news";
+type View = "home" | "play" | "news" | "inventory";
 
 const TEAM_LABEL: Record<TeamName, string> = { police: "Polícia", faction: "Facção" };
 
@@ -64,34 +65,6 @@ const NavTab = ({ label, active, onClick, href }: { label: string; active?: bool
 };
 
 const Divider = () => <span className="h-4 w-px bg-white/20" aria-hidden="true" />;
-
-/** Arena ao fundo: o tabuleiro tático deitado como chão, com luzes dos dois times. */
-const Arena = ({ dim }: { dim: boolean }) => (
-  <div className={`pointer-events-none absolute inset-0 overflow-hidden transition-opacity duration-500 ${dim ? "opacity-40" : ""}`}>
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_35%,#1d1838_0%,#0b0916_55%,#050409_100%)]" />
-    {/* Feixes de luz das bases */}
-    <div
-      className="absolute -left-1/4 top-0 h-[120%] w-1/2 rotate-[18deg] opacity-25 blur-3xl"
-      style={{ background: `linear-gradient(180deg, ${policePalette.glow}, transparent 70%)` }}
-    />
-    <div
-      className="absolute -right-1/4 top-0 h-[120%] w-1/2 -rotate-[18deg] opacity-25 blur-3xl"
-      style={{ background: `linear-gradient(180deg, ${factionPalette.glow}, transparent 70%)` }}
-    />
-    {/* Chão: o tabuleiro em perspectiva */}
-    <div className="absolute inset-x-0 bottom-0 h-[62%]" style={{ perspective: 900 }}>
-      <div
-        className="absolute left-1/2 top-[6%] w-[150%] -translate-x-1/2 opacity-45"
-        style={{ transform: "translateX(-50%) rotateX(64deg)", transformOrigin: "50% 0%" }}
-      >
-        <TacticalBoard className="block h-auto w-full" />
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-[#050409] via-transparent to-[#050409]/80" />
-    </div>
-    {/* Poeira e vinheta */}
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_60%,transparent_40%,rgba(0,0,0,0.75)_100%)]" />
-  </div>
-);
 
 /** Operador em pé no centro, com a plaqueta do jogador à frente. */
 const Hero = ({ team, name, onPlay }: { team: TeamName; name: string; onPlay: () => void }) => {
@@ -190,7 +163,7 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
         </div>
 
         <nav aria-label="Menu principal" className="absolute left-1/2 flex -translate-x-1/2 items-center gap-3">
-          <NavTab label="Cartas" href="/cartas" />
+          <NavTab label="Inventário" active={view === "inventory"} onClick={() => setView("inventory")} />
           <Divider />
           <NavTab label="Tutorial" href="/tutorial" />
           <Divider />
@@ -270,6 +243,7 @@ export const GameMenu = ({ onStart }: { onStart: (setup: SetupSettings) => void 
           </div>
         )}
         {view === "news" && <NewsPanel />}
+        {view === "inventory" && <InventoryView initialTeam={heroTeam} />}
       </main>
 
       <p className="pointer-events-none absolute bottom-1 left-2 z-20 text-[10px] text-zinc-500">CARD STRIKE · build de testes</p>
