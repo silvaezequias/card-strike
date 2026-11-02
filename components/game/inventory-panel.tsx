@@ -5,16 +5,29 @@ import { InventoryGrid } from "./card";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
 import { useGate } from "./tutorial-gate";
+import { TeamName } from "@/game/game-types";
 
 interface InventoryPanelProps {
   game: GameEngine;
   /** Tutorial: mostra o inventário aberto e destacado, sem mudar o jogo. */
   spotlight?: boolean;
+  /** Mantém a mão fechada até a câmera chegar aos slots. */
+  waitCamera?: boolean;
+  /** Abre a mão sem mudar o jogo (distribuição inicial das cartas). */
+  peek?: boolean;
+  /** Mão mostrada; sem ele, a do time da vez. */
+  team?: TeamName;
 }
 
-export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps) => {
+export const InventoryPanel = ({
+  game,
+  spotlight = false,
+  waitCamera = false,
+  peek = false,
+  team,
+}: InventoryPanelProps) => {
   const isSelecting = game.state.turnPhase === "PLACING";
-  const isOpen = game.state.hud.inventory.isOpen || spotlight;
+  const isOpen = (game.state.hud.inventory.isOpen && !waitCamera) || spotlight || peek;
 
   const theme = useGameTheme(game.state.currentTeam);
   const inventoryGate = useGate("inventory");
@@ -34,8 +47,8 @@ export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps)
     <button
       onClick={handleToggle}
       className={`px-8 py-2 rounded-t-xl border-t border-l border-r flex justify-center
-      ${theme.underlay}
-      font-bold text-xs tracking-widest shadow-lg flex items-center gap-2 hover:brightness-110 transition-all`}
+      ${theme.hudPanel}
+      font-bold text-xs tracking-widest flex items-center gap-2 hover:brightness-110 transition-all`}
     >
       INVENTARIO
       {game.state.hud.inventory.isLocked ? (
@@ -73,11 +86,12 @@ export const InventoryPanel = ({ game, spotlight = false }: InventoryPanelProps)
       <div className="flex flex-col items-center">
         {isSelecting ? keepGate.allowed ? <KeepInHandButton /> : <div className="h-8" /> : <ToggleButton />}
         <div
+          data-hand-anchor
           className={`${spotlight ? "tutorial-highlight" : ""} w-[350px] md:w-[500px]
-          ${theme.underlay}
-          border-t-2 border-x-2 rounded-t-sm shadow-[0_-10px_40px_rgba(0,0,0,0.8)] p-4`}
+          ${theme.hudPanel}
+          border-t-2 border-x-2 rounded-t-sm p-4`}
         >
-          <InventoryGrid length={3} game={game} type="hand" />
+          <InventoryGrid length={3} game={game} type="hand" team={team} />
         </div>
       </div>
     </div>

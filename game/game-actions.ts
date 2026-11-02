@@ -1,5 +1,5 @@
 import { Card } from "@/lib/types";
-import { GamePhase, SetupSettings } from "./game-types";
+import { GamePhase, SetupSettings, TeamName } from "./game-types";
 
 export type ActionWithoutPayload =
   | "END_TURN"
@@ -37,6 +37,9 @@ export type ActionMap = {
 
   /** Compra uma carta específica (tutorial roteirizado). */
   BUY_SCRIPTED_CARD: { cardName: string };
+
+  /** Distribuição inicial: uma carta do baralho para a mão do time. */
+  DEAL_CARD: { team: TeamName };
 };
 
 export type GameAction<
@@ -65,6 +68,8 @@ export type GameActionObject =
   | { type: "PLAY_CARD"; payload: { card: Card } }
   | { type: "BUY_CARD" }
   | { type: "BUY_SCRIPTED_CARD"; payload: { cardName: string } }
+  /** Distribuição inicial: uma carta do baralho para a mão do time. */
+  | { type: "DEAL_CARD"; payload: { team: TeamName } }
   | { type: "KEEP_IN_HAND" }
   | {
       type: "PLACE_CARD";

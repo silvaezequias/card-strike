@@ -1,5 +1,6 @@
 import { GameState } from "../game-types";
 import { isFlashed } from "../card-effects";
+import { FLASH_BLIND_SECONDS } from "../card-fx";
 
 const skipFlashedTurn = (state: GameState): GameState => ({
   ...state,
@@ -8,7 +9,7 @@ const skipFlashedTurn = (state: GameState): GameState => ({
   lastResult: "CEGO PELA FLASHBANG: PERDEU A VEZ",
   countdown: {
     ...state.countdown,
-    seconds: 3,
+    seconds: FLASH_BLIND_SECONDS,
   },
   board: {
     ...state.board,

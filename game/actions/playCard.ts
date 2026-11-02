@@ -1,6 +1,7 @@
 import { GameAction } from "../game-actions";
 import { GameState } from "../game-types";
-import { resolveCard } from "../card-effects";
+import { createCombatEvent, resolveCard } from "../card-effects";
+import { fxSeconds } from "../card-fx";
 
 export const ActionPlayCard = (
   state: GameState,
@@ -11,7 +12,8 @@ export const ActionPlayCard = (
   const randomY = Math.floor(Math.random() * 20) - 10;
 
   const { currentTeam } = state;
-  const { teams, bomb, result } = resolveCard(state, action.payload.card);
+  const { teams, bomb, mapEffects, result } = resolveCard(state, action.payload.card);
+  const combatEvent = createCombatEvent(state, action.payload.card, teams);
 
   // Só esvazia o slot da carta: as outras continuam onde estão.
   const warZoneWithoutCard = teams[currentTeam].inventory.warZone.map((card) =>
@@ -30,7 +32,7 @@ export const ActionPlayCard = (
     },
     countdown: {
       ...state.countdown,
-      seconds: 3,
+      seconds: fxSeconds(combatEvent),
     },
     board: {
       warZoneIsActive: true,
@@ -41,7 +43,9 @@ export const ActionPlayCard = (
       },
     },
     bomb,
+    mapEffects,
     lastResult: result,
+    combatEvent,
     teams: {
       ...teams,
       [currentTeam]: {

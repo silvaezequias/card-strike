@@ -18,14 +18,15 @@ export type GateKey =
   | "place" // posicionar carta da mão no slot
   | "play" // jogar a carta do slot sorteado
   | "keep" // manter cartas na mão
-  | "tabs" // abas campo de batalha / ação
+  | "tabs" // minimizar e reabrir o painel de ação
+  | "camera" // botões de câmera do topo
   | "inventory"; // abrir/fechar o inventário
 
 export type GateState = { allowed: GateKey[]; highlight: GateKey | null };
 
 const GateContext = createContext<GateState | null>(null);
 
-export const TutorialGateProvider = ({ value, children }: { value: GateState; children: ReactNode }) => (
+export const TutorialGateProvider = ({ value, children }: { value: GateState | null; children: ReactNode }) => (
   <GateContext.Provider value={value}>{children}</GateContext.Provider>
 );
 

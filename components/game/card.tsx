@@ -1,6 +1,6 @@
 import { GameEngine } from "@/game/useGameEngine";
-import { useGameTheme } from "@/game/useGameTheme";
 import { Card } from "@/lib/types";
+import { TeamName } from "@/game/game-types";
 import { Plus } from "lucide-react";
 import { NoirCard } from "@/components/art/noir-card";
 import { HAND_CARD_DRAG } from "@/components/game/board-stage";
@@ -10,6 +10,8 @@ type InventoryProps = {
   game: GameEngine;
   type: "hand" | "warZone";
   length?: number;
+  /** Time mostrado; sem ele, o time da vez. */
+  team?: TeamName;
 };
 
 export const CardComponent = ({
@@ -41,17 +43,18 @@ export const InventorySlot = ({
   index,
   game,
   type,
+  team,
 }: {
   index: number;
   game: GameEngine;
   type: "hand" | "warZone";
+  team?: TeamName;
 }) => {
-  const theme = useGameTheme(game.state.currentTeam);
   const buyGate = useGate("buy");
   const placeGate = useGate("place");
 
   const { currentTeam, turnPhase, tool, teams } = game.state;
-  const inventory = teams[currentTeam].inventory[type];
+  const inventory = teams[team ?? currentTeam].inventory[type];
   const card = inventory[index] as Card | null;
 
   const d6 = tool.result.d6 || -1;
@@ -61,6 +64,7 @@ export const InventorySlot = ({
     buyGate.allowed &&
     (turnPhase === "BUYING" || turnPhase === "PLACING") &&
     type === "hand" &&
+    !game.state.boughtThisTurn &&
     inventory.length < 3 &&
     index === inventory.length &&
     !card;
@@ -100,16 +104,16 @@ export const InventorySlot = ({
 
   const baseSlotStyle =
     "aspect-[3/4] w-full  " +
-    "bg-gradient-to-b  " +
-    " border border-zinc-900 " +
-    `${theme.overlay} ` +
+    "bg-black/30 border border-white/10 " +
     "rounded " +
-    "shadow-[inset_0_2px_4px_rgba(0,0,0,0.8)] " +
     "flex flex-col items-center justify-center";
 
+  // Carta que dá para usar sobe um pouco sob o mouse.
   const interactionStyle =
-    card && turnPhase === "PLACING"
-      ? "hover:brightness-125 cursor-pointer"
+    card && isPlacing
+      ? "cursor-pointer transition-transform duration-200 hover:-translate-y-3 hover:brightness-125"
+      : card && turnPhase === "PLACING"
+        ? "cursor-default"
       : focused
         ? "cursor-default"
         : "opacity-50 hover:opacity-75";
@@ -138,7 +142,7 @@ export const InventorySlot = ({
       onClick={handleBuy}
       className={`group ${tutorialHighlight} ${animatedRingStyle} ${
         canBuy ? "cursor-pointer" : "cursor-default animate-accordion-down"
-      } ${theme.background}`}
+      }`}
     >
       <div
         onClick={type === "hand" ? handleSelectCard : handlePlayCard}
@@ -172,7 +176,7 @@ export const InventorySlot = ({
   );
 };
 
-export const InventoryGrid = ({ game, type, length = 3 }: InventoryProps) => {
+export const InventoryGrid = ({ game, type, length = 3, team }: InventoryProps) => {
   return (
     <div
       className={`grid grid-cols-3 w-full ${
@@ -180,7 +184,7 @@ export const InventoryGrid = ({ game, type, length = 3 }: InventoryProps) => {
       }`}
     >
       {Array.from({ length }).map((_, i) => (
-        <InventorySlot key={`inv-${i}`} game={game} type={type} index={i} />
+        <InventorySlot key={`inv-${i}`} game={game} type={type} index={i} team={team} />
       ))}
     </div>
   );

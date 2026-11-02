@@ -4,26 +4,31 @@ import type { Card } from "@/lib/types";
 import { Portrait } from "@/components/art/noir";
 import { GameEngine } from "@/game/useGameEngine";
 import { Bombsite } from "@/game/game-types";
-import { MAX_HEALTH } from "@/game/card-effects";
+import { MAX_HEALTH, activeEffectsOn } from "@/game/card-effects";
 
 export const PlayerCard = ({
   game,
   alignment = "left",
+  pendingDamage = 0,
 }: {
   game: GameEngine;
   alignment?: "left" | "right";
+  /** Dano que a animação ainda não mostrou: a barra cai junto com os impactos. */
+  pendingDamage?: number;
 }) => {
   const isRight = alignment === "right";
   const cardTeam = isRight ? "faction" : "police";
   const isActive = game.state.currentTeam === cardTeam;
 
-  const { health, position, effects } = game.state.teams[cardTeam];
+  const { health, position } = game.state.teams[cardTeam];
+  const effects = activeEffectsOn(game.state, cardTeam);
 
   return (
     <div
       className={`
-        flex flex-col gap-3 p-4 rounded-xl backdrop-blur-md
+        flex flex-col gap-3 rounded-xl p-4 bg-black/20 backdrop-blur-sm
         transform transition-all duration-700 cursor-default
+        [text-shadow:0_1px_3px_rgba(0,0,0,0.9)]
         min-w-[220px]
         ${getContainerStyle(isRight)}
         ${!isActive ? "opacity-70 scale-95 grayscale-[0.7]" : ""}
@@ -40,7 +45,7 @@ export const PlayerCard = ({
           isRight={isRight}
           teamName={game.teamNames[cardTeam]}
           playerName={game.state.teams[cardTeam].playerName}
-          health={health}
+          health={health + pendingDamage}
           effects={effects}
         />
       </div>
@@ -191,7 +196,7 @@ const HealthBar = ({
   return (
     <div className="relative h-3 w-full overflow-hidden rounded-sm border border-slate-700/40 bg-slate-800/80">
       <div
-        className={`h-full transition-all duration-500 ${getHealthColor(isRight, isLow, isMid)} ${
+        className={`h-full transition-all duration-200 ${getHealthColor(isRight, isLow, isMid)} ${
           isLow ? "animate-pulse" : ""
         }`}
         style={{ width: `${(health / MAX_HEALTH) * 100}%` }}
@@ -229,9 +234,7 @@ const ActiveEffects = ({
 };
 
 const getContainerStyle = (isRight: boolean) =>
-  isRight
-    ? "bg-zinc-900/90 border-r-4 border-red-600 "
-    : "bg-slate-900/90 border-l-4 border-blue-500 ";
+  isRight ? "border-r-4 border-red-600 " : "border-l-4 border-blue-500 ";
 
 const getAvatarStyle = (isRight: boolean) =>
   isRight

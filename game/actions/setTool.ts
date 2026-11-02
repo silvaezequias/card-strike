@@ -20,7 +20,7 @@ export const ActionSetTool = (
     activeTab: "actionTab",
     enabledTabs: {
       actionTab: true,
-      battlefieldTab: false,
+      battlefieldTab: true,
     },
   },
   tool: {

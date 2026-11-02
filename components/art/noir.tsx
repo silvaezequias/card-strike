@@ -3,7 +3,7 @@
 import { useId } from "react";
 import { TeamName } from "@/game/game-types";
 import { ArtPalette, getPalette } from "./palette";
-import { TEAM_CHARACTERS } from "./characters";
+import { CharacterImage, TEAM_CHARACTERS, characterCrop } from "./characters";
 
 /** Ids seguros para url(#id) — cada SVG precisa dos seus. */
 export const useSvgId = (prefix: string) =>
@@ -90,44 +90,42 @@ export const NoirBackdrop = ({
    PORTRAIT
    ═══════════════════════════════════════════════ */
 
-const CROPS = {
-  bust: "0 0 400 500",
-  head: "104 78 208 208",
-  card: "20 40 360 480",
-};
+type Crop = "bust" | "head" | "card" | "full";
 
 export const Portrait = ({
   team,
   variant = 0,
   crop = "bust",
   backdrop = true,
-  flip = false,
   className,
 }: {
   team: TeamName;
   variant?: 0 | 1;
-  crop?: keyof typeof CROPS;
+  crop?: Crop;
   backdrop?: boolean;
-  /** Espelha o personagem mantendo textos legíveis. */
+  /** Mantido por compatibilidade: as artes já olham para o centro da tela. */
   flip?: boolean;
   className?: string;
 }) => {
   const p = getPalette(team);
   const id = useSvgId("portrait");
-  const Character = TEAM_CHARACTERS[team][variant];
+  const art = TEAM_CHARACTERS[team][variant];
+  const box = characterCrop(art, crop);
 
   return (
     <svg
-      viewBox={CROPS[crop]}
+      viewBox={`${box.x} ${box.y} ${box.w} ${box.h}`}
       className={className}
       preserveAspectRatio="xMidYMid slice"
       role="img"
       aria-label={`Personagem ${team === "police" ? "da polícia" : "da facção"}`}
     >
-      {backdrop && <NoirBackdrop p={p} id={id} width={400} height={500} />}
-      <g transform={flip ? "translate(400 0) scale(-1 1)" : undefined}>
-        <Character p={p} flip={flip} />
-      </g>
+      {backdrop && (
+        <g transform={`translate(${box.x} ${box.y}) scale(${box.w / 400} ${box.h / 500})`}>
+          <NoirBackdrop p={p} id={id} width={400} height={500} />
+        </g>
+      )}
+      <CharacterImage art={art} />
     </svg>
   );
 };

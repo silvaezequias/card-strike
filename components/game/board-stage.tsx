@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { TeamName } from "@/game/game-types";
 import { Card } from "@/lib/types";
 import { NoirCard } from "@/components/art/noir-card";
+import { BoardDice, DiceRoll, DiceStage } from "@/components/game/board-dice";
 import { getPalette } from "@/components/art/palette";
 import {
   BOARD_H,
@@ -50,6 +51,8 @@ export type CardCameraFocus = {
   slot?: number;
   /** Foco total: escurece o que estiver fora da seleção. */
   dim?: boolean;
+  /** Só move a câmera, sem contorno na parte focada. */
+  plain?: boolean;
 };
 
 const rectCenterOf = (r: Rect): Point => ({ x: r.x + r.w / 2, y: r.y + r.h / 2 });
@@ -159,6 +162,9 @@ const CardOnBoard = ({
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const { w, h } = cardBox(rect, rotate);
+  // Só a carta clicável sobe da mesa sob o mouse.
+  const [hovered, setHovered] = useState(false);
+  const lifted = hovered && !!onClick;
 
   // Voo de entrada só na montagem: sobe, faz um arco e pousa no lugar.
   useLayoutEffect(() => {
@@ -190,15 +196,18 @@ const CardOnBoard = ({
   return (
     <div
       ref={ref}
-      className={`absolute ${onClick ? "cursor-pointer transition-[filter] hover:brightness-125" : ""}`}
+      className={`absolute ${onClick ? "cursor-pointer hover:brightness-125" : ""}`}
       onClick={onClick}
+      onPointerEnter={() => setHovered(true)}
+      onPointerLeave={() => setHovered(false)}
       style={{
         left: rect.x + rect.w / 2 - w / 2,
         top: rect.y + rect.h / 2 - h / 2,
         width: w,
         height: h,
-        transform: `rotate(${rotate}deg)`,
-        filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.8))",
+        transform: `rotate(${rotate}deg) translateZ(${lifted ? 34 : 0}px) scale(${lifted ? 1.05 : 1})`,
+        transition: "transform 200ms ease-out, filter 200ms",
+        filter: lifted ? "drop-shadow(0 26px 22px rgba(0,0,0,0.85))" : "drop-shadow(0 10px 14px rgba(0,0,0,0.8))",
       }}
     >
       <NoirCard card={card} team={team} className="block h-full w-full" />
@@ -235,7 +244,6 @@ const FocusDim = ({ rect }: { rect: Rect }) => (
   />
 );
 
-/** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 /** Contorno vermelho que pisca uma vez: carta de ataque fora de confronto. */
 const RangeWarning = ({ rect }: { rect: Rect }) => (
   <div
@@ -251,6 +259,7 @@ const RangeWarning = ({ rect }: { rect: Rect }) => (
   />
 );
 
+/** Contorno pulsante no slot sorteado pelo dado; recebe a carta arrastada. */
 const SlotHighlight = ({
   rect,
   team,
@@ -323,11 +332,13 @@ const DeckHighlight = ({
   team,
   canBuy,
   strong,
+  blockedLabel,
   onClick,
 }: {
   team: TeamName;
   canBuy: boolean;
   strong: boolean;
+  blockedLabel: string;
   onClick?: () => void;
 }) => {
   const p = getPalette(team);
@@ -352,7 +363,7 @@ const DeckHighlight = ({
         className="whitespace-nowrap rounded bg-black/70 px-2 py-0.5 text-lg font-black tracking-[0.2em]"
         style={{ color: canBuy ? p.rim : "#a1a1aa", transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
       >
-        {canBuy ? "COMPRAR" : "MÃO CHEIA"}
+        {canBuy ? "COMPRAR" : blockedLabel}
       </span>
     </div>
   );
@@ -367,19 +378,27 @@ export type BoardStageProps = {
   highlight?: { team: TeamName; index: number; warning?: boolean } | null;
   /** Pixels do rodapé cobertos por outra interface (ex.: inventário aberto). */
   bottomInset?: number;
+  /** Pixels ocupados pela HUD: o palco é maior que a área enquadrada pela câmera. */
+  hudInset?: { x: number; y: number };
   /** Foco pedido pelo tutorial; substitui a tomada normal. */
   cameraFocus?: CardCameraFocus | null;
   onSlotClick?: (team: TeamName, index: number) => void;
   /** Carta da mão (índice) solta sobre o slot em destaque. */
   onHandCardDrop?: (handIndex: number) => void;
+  /** Dado 3D sobre o tabuleiro. */
+  dice?: { shaking: boolean; roll: DiceRoll | null };
+  onDiceHit?: () => void;
+  onDiceSettled?: () => void;
+  onDiceStage?: (stage: DiceStage) => void;
   /** Baralho em destaque (hora de posicionar) e se dá para comprar. */
-  deck?: { team: TeamName; canBuy: boolean; strong?: boolean } | null;
+  deck?: { team: TeamName; canBuy: boolean; strong?: boolean; blockedLabel: string } | null;
   onDeckClick?: () => void;
 };
 
 type CardLocation = { team: TeamName; index: number };
 
 const HAND_DISTANCE = 300; // px do tabuleiro além da borda do jogador
+const NO_INSET = { x: 0, y: 0 };
 const DROP_WINDOW_MS = 1500;
 
 export const BoardStage = ({
@@ -389,9 +408,14 @@ export const BoardStage = ({
   combatCard,
   highlight,
   bottomInset = 0,
+  hudInset = NO_INSET,
   cameraFocus = null,
   onSlotClick,
   onHandCardDrop,
+  dice,
+  onDiceHit,
+  onDiceSettled,
+  onDiceStage,
   deck,
   onDeckClick,
 }: BoardStageProps) => {
@@ -520,7 +544,10 @@ export const BoardStage = ({
     return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
-  const framed = { w: viewport.w, h: Math.max(200, viewport.h - bottomInset) };
+  const framed = {
+    w: viewport.w - hudInset.x,
+    h: Math.max(200, viewport.h - hudInset.y - bottomInset),
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -570,12 +597,14 @@ export const BoardStage = ({
       }
     : getPose(cameraFocus?.area === "overview" ? "overview" : shot, turn, framed);
   const rotate = pose.rotate + orbit.rotate;
+  const zoom = pose.scale * orbit.zoom;
   const transform = [
     // Sobe o enquadramento acima da área coberta no rodapé.
     `translateY(${-bottomInset / 2}px)`,
     `rotateX(${pose.tilt + orbit.tilt}deg)`,
     `rotateZ(${rotate}deg)`,
-    `scale(${pose.scale * orbit.zoom})`,
+    // Escala também a altura (z): com scale() só x e y encolhem e o dado estica.
+    `scale3d(${zoom}, ${zoom}, ${zoom})`,
     `translate(${-pose.focus.x}px, ${-pose.focus.y}px)`,
   ].join(" ");
 
@@ -613,18 +642,42 @@ export const BoardStage = ({
                 rect={slotRect(team, i)}
                 rotate={TEAM_CARD_ROTATION[team]}
                 entrance={slotEntrance(team, i, card)}
-                onClick={onSlotClick ? () => onSlotClick(team, i) : undefined}
+                // Só o slot sorteado pelo dado é clicável.
+                onClick={
+                  onSlotClick && highlight?.team === team && highlight.index === i
+                    ? () => onSlotClick(team, i)
+                    : undefined
+                }
               />
             ) : null,
           ),
         )}
 
+        {/* Marcadores dos baralhos: a distribuição das cartas parte daqui. */}
+        {(["police", "faction"] as TeamName[]).map((team) => {
+          const r = deckRect(team);
+          return (
+            <div
+              key={`deck-${team}`}
+              data-deck-anchor={team}
+              className="pointer-events-none absolute"
+              style={{ left: r.x, top: r.y, width: r.w, height: r.h }}
+            />
+          );
+        })}
+
         {deck && (
-          <DeckHighlight team={deck.team} canBuy={deck.canBuy} strong={!!deck.strong} onClick={onDeckClick} />
+          <DeckHighlight
+            team={deck.team}
+            canBuy={deck.canBuy}
+            strong={!!deck.strong}
+            blockedLabel={deck.blockedLabel}
+            onClick={onDeckClick}
+          />
         )}
 
         {target && cameraFocus?.dim && <FocusDim rect={target.spotlight} />}
-        {target && <FocusRing rect={target.spotlight} />}
+        {target && !cameraFocus?.plain && <FocusRing rect={target.spotlight} />}
 
         {highlight && (
           <SlotHighlight
@@ -649,6 +702,16 @@ export const BoardStage = ({
           />
         )}
 
+        {dice && (
+          <BoardDice
+            team={turn}
+            shaking={dice.shaking}
+            roll={dice.roll}
+            onHit={onDiceHit}
+            onSettled={() => onDiceSettled?.()}
+            onStage={onDiceStage}
+          />
+        )}
       </div>
     </div>
   );
