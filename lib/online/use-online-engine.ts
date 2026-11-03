@@ -18,6 +18,14 @@ import { subscribe } from "./realtime";
    vira uma chamada da API e o estado volta pronto.
    O oponente entra como "botTeam": a tela já sabe
    esconder a mão dele e mostrar vitória/derrota.
+
+   Sem atraso na mão: cada jogada entra numa fila de
+   pendentes e aparece na hora (previsão local). As
+   pendentes vão ao servidor em ordem, uma por vez, e
+   são reaplicadas por cima de todo estado que chega
+   até a resposta delas confirmar (ou desfazer, se o
+   servidor recusar). Assim uma atualização antiga não
+   faz a carta "voltar".
    ═══════════════════════════════════════════════ */
 
 const SPINNER_MS = SPIN_MS + SPIN_READ_MS;
@@ -29,21 +37,31 @@ const POLL_MS = 6_000;
 export const AWAY_WARNING_MS = 15_000;
 export const ABANDON_MS = 60_000;
 
-/** Ações sem sorteio: aparecem na hora, antes da resposta do servidor. */
-const OPTIMISTIC = new Set([
+/**
+ * Jogadas previstas na hora. A compra fica de fora: a carta é sorteada no
+ * servidor (a resposta chega em seguida).
+ */
+const PREDICTED = new Set([
   "SELECT_ACTION",
   "SET_TOOL",
   "SWITCH_TAB",
   "TOGGLE_INVENTORY",
   "PLACE_CARD",
   "KEEP_IN_HAND",
+  "PLAY_CARD",
 ]);
-const SENT_TO_SERVER = new Set([...OPTIMISTIC, "BUY_CARD", "PLAY_CARD"]);
+const SENT_TO_SERVER = new Set([...PREDICTED, "BUY_CARD"]);
+
+/**
+ * Jogada esperando o servidor. `base` é a versão do estado em que ela vai ser
+ * aplicada; um estado do servidor com versão maior já a inclui.
+ */
+type Pending = { id: number; action: GameAction | null; base: number };
 
 export const useOnlineEngine = (matchId: string) => {
   const [match, setMatch] = useState<MatchView | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [optimistic, setOptimistic] = useState<GameState | null>(null);
+  const [pending, setPending] = useState<Pending[]>([]);
   const [now, setNow] = useState(Date.now());
   const [opponentAwayMs, setOpponentAwayMs] = useState(0);
   const [dice, setDice] = useState<{
@@ -58,13 +76,15 @@ export const useOnlineEngine = (matchId: string) => {
   const skew = useRef(0);
   const version = useRef(-1);
   const posting = useRef(false);
+  const queue = useRef<Promise<void>>(Promise.resolve());
+  const nextPendingId = useRef(0);
+  const pendingCount = useRef(0);
 
   /** Guarda só respostas mais novas que a atual (chegam fora de ordem). */
   const accept = useCallback((next: MatchView) => {
     if (next.version < version.current) return;
     version.current = next.version;
     skew.current = next.serverNow - Date.now();
-    setOptimistic(null);
     setMatch(next);
   }, []);
 
@@ -91,7 +111,17 @@ export const useOnlineEngine = (matchId: string) => {
   const you = match?.you ?? "police";
   const opponent = opponentOf(you);
   const active = match?.status === "active";
-  const base = optimistic ?? match?.state ?? null;
+  // Estado do servidor com as jogadas ainda não confirmadas por cima.
+  const base = useMemo(() => {
+    if (!match) return null;
+    return pending.reduce(
+      (state, p) =>
+        p.action && p.base >= match.version
+          ? gameReducer(state, p.action)
+          : state,
+      match.state,
+    );
+  }, [match, pending]);
 
   // Relógio local a partir do prazo do servidor.
   useEffect(() => {
@@ -118,16 +148,37 @@ export const useOnlineEngine = (matchId: string) => {
 
   const myTurn = !!state && active && state.currentTeam === you;
 
+  /**
+   * Põe a jogada na fila: aparece na hora (se houver previsão) e vai ao
+   * servidor depois das anteriores. Sai da fila quando a resposta chega.
+   */
   const send = useCallback(
-    async (request: () => Promise<{ match: MatchView }>) => {
-      try {
-        accept((await request()).match);
-        setError(null);
-      } catch (e) {
-        setError((e as Error).message);
-        setOptimistic(null);
-        refresh();
-      }
+    (
+      request: () => Promise<{ match: MatchView }>,
+      predicted: GameAction | null = null,
+      onFail?: () => void,
+    ) => {
+      const entry: Pending = {
+        id: nextPendingId.current++,
+        action: predicted,
+        // Cada jogada aceita sobe a versão em 1: esta entra depois das da fila.
+        base: version.current + pendingCount.current,
+      };
+      pendingCount.current++;
+      setPending((list) => [...list, entry]);
+      queue.current = queue.current.then(async () => {
+        try {
+          accept((await request()).match);
+          setError(null);
+        } catch (e) {
+          setError((e as Error).message);
+          onFail?.();
+          refresh();
+        } finally {
+          pendingCount.current--;
+          setPending((list) => list.filter((p) => p.id !== entry.id));
+        }
+      });
     },
     [accept, refresh],
   );
@@ -135,40 +186,57 @@ export const useOnlineEngine = (matchId: string) => {
   const dispatch = useCallback(
     (action: GameAction) => {
       if (!myTurn || !match || !SENT_TO_SERVER.has(action.type)) return;
-      if (OPTIMISTIC.has(action.type))
-        setOptimistic((current) => gameReducer(current ?? match.state, action));
-      send(() => api.action(matchId, action));
+      send(
+        () => api.action(matchId, action),
+        PREDICTED.has(action.type) ? action : null,
+      );
     },
     [myTurn, match, matchId, send],
   );
 
+  // O dado segue balançando na mão até o servidor sortear; não "volta".
   const roll = useCallback(() => {
-    if (!myTurn || match?.pendingRoll || finishRollRef.current) return;
-    send(() => api.roll(matchId));
-  }, [myTurn, match?.pendingRoll, matchId, send]);
+    if (
+      !myTurn ||
+      match?.pendingRoll ||
+      finishRollRef.current ||
+      state?.tool.isRolling
+    )
+      return;
+    setDice((current) => ({ ...current, shaking: true }));
+    send(
+      () => api.roll(matchId),
+      { type: "ROLL_TOOL_START" },
+      () => setDice((current) => ({ ...current, shaking: false })),
+    );
+  }, [myTurn, match?.pendingRoll, state?.tool.isRolling, matchId, send]);
 
   // Sorteio novo no servidor: anima o dado/roleta nos dois lados.
   // Quem rolou avisa o fim; se sumir, o prazo vence e o outro cobra.
-  const pending = match?.pendingRoll ?? null;
-  const pendingId = pending?.id ?? null;
+  const serverRoll = match?.pendingRoll ?? null;
+  const serverRollId = serverRoll?.id ?? null;
   useEffect(() => {
-    if (!pending) return;
-    const mine = pending.team === you;
-    if (pending.tool === "d6") {
+    if (!serverRoll) return;
+    const mine = serverRoll.team === you;
+    if (serverRoll.tool === "d6") {
       setDice({
         shaking: false,
-        roll: { id: pending.id, value: pending.d6, team: pending.team },
+        roll: {
+          id: serverRoll.id,
+          value: serverRoll.d6,
+          team: serverRoll.team,
+        },
       });
     } else {
-      const target = getSpinnerRotation(pending.spinner);
-      const spins = 5 + (pending.id % 6);
+      const target = getSpinnerRotation(serverRoll.spinner);
+      const spins = 5 + (serverRoll.id % 6);
       setSpinnerRotation((prev) => {
         let diff = target.z - (prev.z % 360);
         if (diff > 0) diff -= 360;
         return {
           x: 0,
           y: 0,
-          z: prev.z - spins * 360 + diff + ((pending.id % 40) - 20),
+          z: prev.z - spins * 360 + diff + ((serverRoll.id % 40) - 20),
         };
       });
     }
@@ -178,12 +246,20 @@ export const useOnlineEngine = (matchId: string) => {
       done = true;
       window.clearTimeout(timer);
       finishRollRef.current = null;
-      if (mine) send(() => api.finishRoll(matchId));
+      if (mine)
+        send(() => api.finishRoll(matchId), {
+          type: "ROLL_TOOL_COMPLETE",
+          payload: {
+            d6: serverRoll.d6,
+            spinner: serverRoll.spinner,
+            timerAfter: serverRoll.timerAfter,
+          },
+        });
     };
     finishRollRef.current = finish;
     const timer = window.setTimeout(
       finish,
-      pending.tool === "d6" ? DICE_FALLBACK_MS : SPINNER_MS,
+      serverRoll.tool === "d6" ? DICE_FALLBACK_MS : SPINNER_MS,
     );
     return () => {
       window.clearTimeout(timer);
@@ -191,7 +267,7 @@ export const useOnlineEngine = (matchId: string) => {
     };
     // Só quando chega um sorteio novo.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingId]);
+  }, [serverRollId]);
 
   // Prazo vencido: o jogador da vez cobra primeiro; o outro, um pouco depois.
   const deadline = match?.deadline ?? null;
