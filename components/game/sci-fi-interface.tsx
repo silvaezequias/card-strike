@@ -21,8 +21,8 @@ import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
-import { inConfrontation, isAttackCard, isFlashed, opponentOf, winnerOf } from "@/game/card-effects";
-import { BOMB_FX_MS } from "@/game/card-fx";
+import { inConfrontation, isAttackCard, opponentOf, winnerOf } from "@/game/card-effects";
+import { BOMB_FX_MS, FLASH_BLIND_SECONDS } from "@/game/card-fx";
 import { useBot } from "@/game/useBot";
 import { useCombatFx } from "@/game/useCombatFx";
 import { playDiceHit, useGameSounds } from "@/game/useGameSounds";
@@ -256,6 +256,24 @@ export function GameScreen({
 
   const shownView = fx.active ? null : view;
   const me = state.botTeam ? opponentOf(state.botTeam) : currentTeam;
+
+  // Flashbang: a tela fica branca no instante em que ela cai, só para quem foi
+  // atingido (contra o bot e online, o humano; no local a tela é de todos).
+  const [blinded, setBlinded] = useState(false);
+  const blindTimer = useRef<number | null>(null);
+  const flashEvent = fx.event?.card.name === "Flashbang" && fx.event.hit && !fx.event.blocked ? fx.event : null;
+  const flashLandedId = flashEvent && fx.landed > 0 ? flashEvent.id : null;
+  const flashHitsViewer = !!flashEvent && (!state.botTeam || flashEvent.target === me);
+  useEffect(() => {
+    if (flashLandedId === null || !flashHitsViewer) return;
+    setBlinded(true);
+    if (blindTimer.current) window.clearTimeout(blindTimer.current);
+    // Sem limpar na troca de vez: o clarão dura o tempo dele mesmo com a vez já de volta.
+    blindTimer.current = window.setTimeout(() => setBlinded(false), FLASH_BLIND_SECONDS * 1000);
+    // Só quando uma flash nova cai.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flashLandedId]);
+  useEffect(() => () => void (blindTimer.current && window.clearTimeout(blindTimer.current)), []);
   // Mão aberta na distribuição: a do humano contra o bot; no local, a do time da vez.
   const handTeam = me;
 
@@ -676,7 +694,7 @@ export function GameScreen({
       </button>
       <SettingsButton className="fixed bottom-3 right-14 z-40 flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-black/30 text-zinc-300 backdrop-blur-sm transition-colors hover:text-white" />
 
-      {turnPhase === "IDLE" && isFlashed(teams[currentTeam]) && <FlashBlind />}
+      {blinded && <FlashBlind />}
       {bombFxPlaying && <BombExplosion />}
 
       {overlay}

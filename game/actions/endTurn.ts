@@ -1,7 +1,8 @@
 import { GameState } from "../game-types";
-import { closesRound, opponentOf, resolveEndOfTurn } from "../card-effects";
+import { closesRound, isFlashed, isGameOver, opponentOf, resolveEndOfTurn } from "../card-effects";
 
-export const ActionEndTurn = (state: GameState): GameState => ({
+/** Fecha a vez do time atual e passa para o outro. */
+const passTurn = (state: GameState): GameState => ({
   ...state,
   ...resolveEndOfTurn(state),
   currentTeam: opponentOf(state.currentTeam),
@@ -25,3 +26,15 @@ export const ActionEndTurn = (state: GameState): GameState => ({
     },
   },
 });
+
+/**
+ * Fim de turno. Se quem joga a seguir está cego pela Flashbang, a vez dele é
+ * perdida na hora, sem passar por ele: conta como uma vez jogada (o efeito
+ * acaba, o fogo queima, a bomba conta e a rodada avança) e quem jogou a flash
+ * continua.
+ */
+export const ActionEndTurn = (state: GameState): GameState => {
+  const next = passTurn(state);
+  if (isGameOver(next) || !isFlashed(next.teams[next.currentTeam])) return next;
+  return passTurn(next);
+};
