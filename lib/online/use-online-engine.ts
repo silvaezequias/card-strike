@@ -195,6 +195,8 @@ export const useOnlineEngine = (matchId: string) => {
   );
 
   // O dado segue balançando na mão até o servidor sortear; não "volta".
+  // Só o dado balança: na roleta o balanço ficava ligado para sempre.
+  const selectedTool = state?.tool.selected;
   const roll = useCallback(() => {
     if (
       !myTurn ||
@@ -203,13 +205,19 @@ export const useOnlineEngine = (matchId: string) => {
       state?.tool.isRolling
     )
       return;
-    setDice((current) => ({ ...current, shaking: true }));
+    if (selectedTool === "d6") setDice((current) => ({ ...current, shaking: true }));
     send(
       () => api.roll(matchId),
       { type: "ROLL_TOOL_START" },
       () => setDice((current) => ({ ...current, shaking: false })),
     );
-  }, [myTurn, match?.pendingRoll, state?.tool.isRolling, matchId, send]);
+  }, [myTurn, match?.pendingRoll, state?.tool.isRolling, selectedTool, matchId, send]);
+
+  // Vez nova: nenhum dado fica balançando da jogada anterior.
+  const turnTeam = state?.currentTeam;
+  useEffect(() => {
+    setDice((current) => (current.shaking ? { ...current, shaking: false } : current));
+  }, [turnTeam]);
 
   // Sorteio novo no servidor: anima o dado/roleta nos dois lados.
   // Quem rolou avisa o fim; se sumir, o prazo vence e o outro cobra.
@@ -228,6 +236,7 @@ export const useOnlineEngine = (matchId: string) => {
         },
       });
     } else {
+      setDice((current) => (current.shaking ? { ...current, shaking: false } : current));
       const target = getSpinnerRotation(serverRoll.spinner);
       const spins = 5 + (serverRoll.id % 6);
       setSpinnerRotation((prev) => {
