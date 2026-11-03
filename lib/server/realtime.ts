@@ -46,6 +46,8 @@ export const publish = async (
         body: JSON.stringify({
           messages: [{ topic: channel, event, payload }],
         }),
+        // O aviso nunca pode segurar a resposta da jogada.
+        signal: AbortSignal.timeout(4000),
       });
     } catch (error) {
       // O estado fica salvo; quem perder o aviso recarrega pelo próximo pedido.
