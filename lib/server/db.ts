@@ -20,8 +20,13 @@ type Global = typeof globalThis & { __cardStrikeDb?: Promise<Db> };
 
 const connectPostgres = async (): Promise<Db> => {
   const postgres = (await import("postgres")).default;
+  // A URL da integração traz parâmetros que não são do Postgres (ex.: "supa");
+  // o postgres-js mandaria todos como configuração da conexão. Fica só o SSL.
+  const url = new URL(env.databaseUrl);
+  const sslmode = url.searchParams.get("sslmode");
+  url.search = sslmode ? `?sslmode=${sslmode}` : "";
   // prepare: false é exigido pelo pooler do Supabase em modo transação.
-  const sql = postgres(env.databaseUrl, {
+  const sql = postgres(url.toString(), {
     prepare: false,
     max: 3,
     idle_timeout: 20,
