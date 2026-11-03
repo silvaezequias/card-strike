@@ -25,11 +25,19 @@ const connectPostgres = async (): Promise<Db> => {
   const url = new URL(env.databaseUrl);
   const sslmode = url.searchParams.get("sslmode");
   url.search = sslmode ? `?sslmode=${sslmode}` : "";
-  // prepare: false é exigido pelo pooler do Supabase em modo transação.
+  // O pooler do Supabase em modo transação (Supavisor) pede:
+  // - prepare: false (sem prepared statements com nome);
+  // - max_pipeline: 1: uma consulta por vez em cada conexão. Com pipelining, a
+  //   função da Vercel atende vários pedidos juntos e o pooler trava no meio
+  //   da consulta (sessões "active" esperando o cliente até o timeout de 300 s);
+  // - fetch_types: false: não roda a consulta de tipos ao conectar.
   const sql = postgres(url.toString(), {
     prepare: false,
+    max_pipeline: 1,
+    fetch_types: false,
     max: 3,
     idle_timeout: 20,
+    connect_timeout: 10,
   });
   const query = async <T extends Row>(text: string, params: unknown[] = []) =>
     (await sql.unsafe(text, params as never[])) as unknown as T[];
