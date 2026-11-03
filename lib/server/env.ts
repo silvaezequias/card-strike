@@ -13,9 +13,10 @@ const isProd =
 export const env = {
   /**
    * Postgres do Supabase (string de conexão do pooler, modo transação). A
-   * integração Supabase ↔ Vercel cria POSTGRES_URL sozinha, já pelo pooler.
+   * integração Supabase ↔ Vercel cria POSTGRES_URL sozinha, já pelo pooler e
+   * com a senha certa; ela vale antes da DATABASE_URL digitada à mão.
    */
-  databaseUrl: process.env.DATABASE_URL || process.env.POSTGRES_URL || "",
+  databaseUrl: process.env.POSTGRES_URL || process.env.DATABASE_URL || "",
   /**
    * Segredo das sessões (cookie assinado). Obrigatório em produção; sem
    * AUTH_SECRET, usa o segredo JWT que a integração do Supabase cria.
