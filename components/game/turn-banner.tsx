@@ -6,7 +6,7 @@ import { useGameTheme } from "@/game/useGameTheme";
 import { TeamName } from "@/game/game-types";
 
 const TEAM_LABEL: Record<TeamName, string> = {
-  police: "DOS POLICIAIS",
+  police: "DOS MILITARES",
   faction: "DOS TERRORISTAS",
 };
 

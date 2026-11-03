@@ -347,8 +347,8 @@ export const useOnlineEngine = (matchId: string) => {
         myTurn && setDice((current) => ({ ...current, shaking })),
       finishRoll: () => finishRollRef.current?.(),
     },
-    teamNames: { faction: "Facção", police: "Polícia" },
-    currentTeamName: state.currentTeam === "faction" ? "Facção" : "Polícia",
+    teamNames: { faction: "Terrorista", police: "Militar" },
+    currentTeamName: state.currentTeam === "faction" ? "Terrorista" : "Militar",
     currentPlayerName: state.teams[state.currentTeam].playerName,
   };
 

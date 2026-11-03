@@ -45,8 +45,8 @@ import { Avatar, STATUS_COLOR, STATUS_LABEL } from "@/components/online/ui";
 type View = "home" | "play" | "inventory" | "history" | "settings";
 
 const TEAM_LABEL: Record<TeamName, string> = {
-  police: "Polícia",
-  faction: "Facção",
+  police: "Militar",
+  faction: "Terrorista",
 };
 
 const TopIcon = ({

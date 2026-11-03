@@ -4,7 +4,7 @@ import { Skull, Trophy } from "lucide-react";
 import { getPalette } from "@/components/art/palette";
 import { TeamName } from "@/game/game-types";
 
-const TEAM_NAME: Record<TeamName, string> = { police: "Polícia", faction: "Facção" };
+const TEAM_NAME: Record<TeamName, string> = { police: "Militar", faction: "Terrorista" };
 
 /**
  * Fim de partida. Vitória na cor do time vencedor; derrota (só para quem

@@ -18,8 +18,11 @@ export interface BombData {
   planted: boolean;
   position: Bombsite | null;
   timer: number;
+  /** A explosão encerrou a partida (no modo competitivo, só quando não sobra site). */
   exploded: boolean;
   maxTime: number;
+  /** Modo competitivo: sites já explodidos, fora do jogo. Ausente em partidas antigas. */
+  destroyed?: Bombsite[];
 }
 
 /** Efeito que fica no mapa por alguns rounds, com ou sem jogador por perto. */
@@ -47,9 +50,14 @@ export type CombatEvent = {
 export type GameRules = {
   /** Cartas do oponente escondidas (mão e slots) até ele jogar uma. */
   hiddenCards: boolean;
+  /**
+   * Modo competitivo: a explosão destrói só o site da bomba e mata só quem
+   * estiver nele. O Terrorista vence ao destruir os três sites (ou zerar o Militar).
+   */
+  competitive: boolean;
 };
 
-export const DEFAULT_RULES: GameRules = { hiddenCards: false };
+export const DEFAULT_RULES: GameRules = { hiddenCards: false, competitive: false };
 
 export interface GameState {
   /** Time jogado pelo bot; null quando os dois lados são humanos. */

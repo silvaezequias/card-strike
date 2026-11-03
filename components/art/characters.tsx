@@ -6,7 +6,7 @@ import { TeamName } from "@/game/game-types";
    e recortadas pela silhueta. Todas no mesmo quadro:
    400 de largura, cabeça a partir de y 36 e botas
    em y 892. A pose já olha para o centro da tela
-   (Polícia para a direita, Facção para a esquerda).
+   (Militar para a direita, Terrorista para a esquerda).
    ═══════════════════════════════════════════════ */
 
 export const ART_WIDTH = 400;

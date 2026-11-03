@@ -4,7 +4,7 @@ import { gameReducer } from "./game-reducer";
 import { createInitialGameState } from "./game-initital-state";
 import { getSpinnerRotation } from "@/lib/game-helpers";
 import { GameAction } from "./game-actions";
-import { isGameOver } from "./card-effects";
+import { isGameOver, spinnerSites } from "./card-effects";
 import { SPIN_MS, SPIN_READ_MS } from "@/components/game/roulette-board";
 
 /** Resultados forçados para as próximas jogadas (tutorial roteirizado). */
@@ -15,7 +15,6 @@ export type ScriptedOutcomes = {
   card?: string | null;
 };
 
-const BOMBSITES: Bombsite[] = ["A", "B", "C"];
 /** Giro da roleta mais um instante parada mostrando o site. */
 const SPINNER_MS = SPIN_MS + SPIN_READ_MS;
 /** Segurança: aba em segundo plano para o dado, e o jogo não pode travar. */
@@ -71,8 +70,8 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
     dispatch({ type: "ROLL_TOOL_START" });
 
     const d6Result = script?.current.d6 ?? Math.floor(Math.random() * 6) + 1;
-    // Se reposicionar sempre muda de lugar: o site atual fica fora do sorteio.
-    const otherSites = BOMBSITES.filter((site) => site !== state.teams[currentTeam].position);
+    // Muda sempre de lugar e nunca cai num site destruído (modo competitivo).
+    const otherSites = spinnerSites(state, currentTeam);
     const spinnerResult =
       script?.current.spinner ??
       otherSites[Math.floor(Math.random() * otherSites.length)];
@@ -201,8 +200,8 @@ export const useGameEngine = (setup: SetupSettings, options: GameEngineOptions =
       shakeDice: (shaking: boolean) => setDice((current) => ({ ...current, shaking })),
       finishRoll: () => finishRollRef.current?.(),
     },
-    teamNames: { faction: "Facção", police: "Polícia" },
-    currentTeamName: state.currentTeam === "faction" ? "Facção" : "Polícia",
+    teamNames: { faction: "Terrorista", police: "Militar" },
+    currentTeamName: state.currentTeam === "faction" ? "Terrorista" : "Militar",
     currentPlayerName: state.teams[state.currentTeam].playerName,
   };
 };

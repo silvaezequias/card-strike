@@ -45,7 +45,10 @@ const CARD_RULES: Record<string, CardRules> = {
   BOMBA: {
     mapEffect:
       "É plantada no bombsite (A, B ou C) e fica armada no mapa por 5 rounds.",
-    interactions: ["Desarmada pelo KIT DEFUSE da polícia antes de explodir."],
+    interactions: [
+      "Desarmada pelo KIT DEFUSE do militar antes de explodir.",
+      "Modo competitivo: a explosão destrói só o site e atinge só quem estiver nele; o Terrorista precisa destruir os três para vencer.",
+    ],
   },
   "KIT DEFUSE": {
     mapEffect: "Remove a bomba plantada do bombsite.",

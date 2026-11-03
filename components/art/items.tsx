@@ -655,7 +655,7 @@ const Vest = ({ p }: ArtProps) => (
       fontFamily="ui-monospace, monospace"
       letterSpacing="1"
     >
-      {p.team === "police" ? "POLICIA" : "FACCAO"}
+      {p.team === "police" ? "MILITAR" : "TERRORISTA"}
     </text>
     {/* Porta-carregadores */}
     {[0, 1, 2].map((i) => (

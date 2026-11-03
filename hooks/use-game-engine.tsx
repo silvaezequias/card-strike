@@ -85,12 +85,12 @@ export const useGameEngine = (playerSetup?: PlayerSetup): GameEngine => {
     ? playerSetup.player1Team === "police"
       ? playerSetup.player1Name
       : playerSetup.player2Name
-    : "POLICIA";
+    : "MILITAR";
   const factionName = playerSetup
     ? playerSetup.player1Team === "faction"
       ? playerSetup.player1Name
       : playerSetup.player2Name
-    : "FACCAO";
+    : "TERRORISTA";
 
   const [showWarZone, setShowWarZone] = useState(true);
   const [isWarTheme, setIsWarTheme] = useState(false);

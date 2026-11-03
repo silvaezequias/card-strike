@@ -11,8 +11,8 @@ import { factionPalette, getPalette, policePalette, type ArtPalette } from "./pa
    │  [baralho POL]                               │
    └──────────────────────────────────────────────┘
 
-   A polícia joga pela esquerda e a facção pela direita.
-   As cartas da facção são as da polícia giradas 180°,
+   A militar joga pela esquerda e o terrorista pela direita.
+   As cartas do terrorista são as do militar giradas 180°,
    então cada jogador lê a sua grade. O mapa (bases,
    bombsites e peões) fica no tabuleiro menor, MapBoard.
    ═══════════════════════════════════════════════ */
@@ -39,8 +39,8 @@ const chamfer = (x: number, y: number, w: number, h: number, c: number) =>
   `M${x + c},${y} L${x + w - c},${y} L${x + w},${y + c} L${x + w},${y + h - c} L${x + w - c},${y + h} L${x + c},${y + h} L${x},${y + h - c} L${x},${y + c} Z`;
 
 /* ═══════════════════════════════════════════════
-   GEOMETRIA — definida no lado da polícia e girada
-   180° para a facção.
+   GEOMETRIA — definida no lado do militar e girada
+   180° para o terrorista.
    ═══════════════════════════════════════════════ */
 
 const mirrorRect = (r: Rect): Rect => ({ x: BOARD_W - r.x - r.w, y: BOARD_H - r.y - r.h, w: r.w, h: r.h });
@@ -202,7 +202,7 @@ const TeamCards = ({ team }: { team: TeamName }) => {
           <TeamIcon team={team} color={p.rim} s={1.1} />
         </g>
         <text x="12" y="9" textAnchor="middle" fontSize="24" fontWeight={900} fill={p.rim} fontFamily={TITLE_FONT} letterSpacing="8">
-          {team === "police" ? "POLÍCIA" : "FACÇÃO"}
+          {team === "police" ? "MILITAR" : "TERRORISTA"}
         </text>
       </FacingTeam>
     </g>

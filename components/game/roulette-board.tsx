@@ -3,6 +3,7 @@
 import { CSSProperties, useEffect, useState } from "react";
 import { ArrowLeft, Sun } from "lucide-react";
 import { factionPalette, getPalette, policePalette } from "@/components/art/palette";
+import { Bombsite } from "@/game/game-types";
 import { GameEngine } from "@/game/useGameEngine";
 import { useGameTheme } from "@/game/useGameTheme";
 import { HIGHLIGHT_CLASS, useGate } from "./tutorial-gate";
@@ -53,7 +54,16 @@ const siteAt = (rotation: number) => {
   }).site;
 };
 
-const Wheel = ({ team, rotation }: { team: "police" | "faction"; rotation: number }) => {
+const Wheel = ({
+  team,
+  rotation,
+  destroyed = [],
+}: {
+  team: "police" | "faction";
+  rotation: number;
+  /** Sites explodidos (modo competitivo), riscados no disco. */
+  destroyed?: Bombsite[];
+}) => {
   const p = getPalette(team);
   return (
     <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden="true">
@@ -76,12 +86,15 @@ const Wheel = ({ team, rotation }: { team: "police" | "faction"; rotation: numbe
         })}
         {DIAL_SITES.map(({ site, angle }) => {
           const badge = dialPoint(56, angle);
+          const ruined = destroyed.includes(site as Bombsite);
           return (
-            <g key={site} transform={`translate(${badge.x} ${badge.y}) rotate(${angle})`}>
-              <circle r="19" fill="#07060c" stroke="#c9bcff" strokeOpacity={0.7} strokeWidth={1.5} />
-              <text y="9" textAnchor="middle" fontSize="26" fontWeight={900} fill="#ffffff" fontFamily="'Arial Black', Impact, sans-serif">
+            <g key={site} transform={`translate(${badge.x} ${badge.y}) rotate(${angle})`} opacity={ruined ? 0.55 : 1}>
+              <circle r="19" fill="#07060c" stroke={ruined ? "#ff4a3a" : "#c9bcff"} strokeOpacity={0.7} strokeWidth={1.5} />
+              <text y="9" textAnchor="middle" fontSize="26" fontWeight={900} fill={ruined ? "#71717a" : "#ffffff"} fontFamily="'Arial Black', Impact, sans-serif">
                 {site}
               </text>
+              {/* Site destruído (modo competitivo): a roleta nunca para nele. */}
+              {ruined && <path d="M-14,-14 L14,14 M14,-14 L-14,14" stroke="#ff4a3a" strokeWidth={4} strokeLinecap="round" />}
             </g>
           );
         })}
@@ -140,6 +153,7 @@ export const RouletteBoard = ({
   className?: string;
 }) => {
   const { currentTeam, tool, teams } = game.state;
+  const destroyed = game.state.bomb.destroyed ?? [];
   const p = getPalette(currentTeam);
   const theme = useGameTheme(currentTeam);
   const rotation = game.tool.rotation.spinner.z;
@@ -209,7 +223,7 @@ export const RouletteBoard = ({
               />
             ))}
             <div className="absolute inset-0" style={{ transform: `translateZ(${WHEEL_THICKNESS}px)` }}>
-              <Wheel team={currentTeam} rotation={rotation} />
+              <Wheel team={currentTeam} rotation={rotation} destroyed={destroyed} />
             </div>
             <Pointer color={p.rim} glow={p.glow} />
           </div>

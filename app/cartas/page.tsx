@@ -18,8 +18,8 @@ const CATEGORIES: { id: Card["cardCategory"]; label: string }[] = [
 ];
 
 const TEAM_LABEL: Record<TeamName, string> = {
-  police: "Polícia",
-  faction: "Facção",
+  police: "Militar",
+  faction: "Terrorista",
 };
 
 const lifeEffect = (card: CatalogEntry) => {

@@ -65,7 +65,11 @@ const readRules = (): GameRules => {
     const data = JSON.parse(
       window.localStorage.getItem(RULES_STORAGE_KEY) ?? "null",
     );
-    return { ...DEFAULT_RULES, hiddenCards: data?.hiddenCards === true };
+    return {
+      ...DEFAULT_RULES,
+      hiddenCards: data?.hiddenCards === true,
+      competitive: data?.competitive === true,
+    };
   } catch {
     return DEFAULT_RULES;
   }

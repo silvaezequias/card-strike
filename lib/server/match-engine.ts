@@ -8,7 +8,7 @@ import {
 import { GameAction } from "@/game/game-actions";
 import { gameReducer } from "@/game/game-reducer";
 import { createInitialGameState } from "@/game/game-initital-state";
-import { isGameOver, opponentOf, winnerOf } from "@/game/card-effects";
+import { isGameOver, opponentOf, spinnerSites, winnerOf } from "@/game/card-effects";
 import { HttpError } from "./users";
 import type { Card } from "@/lib/types";
 
@@ -23,7 +23,6 @@ import type { Card } from "@/lib/types";
    Funções puras: quem grava no banco é matches.ts.
    ═══════════════════════════════════════════════ */
 
-const BOMBSITES: Bombsite[] = ["A", "B", "C"];
 
 /** Sorteio guardado enquanto o dado/roleta anima nos dois clientes. */
 export type PendingRoll = {
@@ -81,6 +80,7 @@ export const newMatchState = (
 /** Só as regras conhecidas, com valores válidos (vem do cliente). */
 export const cleanRules = (raw: unknown): GameRules => ({
   hiddenCards: (raw as Partial<GameRules> | null)?.hiddenCards === true,
+  competitive: (raw as Partial<GameRules> | null)?.competitive === true,
 });
 
 /**
@@ -207,10 +207,8 @@ export const startRoll = (
   const tool = snap.state.tool.selected;
   if (!tool || snap.state.tool.isRolling || snap.pendingRoll)
     throw new HttpError(409, "Nada para sortear agora.");
-  // Ao se reposicionar sempre muda de lugar: o site atual fica fora do sorteio.
-  const sites = BOMBSITES.filter(
-    (site) => site !== snap.state.teams[team].position,
-  );
+  // Muda sempre de lugar e nunca cai num site destruído (modo competitivo).
+  const sites = spinnerSites(snap.state, team);
   const pendingRoll: PendingRoll = {
     id: now,
     tool,

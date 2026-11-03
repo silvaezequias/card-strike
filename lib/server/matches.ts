@@ -1,5 +1,6 @@
 import { GameAction } from "@/game/game-actions";
 import { GameRules, GameState, TeamName } from "@/game/game-types";
+import { isBombVictory } from "@/game/card-effects";
 import { Db, getDb } from "./db";
 import { publish } from "./realtime";
 import { areFriends } from "./social";
@@ -61,7 +62,14 @@ const ROOM_COLUMNS =
   "id, code, kind, host_id, host_team, guest_id, status, match_id, mode, rules";
 
 /** Modos que já podem ser jogados online. */
-const ROOM_MODES = new Set(["bombsite"]);
+/** "bombsite" é a Sabotagem (nome antigo no banco); "domination" é a Dominação. */
+const ROOM_MODES = new Set(["bombsite", "domination"]);
+
+/** A Dominação é a regra competitiva da bomba: o modo manda nela. */
+const rulesForMode = (rules: GameRules, mode: string): GameRules => ({
+  ...rules,
+  competitive: mode === "domination",
+});
 
 export type RoomView = {
   id: string;
@@ -236,10 +244,12 @@ export const updateRoom = async (
           : "police";
     const mode =
       changes.mode === undefined ? locked.mode : String(changes.mode);
-    const rules =
+    const rules = rulesForMode(
       changes.rules === undefined
         ? cleanRules(parseJson(locked.rules))
-        : cleanRules(changes.rules);
+        : cleanRules(changes.rules),
+      mode,
+    );
     const [updated] = await tx.query<RoomRow>(
       `update rooms set host_team = $2, mode = $3, rules = $4, updated_at = now() where id = $1 returning ${ROOM_COLUMNS}`,
       [roomId, team, mode, JSON.stringify(rules)],
@@ -441,7 +451,7 @@ const createMatch = async (tx: Q, room: RoomRow) => {
   const state = newMatchState(
     police!.name,
     faction!.name,
-    cleanRules(parseJson(room.rules)),
+    rulesForMode(cleanRules(parseJson(room.rules)), room.mode),
   );
   const [match] = await tx.query<{ id: string }>(
     `insert into matches (room_id, police_id, faction_id, state, deadline)
@@ -607,7 +617,7 @@ const mutate = async (user: User, matchId: string, change: Change) => {
         tx,
         match,
         winner,
-        next.state.bomb.exploded ? "bomb" : "eliminated",
+        isBombVictory(next.state) ? "bomb" : "eliminated",
       );
     const [fresh] = await tx.query<MatchRow>(
       `select ${MATCH_COLUMNS} from matches where id = $1`,

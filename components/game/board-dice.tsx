@@ -53,7 +53,7 @@ const PIPS: Record<number, [number, number][]> = {
 export const DICE_BOUNDS = { x0: 0, y0: 0, x1: BOARD_W, y1: BOARD_H };
 
 export const throwSetup = (team: TeamName) => {
-  // Polícia na borda esquerda, Facção na direita; o dado vai para o outro lado.
+  // Militar na borda esquerda, Terrorista na direita; o dado vai para o outro lado.
   const dir = team === "police" ? 1 : -1;
   return {
     dir,

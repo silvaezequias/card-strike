@@ -156,7 +156,7 @@ export const useTutorialRunner = ({
     if (turnPhase === "COUNTDOWN" || currentTeam !== team) {
       hint = "Trocando de turno...";
     } else if (team === "faction") {
-      hint = "Aguarde a jogada da Facção...";
+      hint = "Aguarde a jogada do Terrorista...";
     } else {
       let key: GateKey | null = null;
       if (turnPhase === "CHOOSING") {

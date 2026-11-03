@@ -34,6 +34,7 @@ export const createInitialGameState = (
     position: null,
     timer: 5,
     maxTime: 5,
+    destroyed: [],
   },
   board: {
     activeTab: "battlefieldTab",

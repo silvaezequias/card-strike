@@ -21,7 +21,7 @@ import { Maximize2, Volume2, VolumeX } from "lucide-react";
 import { useFitScale } from "@/game/useFitScale";
 import { SetupSettings, TeamName } from "@/game/game-types";
 import { useGameTheme } from "@/game/useGameTheme";
-import { inConfrontation, isAttackCard, opponentOf, winnerOf } from "@/game/card-effects";
+import { inConfrontation, isAttackCard, isBombVictory, opponentOf, winnerOf } from "@/game/card-effects";
 import { BOMB_FX_MS, FLASH_BLIND_SECONDS } from "@/game/card-fx";
 import { useBot } from "@/game/useBot";
 import { useCombatFx } from "@/game/useCombatFx";
@@ -214,6 +214,7 @@ export function GameScreen({
   }, [shot]);
 
   const plantedSite = state.bomb.planted ? state.bomb.position : null;
+  const destroyedSites = state.bomb.destroyed ?? [];
 
   // Tabuleiro em destaque; o outro fica no minimapa da coluna esquerda.
   const [mainView, setMainView] = useState<MainBoardView>("cards");
@@ -477,9 +478,11 @@ export function GameScreen({
               ? result.subMessage
               : state.bomb.exploded
               ? `CARGA DETONADA NO SITE ${state.bomb.position}`
+              : isBombVictory(state)
+              ? "TODOS OS BOMBSITES DESTRUÍDOS"
               : teams.police.health <= 0
-                ? "FORÇAS POLICIAIS ELIMINADAS"
-                : "FACÇÃO ELIMINADA"
+                ? "FORÇAS MILITARES ELIMINADAS"
+                : "TERRORISTAS ELIMINADOS"
           }
           onRetry={onExit ?? (() => window.location.reload())}
           retryLabel={onExit ? "VOLTAR AO MENU" : undefined}
@@ -487,7 +490,7 @@ export function GameScreen({
       )}
 
       <div className="relative min-h-0 flex-1">
-        {/* Polícia (esquerda, como no tabuleiro) */}
+        {/* Militar (esquerda, como no tabuleiro) */}
         <FitColumn onScale={setFit} onWidth={setLeftHud} className="left-4">
           <div data-player-anchor="police" className={hudClass("player-police")}>
             <PlayerCard game={game} alignment="left" pendingDamage={fx.pendingDamage("police")} />
@@ -495,7 +498,7 @@ export function GameScreen({
           <div className={`w-[256px] ${hudClass("minimap")}`}>
             <MinimapButton label={mainView === "cards" ? "MAPA" : "CARTAS"} onClick={toggleView}>
               {mainView === "cards" ? (
-                <MapBoard positions={positions} bomb={plantedSite} effects={effectsOnMap} autoZoom flat className="w-full" />
+                <MapBoard positions={positions} bomb={plantedSite} destroyed={destroyedSites} effects={effectsOnMap} autoZoom flat className="w-full" />
               ) : (
                 <CardBoardPreview />
               )}
@@ -546,6 +549,7 @@ export function GameScreen({
             <MapBoard
               positions={positions}
               bomb={plantedSite}
+              destroyed={destroyedSites}
               effects={effectsOnMap}
               fx={fx.event ? { event: fx.event, stage: fx.stage } : null}
               fighters={fighters}
@@ -634,7 +638,7 @@ export function GameScreen({
           </button>
         )}
 
-        {/* Facção (direita) */}
+        {/* Terrorista (direita) */}
         <FitColumn onWidth={setRightHud} className="right-4">
           <div data-player-anchor="faction" className={hudClass("player-faction")}>
             <PlayerCard game={game} alignment="right" pendingDamage={fx.pendingDamage("faction")} />

@@ -60,8 +60,8 @@ const ON_OFF = [
 
 /** Cores que o jogo precisa separar: mostram o efeito do modo daltônico na hora. */
 const SWATCHES = [
-  { label: "Polícia", color: policePalette.rim },
-  { label: "Facção", color: factionPalette.rim },
+  { label: "Militar", color: policePalette.rim },
+  { label: "Terrorista", color: factionPalette.rim },
   { label: "Vida", color: "#5cffa8" },
   { label: "Dano", color: "#ff5c70" },
   { label: "Conflito", color: "#ffb020" },

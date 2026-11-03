@@ -15,8 +15,8 @@ import { BOT_NAME, useGameSetup } from "@/game/useSetupGame";
 /* ═══════════════════════════════════════════════
    ESCOLHA DE TIME
    Como a seleção de lado dos jogos de tiro tático:
-   a tela dividida ao meio, Facção à esquerda e
-   Polícia à direita, cada uma com o seu operador.
+   a tela dividida ao meio, Terrorista à esquerda e
+   Militar à direita, cada uma com o seu operador.
    Clique num lado para levar o jogador da vez para
    lá, ou aleatorize. Com todos posicionados, JOGAR.
    ═══════════════════════════════════════════════ */
@@ -33,7 +33,7 @@ const SIDES: {
 }[] = [
   {
     team: "faction",
-    label: "Facção",
+    label: "Terrorista",
     Icon: Crosshair,
     color: factionPalette.rim,
     glow: factionPalette.glow,
@@ -41,7 +41,7 @@ const SIDES: {
   },
   {
     team: "police",
-    label: "Polícia",
+    label: "Militar",
     Icon: Shield,
     color: policePalette.rim,
     glow: policePalette.glow,

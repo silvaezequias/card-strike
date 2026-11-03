@@ -302,7 +302,7 @@
       "id": "bot-molotov",
       "label": "Bot posiciona Molotov",
       "speaker": "Sargento Vega",
-      "text": "A Facção rolou um 5 e preparou um Molotov no slot 5. Eles tão se armando...",
+      "text": "O Terrorista rolou um 5 e preparou um Molotov no slot 5. Eles tão se armando...",
       "action": {
         "kind": "opponent-place",
         "slot": 5,
@@ -336,7 +336,7 @@
       "id": "bot-glock",
       "label": "Bot posiciona Glock",
       "speaker": "Sargento Vega",
-      "text": "A Facção tirou um 1 e colocou uma Glock no slot 1.",
+      "text": "O Terrorista tirou um 1 e colocou uma Glock no slot 1.",
       "action": {
         "kind": "opponent-place",
         "slot": 1,

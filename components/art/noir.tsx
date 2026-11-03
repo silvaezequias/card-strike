@@ -118,7 +118,7 @@ export const Portrait = ({
       className={className}
       preserveAspectRatio="xMidYMid slice"
       role="img"
-      aria-label={`Personagem ${team === "police" ? "da polícia" : "da facção"}`}
+      aria-label={`Personagem ${team === "police" ? "do militar" : "do terrorista"}`}
     >
       {backdrop && (
         <g transform={`translate(${box.x} ${box.y}) scale(${box.w / 400} ${box.h / 500})`}>

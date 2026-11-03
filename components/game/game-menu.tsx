@@ -1,7 +1,6 @@
 "use client";
 
 import { CSSProperties, useState } from "react";
-import Link from "next/link";
 import {
   ArrowLeftRight,
   Bomb,
@@ -14,6 +13,7 @@ import {
   Play,
   Shield,
   Shuffle,
+  Skull,
 } from "lucide-react";
 import { factionPalette, policePalette } from "@/components/art/palette";
 import { MapBoard } from "@/components/game/map-board";
@@ -41,8 +41,8 @@ const TEAM_STYLE: Record<
   TeamName,
   { label: string; color: string; Icon: typeof Shield }
 > = {
-  police: { label: "Polícia", color: policePalette.rim, Icon: Shield },
-  faction: { label: "Facção", color: factionPalette.rim, Icon: Crosshair },
+  police: { label: "Militar", color: policePalette.rim, Icon: Shield },
+  faction: { label: "Terrorista", color: factionPalette.rim, Icon: Crosshair },
 };
 
 const ACCENT = "#c9bcff";
@@ -114,70 +114,137 @@ const TeamPicker = ({
   </div>
 );
 
+/** Modos de jogo: a Dominação liga a regra competitiva da bomba. */
+type GameModeId = "sabotage" | "domination";
+
+const MODE_INFO: Record<GameModeId, { title: string; tagline: string; detail: string; badge: string }> = {
+  sabotage: {
+    title: "Sabotagem",
+    tagline: "Militar x Terrorista",
+    detail: "Uma bomba decide a partida",
+    badge: "Clássico",
+  },
+  domination: {
+    title: "Dominação",
+    tagline: "Destrua os 3 bombsites",
+    detail: "A bomba só mata quem está no site",
+    badge: "Difícil",
+  },
+};
+
 /** Cartão alto de um modo de jogo, com a arte do mapa e o emblema. */
 const ModeCard = ({
+  mode,
   selected,
   onSelect,
 }: {
+  mode: GameModeId;
   selected: boolean;
   onSelect: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onSelect}
-    aria-pressed={selected}
-    className="group relative h-full w-full max-w-[15rem] overflow-hidden border-[3px] bg-[#0b0916] text-left transition-transform hover:-translate-y-1"
-    style={{ borderColor: selected ? "#ffffff" : "rgba(255,255,255,0.25)" }}
-  >
-    {/* Mapa tático deitado como foto de fundo */}
-    <div className="pointer-events-none absolute left-1/2 top-1/2 w-[260%] -translate-x-1/2 -translate-y-1/2 rotate-90 opacity-80 transition-transform duration-500 group-hover:scale-105">
-      <MapBoard
-        positions={{ police: "BASE", faction: "BASE" }}
-        flat
-        className="w-full"
-      />
-    </div>
-    <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/85" />
-
-    <span className="absolute left-2 top-2 rounded-sm bg-[#c9bcff] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-[#07060c]">
-      Novo
-    </span>
-    <span
-      className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center border-2"
+}) => {
+  const info = MODE_INFO[mode];
+  const hard = mode === "domination";
+  const accent = hard ? "#ff4a3a" : "#ffb020";
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className="group relative h-full w-full max-w-[15rem] overflow-hidden border-[3px] text-left transition-transform hover:-translate-y-1"
       style={{
-        borderColor: "#ffffff",
-        background: selected ? "#ffffff" : "transparent",
+        borderColor: selected ? (hard ? accent : "#ffffff") : "rgba(255,255,255,0.25)",
+        background: hard ? "#140605" : "#0b0916",
+        boxShadow: selected && hard ? `0 0 28px ${accent}66` : undefined,
       }}
     >
-      {selected && <Check size={13} className="text-black" strokeWidth={4} />}
-    </span>
+      {/* Mapa tático deitado como foto de fundo; na Dominação, com os sites em escombros */}
+      <div
+        className="pointer-events-none absolute left-1/2 top-1/2 w-[260%] -translate-x-1/2 -translate-y-1/2 rotate-90 transition-transform duration-500 group-hover:scale-105"
+        style={{ opacity: hard ? 0.55 : 0.8, filter: hard ? "sepia(0.6) hue-rotate(-25deg) saturate(1.6)" : undefined }}
+      >
+        <MapBoard
+          positions={{ police: "BASE", faction: "BASE" }}
+          destroyed={hard ? ["A", "B", "C"] : undefined}
+          flat
+          className="w-full"
+        />
+      </div>
+      {hard ? (
+        <>
+          {/* Brasa: brilho quente subindo do fundo */}
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_110%,rgba(255,74,58,0.55),transparent_60%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/85" />
+      )}
 
-    {/* Emblema */}
-    <span
-      className="absolute left-1/2 top-[44%] flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
-      style={{
-        borderColor: "#ffffff",
-        background: `conic-gradient(${policePalette.bg2} 0 50%, ${factionPalette.bg2} 50% 100%)`,
-      }}
-    >
-      <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#07060c] ring-2 ring-[#ffb020]">
-        <Bomb size={40} className="text-[#ffb020]" />
+      <span
+        className="absolute left-2 top-2 rounded-sm px-1.5 py-0.5 text-[9px] font-black uppercase tracking-widest"
+        style={{ background: hard ? accent : "#c9bcff", color: hard ? "#ffffff" : "#07060c" }}
+      >
+        {info.badge}
       </span>
-    </span>
+      <span
+        className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center border-2"
+        style={{
+          borderColor: "#ffffff",
+          background: selected ? "#ffffff" : "transparent",
+        }}
+      >
+        {selected && <Check size={13} className="text-black" strokeWidth={4} />}
+      </span>
 
-    <span className="absolute inset-x-0 bottom-3 flex flex-col items-center text-center">
-      <span className="text-xl font-black tracking-wider text-white drop-shadow">
-        Bombsite
+      {/* Emblema: Sabotagem é redondo com a bomba; Dominação é um escudo com caveira */}
+      {hard ? (
+        <span
+          className="absolute left-1/2 top-[44%] flex h-32 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center drop-shadow-[0_10px_30px_rgba(0,0,0,0.9)]"
+          style={{
+            clipPath: "polygon(50% 0, 100% 14%, 100% 58%, 50% 100%, 0 58%, 0 14%)",
+            background: `linear-gradient(160deg, #ff8a5a, ${accent} 45%, #5a0d08)`,
+          }}
+        >
+          <span
+            className="flex h-[7.25rem] w-[6.25rem] items-center justify-center"
+            style={{
+              clipPath: "polygon(50% 0, 100% 14%, 100% 58%, 50% 100%, 0 58%, 0 14%)",
+              background: "radial-gradient(circle at 50% 35%, #2a0d0a, #07060c 70%)",
+            }}
+          >
+            <Skull size={44} className="mb-3 text-[#ff6a4a]" />
+          </span>
+        </span>
+      ) : (
+        <span
+          className="absolute left-1/2 top-[44%] flex h-28 w-28 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-4 shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
+          style={{
+            borderColor: "#ffffff",
+            background: `conic-gradient(${policePalette.bg2} 0 50%, ${factionPalette.bg2} 50% 100%)`,
+          }}
+        >
+          <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#07060c] ring-2 ring-[#ffb020]">
+            <Bomb size={40} className="text-[#ffb020]" />
+          </span>
+        </span>
+      )}
+
+      <span className="absolute inset-x-0 bottom-3 flex flex-col items-center text-center">
+        <span
+          className="text-xl font-black tracking-wider drop-shadow"
+          style={{ color: hard ? "#ffd0c4" : "#ffffff" }}
+        >
+          {info.title}
+        </span>
+        <span className="text-[10px] uppercase tracking-widest" style={{ color: hard ? "#ff8a6a" : "#d4d4d8" }}>
+          {info.tagline}
+        </span>
+        <span className="mt-1 flex items-center gap-1 text-[10px] text-zinc-400">
+          {hard ? <Skull size={10} /> : <Clock size={10} />} {info.detail}
+        </span>
       </span>
-      <span className="text-[10px] uppercase tracking-widest text-zinc-300">
-        Polícia x Facção
-      </span>
-      <span className="mt-1 flex items-center gap-1 text-[10px] text-zinc-400">
-        <Clock size={10} /> Rodadas de 60 s
-      </span>
-    </span>
-  </button>
-);
+    </button>
+  );
+};
 
 /** Espaço de um modo que ainda não existe. */
 const SoonCard = () => (
@@ -267,15 +334,6 @@ export const PlayLobby = ({
       {/* Subabas */}
       <div className="flex flex-col items-center gap-1 border-b border-white/10 bg-black/40 py-2 backdrop-blur-sm">
         <div className="flex items-center gap-1">
-          <SubTab label="Partida" active />
-          <Link
-            href="/tutorial"
-            className="rounded-sm px-2.5 py-1 text-[11px] font-bold uppercase tracking-widest text-zinc-300 transition-colors hover:text-white"
-          >
-            Treino (tutorial)
-          </Link>
-        </div>
-        <div className="flex items-center gap-1">
           {PLAYER_MODES.map(({ id, label }, i) => (
             <span key={id} className="flex items-center gap-1">
               {i > 0 && <span className="h-3 w-px bg-white/15" />}
@@ -349,6 +407,7 @@ export const PlayLobby = ({
                   checked={lobby.rules.hiddenCards}
                   onChange={(value) => lobby.setRule("hiddenCards", value)}
                 />
+
               </section>
 
               <p className="mt-auto flex items-start gap-2 rounded-sm bg-black/50 p-2.5 text-[11px] text-zinc-300">
@@ -361,8 +420,16 @@ export const PlayLobby = ({
 
             {/* Modos de jogo */}
             <div className="flex min-w-0 flex-1 items-stretch gap-3 overflow-x-auto pb-1">
-              <ModeCard selected onSelect={() => undefined} />
-              <SoonCard />
+              <ModeCard
+                mode="sabotage"
+                selected={!lobby.rules.competitive}
+                onSelect={() => lobby.setRule("competitive", false)}
+              />
+              <ModeCard
+                mode="domination"
+                selected={lobby.rules.competitive}
+                onSelect={() => lobby.setRule("competitive", true)}
+              />
               <SoonCard />
               <SoonCard />
             </div>

@@ -23,7 +23,7 @@ const DEMO_SLOTS: Record<TeamName, (Card | null)[]> = {
   faction: [null, card("AK-47"), null, card("Molotov"), null, card("BOMBA")],
 };
 
-const TEAM_LABEL: Record<TeamName, string> = { police: "POLÍCIA", faction: "FACÇÃO" };
+const TEAM_LABEL: Record<TeamName, string> = { police: "MILITAR", faction: "TERRORISTA" };
 
 const other = (team: TeamName): TeamName => (team === "police" ? "faction" : "police");
 

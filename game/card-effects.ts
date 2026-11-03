@@ -18,7 +18,7 @@ import {
    ═══════════════════════════════════════════════ */
 
 export const MAX_HEALTH = 10;
-/** A facção abre a rodada; ela fecha quando a polícia termina de jogar. */
+/** A terrorista abre a rodada; ela fecha quando o militar termina de jogar. */
 const ROUND_CLOSER: TeamName = "police";
 const BOMB_EXPLOSION_DAMAGE = 10;
 
@@ -77,13 +77,36 @@ export const isAttackCard = (card: Card) =>
 export const inConfrontation = ({ teams }: GameState) =>
   !!teams.police.position && teams.police.position === teams.faction.position;
 
-export const isGameOver = ({ bomb, teams }: GameState) =>
-  bomb.exploded || teams.police.health <= 0 || teams.faction.health <= 0;
+const ALL_SITES: Bombsite[] = ["A", "B", "C"];
 
-/** Time vencedor: a Facção explode a bomba ou zera a Polícia; a Polícia zera a Facção. */
-export const winnerOf = ({ bomb, teams }: GameState): TeamName | null => {
-  if (bomb.exploded || teams.police.health <= 0) return "faction";
-  if (teams.faction.health <= 0) return "police";
+/** Sites explodidos no modo competitivo. */
+export const destroyedSites = ({ bomb }: GameState): Bombsite[] => bomb.destroyed ?? [];
+
+/** Sites onde ainda dá para ir (no modo normal, todos). */
+export const openSites = (state: GameState): Bombsite[] =>
+  ALL_SITES.filter((site) => !destroyedSites(state).includes(site));
+
+/**
+ * Sites que a roleta pode sortear: os que sobraram, menos o atual (reposicionar
+ * sempre muda de lugar). Se só sobra o atual, fica nele.
+ */
+export const spinnerSites = (state: GameState, team: TeamName): Bombsite[] => {
+  const open = openSites(state);
+  const others = open.filter((site) => site !== state.teams[team].position);
+  return others.length ? others : open.length ? open : ALL_SITES;
+};
+
+/** O Terrorista venceu pela bomba: explodiu (modo normal) ou destruiu os três sites. */
+export const isBombVictory = (state: GameState) =>
+  state.bomb.exploded || (!!state.rules?.competitive && openSites(state).length === 0);
+
+export const isGameOver = (state: GameState) =>
+  isBombVictory(state) || state.teams.police.health <= 0 || state.teams.faction.health <= 0;
+
+/** Time vencedor: o Terrorista vence pela bomba ou zerando o Militar; o Militar zera o Terrorista. */
+export const winnerOf = (state: GameState): TeamName | null => {
+  if (isBombVictory(state) || state.teams.police.health <= 0) return "faction";
+  if (state.teams.faction.health <= 0) return "police";
   return null;
 };
 
@@ -109,7 +132,7 @@ export const resolveCard = (state: GameState, card: Card) => {
   });
 
   if (card.name === "BOMBA") {
-    if (!me.position || state.bomb.planted)
+    if (!me.position || state.bomb.planted || destroyedSites(state).includes(me.position))
       return outcome("NÃO FOI POSSÍVEL PLANTAR");
 
     return outcome(`BOMBA PLANTADA NO SITE ${me.position}`, {
@@ -274,6 +297,28 @@ export const resolveEndOfTurn = (state: GameState) => {
 
   const timer = state.bomb.timer - 1;
   const exploded = timer === 0;
+
+  // Competitivo: a explosão destrói só o site e atinge só quem está nele; a
+  // bomba volta a poder ser plantada nos sites que sobraram.
+  if (exploded && state.rules?.competitive && state.bomb.position) {
+    const site = state.bomb.position;
+    const blast = (name: TeamName) =>
+      teams[name].position === site ? hurt(teams[name], BOMB_EXPLOSION_DAMAGE) : teams[name];
+    const destroyed = [...destroyedSites(state), site];
+    return {
+      // Efeitos no site destruído somem com ele.
+      mapEffects: mapEffects.filter((effect) => effect.spot !== site),
+      bomb: {
+        ...state.bomb,
+        planted: false,
+        position: null,
+        timer: state.bomb.maxTime,
+        exploded: false,
+        destroyed,
+      },
+      teams: { ...teams, police: blast("police"), faction: blast("faction") },
+    };
+  }
 
   return {
     mapEffects,

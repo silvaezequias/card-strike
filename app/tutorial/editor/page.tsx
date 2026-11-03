@@ -97,7 +97,7 @@ const describeCamera = (a: Extract<TutorialAction, { kind: "camera" }>) => {
       ? `Destaca na HUD: ${a.hud.map((k) => HUD_LABELS[k]).join(", ")}.`
       : "Nenhum elemento da HUD marcado.";
   }
-  const team = a.team === "faction" ? "da Facção" : "da Polícia";
+  const team = a.team === "faction" ? "do Terrorista" : "do Militar";
   if (a.board === "map") {
     if (a.area === "full") return "O mapa vai para o centro, sem zoom.";
     if (a.area === "side") return `O mapa vai para o centro destacando o campo ${team}: base, corredores e bombsites.`;
@@ -558,8 +558,8 @@ export default function TutorialEditorPage() {
                               value={a.team ?? "police"}
                               onChange={(e) => updateAction({ team: e.target.value as TeamName })}
                             >
-                              <option value="police">Polícia (jogador)</option>
-                              <option value="faction">Facção (bot)</option>
+                              <option value="police">Militar (jogador)</option>
+                              <option value="faction">Terrorista (bot)</option>
                             </select>
                           </div>
                         )}

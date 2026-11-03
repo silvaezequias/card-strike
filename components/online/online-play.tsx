@@ -22,6 +22,7 @@ import {
   Search,
   Send,
   Shield,
+  Skull,
   Swords,
   X,
 } from "lucide-react";
@@ -49,8 +50,8 @@ const TEAM: Record<
   TeamName,
   { label: string; color: string; Icon: typeof Shield }
 > = {
-  police: { label: "Polícia", color: policePalette.rim, Icon: Shield },
-  faction: { label: "Facção", color: factionPalette.rim, Icon: Crosshair },
+  police: { label: "Militar", color: policePalette.rim, Icon: Shield },
+  faction: { label: "Terrorista", color: factionPalette.rim, Icon: Crosshair },
 };
 
 const other = (team: TeamName): TeamName =>
@@ -125,17 +126,29 @@ const GoButton = ({
   </button>
 );
 
-/** Modos online: por enquanto só o Bombsite. */
+/**
+ * Modos online. "bombsite" é o id guardado no banco para a Sabotagem; a
+ * Dominação liga a regra competitiva da bomba no servidor.
+ */
 const ONLINE_MODES = [
   {
     id: "bombsite",
-    label: "Bombsite",
-    detail: "Polícia x Facção · rodadas de 60 s",
+    label: "Sabotagem",
+    detail: "Uma bomba decide a partida",
     ready: true,
+    hard: false,
   },
-  { id: "soon-1", label: "Em breve", detail: "Novo modo", ready: false },
-  { id: "soon-2", label: "Em breve", detail: "Novo modo", ready: false },
+  {
+    id: "domination",
+    label: "Dominação",
+    detail: "Destrua os 3 bombsites · difícil",
+    ready: true,
+    hard: true,
+  },
+  { id: "soon-1", label: "Em breve", detail: "Novo modo", ready: false, hard: false },
 ];
+
+const HARD = "#ff4a3a";
 
 /** Modo de jogo e regras da sala: o dono escolhe, o convidado só vê. */
 const RoomOptions = ({
@@ -171,13 +184,18 @@ const RoomOptions = ({
               onClick={() => onChange({ mode: m.id })}
               className="flex flex-col items-start gap-0.5 rounded-sm border px-3 py-2 text-left transition-colors disabled:cursor-default"
               style={{
-                borderColor: selected ? GO : "rgba(255,255,255,0.12)",
-                background: selected ? `${GO}1f` : "rgba(0,0,0,0.3)",
+                borderColor: selected ? (m.hard ? HARD : GO) : m.hard ? `${HARD}55` : "rgba(255,255,255,0.12)",
+                background: m.hard
+                  ? `linear-gradient(160deg, ${selected ? `${HARD}40` : `${HARD}1a`}, rgba(0,0,0,0.45))`
+                  : selected
+                    ? `${GO}1f`
+                    : "rgba(0,0,0,0.3)",
                 opacity: m.ready ? 1 : 0.4,
               }}
             >
               <span className="flex items-center gap-1.5 text-sm font-black uppercase tracking-wider">
-                {selected && <Check size={14} style={{ color: GO }} />}
+                {selected && <Check size={14} style={{ color: m.hard ? HARD : GO }} />}
+                {m.hard && !selected && <Skull size={14} style={{ color: HARD }} />}
                 {m.label}
               </span>
               <span className="text-[10px] text-zinc-400">{m.detail}</span>
@@ -188,40 +206,57 @@ const RoomOptions = ({
       <h3 className="mt-1 text-xs font-black uppercase tracking-widest">
         Regras
       </h3>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={room.rules.hiddenCards}
+      <RoomRule
+        label="Cartas ocultas"
+        description="Ninguém vê as cartas do oponente, nem na mão nem nos 6 slots, até ele jogar."
+        checked={room.rules.hiddenCards}
         disabled={!editable}
-        onClick={() =>
-          onChange({
-            rules: { ...room.rules, hiddenCards: !room.rules.hiddenCards },
-          })
+        onToggle={() =>
+          onChange({ rules: { ...room.rules, hiddenCards: !room.rules.hiddenCards } })
         }
-        className="flex items-start gap-3 rounded-sm border border-white/10 bg-black/40 p-2.5 text-left transition-colors enabled:hover:border-white/30 disabled:cursor-default"
-      >
-        <span
-          className="relative mt-0.5 h-4 w-8 shrink-0 rounded-full transition-colors"
-          style={{ background: room.rules.hiddenCards ? GO : "#3f3f46" }}
-        >
-          <span
-            className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-[left]"
-            style={{ left: room.rules.hiddenCards ? 18 : 2 }}
-          />
-        </span>
-        <span className="flex flex-col gap-0.5">
-          <span className="text-xs font-bold uppercase tracking-wider">
-            Cartas ocultas
-          </span>
-          <span className="text-[11px] leading-snug text-zinc-400">
-            Ninguém vê as cartas do oponente, nem na mão nem nos 6 slots, até
-            ele jogar.
-          </span>
-        </span>
-      </button>
+      />
+
     </section>
   );
 };
+
+/** Interruptor de uma regra da sala. */
+const RoomRule = ({
+  label,
+  description,
+  checked,
+  disabled,
+  onToggle,
+}: {
+  label: string;
+  description: string;
+  checked: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+}) => (
+  <button
+    type="button"
+    role="switch"
+    aria-checked={checked}
+    disabled={disabled}
+    onClick={onToggle}
+    className="flex items-start gap-3 rounded-sm border border-white/10 bg-black/40 p-2.5 text-left transition-colors enabled:hover:border-white/30 disabled:cursor-default"
+  >
+    <span
+      className="relative mt-0.5 h-4 w-8 shrink-0 rounded-full transition-colors"
+      style={{ background: checked ? GO : "#3f3f46" }}
+    >
+      <span
+        className="absolute top-0.5 h-3 w-3 rounded-full bg-white transition-[left]"
+        style={{ left: checked ? 18 : 2 }}
+      />
+    </span>
+    <span className="flex flex-col gap-0.5">
+      <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
+      <span className="text-[11px] leading-snug text-zinc-400">{description}</span>
+    </span>
+  </button>
+);
 
 export const OnlinePlay = () => {
   const router = useRouter();

@@ -124,4 +124,12 @@ export const useGameSounds = (state: GameState, fx: CombatFx, shaking: boolean, 
   useEffect(() => {
     if (bomb.exploded) playSound("c4-explosion");
   }, [bomb.exploded]);
+
+  // Modo competitivo: cada site destruído explode sem acabar a partida.
+  const destroyedCount = bomb.destroyed?.length ?? 0;
+  const lastDestroyed = useRef(destroyedCount);
+  useEffect(() => {
+    if (destroyedCount > lastDestroyed.current) playSound("c4-explosion");
+    lastDestroyed.current = destroyedCount;
+  }, [destroyedCount]);
 };

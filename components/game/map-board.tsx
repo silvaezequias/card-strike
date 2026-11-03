@@ -16,8 +16,8 @@ import { BOARD_EDGE } from "./minimap";
    MAP BOARD — tabuleiro menor com o mapa tático
    viewBox 0 0 900 560
 
-   Cada time começa na sua base (polícia à esquerda,
-   facção à direita). Os bombsites A, B e C ficam no
+   Cada time começa na sua base (militar à esquerda,
+   terrorista à direita). Os bombsites A, B e C ficam no
    centro, divididos ao meio: cada time ocupa a sua
    metade. No mesmo site, os dois estão em conflito.
    ═══════════════════════════════════════════════ */
@@ -46,7 +46,7 @@ const CONFLICT = "#ffb020";
 const TITLE_FONT = "'Arial Black', Impact, 'Helvetica Neue', sans-serif";
 const MONO_FONT = "ui-monospace, 'Cascadia Mono', Consolas, monospace";
 
-/** Espelho horizontal: o lado da facção é o da polícia refletido. */
+/** Espelho horizontal: o lado do terrorista é o do militar refletido. */
 const side = (team: TeamName, p: Point): Point => (team === "police" ? p : { x: MAP_W - p.x, y: p.y });
 
 /** Onde a ficha do time fica parada. */
@@ -55,7 +55,7 @@ const spotPoint = (team: TeamName, spot: MapSpot): Point =>
     ? side(team, { x: BASE.x + BASE.w / 2, y: MID_Y })
     : side(team, { x: SITE.x + TOKEN_INSET, y: siteCenterY(spot) + TOKEN_DY });
 
-/** Caminho (lado da polícia) da base até um ponto, pelos corredores. */
+/** Caminho (lado do militar) da base até um ponto, pelos corredores. */
 const routeFromBase = (spot: MapSpot): Point[] => {
   const base = spotPoint("police", "BASE");
   if (spot === "BASE") return [base];
@@ -185,6 +185,39 @@ const Site = ({ site, conflict }: { site: Bombsite; conflict: boolean }) => {
   );
 };
 
+/** Site explodido no modo competitivo: escombros, rachaduras e um X por cima. */
+const RuinedSite = ({ site }: { site: Bombsite }) => {
+  const y = SITE_Y[site];
+  const cx = SITE.x + SITE.w / 2;
+  const cy = y + SITE.h / 2;
+  const cracks = [
+    `M${cx},${cy} L${cx - 70},${cy - 40} L${cx - 118},${cy - 30}`,
+    `M${cx},${cy} L${cx + 54},${cy - 46} L${cx + 126},${cy - 58}`,
+    `M${cx},${cy} L${cx - 40},${cy + 48} L${cx - 96},${cy + 60}`,
+    `M${cx},${cy} L${cx + 76},${cy + 34} L${cx + 132},${cy + 62}`,
+  ];
+  return (
+    <g>
+      <rect x={SITE.x} y={y} width={SITE.w} height={SITE.h} rx="14" fill="#0a0806" opacity={0.88} />
+      <rect x={SITE.x} y={y} width={SITE.w} height={SITE.h} rx="14" fill="#ff5a1f" opacity={0.08} />
+      {cracks.map((d) => (
+        <path key={d} d={d} fill="none" stroke="#ff7a3c" strokeOpacity={0.55} strokeWidth={2} strokeLinejoin="round" />
+      ))}
+      <circle cx={cx} cy={cy} r="36" fill="#ff5a1f" opacity={0.15} />
+      <path
+        d={`M${cx - 22},${cy - 22} L${cx + 22},${cy + 22} M${cx + 22},${cy - 22} L${cx - 22},${cy + 22}`}
+        stroke="#ff4a3a"
+        strokeWidth={6}
+        strokeLinecap="round"
+      />
+      <text x={cx} y={y + SITE.h - 12} textAnchor="middle" fontSize="13" fontWeight={900} fill="#ff8a6a" fontFamily={MONO_FONT} letterSpacing="4">
+        SITE {site} DESTRUÍDO
+      </text>
+      <rect x={SITE.x} y={y} width={SITE.w} height={SITE.h} rx="14" fill="none" stroke="#ff4a3a" strokeOpacity={0.6} strokeWidth={2.5} />
+    </g>
+  );
+};
+
 /** Nome e vida de quem está no site, mostrados com ele ampliado. */
 export type SiteFighters = Record<TeamName, { name: string; health: number }>;
 
@@ -285,11 +318,14 @@ const BombMarker = ({ site }: { site: Bombsite }) => {
 const MapArt = ({
   conflict,
   bomb = null,
+  destroyed = [],
   detail = null,
   fighters,
 }: {
   conflict: Bombsite | null;
   bomb?: Bombsite | null;
+  /** Sites explodidos no modo competitivo. */
+  destroyed?: Bombsite[];
   /** Site ampliado, com os detalhes à mostra. */
   detail?: Bombsite | null;
   fighters?: SiteFighters;
@@ -349,6 +385,9 @@ const MapArt = ({
       <TeamSide team="faction" />
       {(["A", "B", "C"] as Bombsite[]).map((s) => (
         <Site key={s} site={s} conflict={conflict === s} />
+      ))}
+      {destroyed.map((s) => (
+        <RuinedSite key={s} site={s} />
       ))}
       {detail && <SiteDetails key={detail} site={detail} fighters={conflict === detail ? fighters : undefined} />}
       {conflict && <ConflictLine site={conflict} />}
@@ -584,6 +623,7 @@ const MAP_CLIP = "polygon(3.1% 0, 96.9% 0, 100% 5%, 100% 95%, 96.9% 100%, 3.1% 1
 export const MapBoard = ({
   positions,
   bomb = null,
+  destroyed,
   autoZoom = false,
   flat = false,
   effects,
@@ -596,6 +636,8 @@ export const MapBoard = ({
   positions: Record<TeamName, MapSpot>;
   /** Bombsite com a bomba plantada, se houver. */
   bomb?: Bombsite | null;
+  /** Sites explodidos no modo competitivo. */
+  destroyed?: Bombsite[];
   /** Zoom automático na bomba (usado no modo minimapa). */
   autoZoom?: boolean;
   /** Visto de cima, sem inclinação (minimapa). */
@@ -645,7 +687,7 @@ export const MapBoard = ({
                 .join(", "),
             }}
           >
-            <MapArt conflict={conflict} bomb={bomb} detail={detail} fighters={fighters} />
+            <MapArt conflict={conflict} bomb={bomb} destroyed={destroyed} detail={detail} fighters={fighters} />
             {ring && (
               <div
                 className="pointer-events-none absolute animate-pulse rounded-xl"

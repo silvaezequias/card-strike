@@ -16,8 +16,8 @@ export type HudElement =
   | "turn-bar";
 
 export const HUD_LABELS: Record<HudElement, string> = {
-  "player-police": "Painel da Polícia",
-  "player-faction": "Painel da Facção",
+  "player-police": "Painel do Militar",
+  "player-faction": "Painel do Terrorista",
   mission: "Status da missão",
   minimap: "Minimapa",
   bomb: "Carga C4",
@@ -36,7 +36,7 @@ export type CameraFocus =
 
 /* ═══════════════════════════════════════════════
    ROTEIRO DO TUTORIAL
-   Você joga de CT (Polícia) contra um bot (Facção).
+   Você joga de CT (Militar) contra um bot (Terrorista).
    Cada passo tem uma fala e uma regra: o que acontece
    e qual resultado o dado/roleta/compra vai dar.
    ═══════════════════════════════════════════════ */

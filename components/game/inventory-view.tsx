@@ -32,7 +32,7 @@ const COLUMNS: Column[] = [
   { title: "Equipamento", names: { police: ["Capacete", "Colete", "KIT DEFUSE"], faction: ["Capacete", "Colete", "BOMBA"] } },
 ];
 
-const TEAM_LABEL: Record<TeamName, string> = { police: "Polícia", faction: "Facção" };
+const TEAM_LABEL: Record<TeamName, string> = { police: "Militar", faction: "Terrorista" };
 
 /** Raridade pelo impacto da carta, nas cores clássicas dos jogos de tiro. */
 const rarityOf = (entry: CatalogEntry) => {
