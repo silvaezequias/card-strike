@@ -308,11 +308,14 @@ const SlotHighlight = ({
   empty,
   acceptingDrop,
   onDropHandCard,
+  interactive,
 }: {
   rect: Rect;
   team: TeamName;
   empty: boolean;
   acceptingDrop: boolean;
+  /** Quem está jogando vê as instruções; quem só observa vê o contorno. */
+  interactive: boolean;
   onDropHandCard?: (handIndex: number) => void;
 }) => {
   const p = getPalette(team);
@@ -345,7 +348,7 @@ const SlotHighlight = ({
         boxShadow: `0 0 ${over ? 70 : 40}px ${p.glow}, inset 0 0 30px ${p.glow}88`,
       }}
     >
-      {empty ? (
+      {!interactive ? null : empty ? (
         <span
           className="whitespace-nowrap text-2xl font-black tracking-[0.2em]"
           style={{ color: p.rim, transform: `rotate(${TEAM_CARD_ROTATION[team]}deg)` }}
@@ -425,6 +428,8 @@ export type BoardStageProps = {
   /** Foco pedido pelo tutorial; substitui a tomada normal. */
   cameraFocus?: CardCameraFocus | null;
   onSlotClick?: (team: TeamName, index: number) => void;
+  /** Instruções no slot em destaque; false para quem só assiste a vez do outro. */
+  slotHints?: boolean;
   /** Times com as cartas dos slots de costas (regra de cartas ocultas). */
   hiddenTeams?: TeamName[];
   /** Carta da mão (índice) solta sobre o slot em destaque. */
@@ -463,6 +468,7 @@ export const BoardStage = ({
   deck,
   onDeckClick,
   hiddenTeams = [],
+  slotHints = true,
 }: BoardStageProps) => {
   /* ───────── Rastreio das cartas para animar de onde vieram ───────── */
 
@@ -732,6 +738,7 @@ export const BoardStage = ({
             empty={!slots[highlight.team][highlight.index]}
             acceptingDrop={handDrag}
             onDropHandCard={handleDrop}
+            interactive={slotHints}
           />
         )}
 

@@ -2,6 +2,7 @@
 
 import { GameEngine, useGameEngine } from "@/game/useGameEngine";
 
+import { getPalette } from "@/components/art/palette";
 import { GameOverOverlay } from "@/components/game/game-over-overlay";
 import { PlayerCard } from "@/components/game/player-card";
 import { MissionStatus } from "@/components/game/mission-status";
@@ -506,6 +507,7 @@ export function GameScreen({
               onDiceSettled={game.tool.finishRoll}
               onDiceStage={setDiceStage}
               onSlotClick={!botTurn && playGate.allowed ? handleSlotClick : undefined}
+              slotHints={!botTurn}
               onHandCardDrop={handleHandCardDrop}
               deck={deck}
               onDeckClick={handleDeckClick}
@@ -636,6 +638,29 @@ export function GameScreen({
             peek={game.dealing}
             team={game.dealing ? handTeam : undefined}
           />
+        </div>
+      )}
+
+      {/* Vez do oponente (bot ou online): quem só assiste vê que é para aguardar. */}
+      {botTurn && !game.dealing && !game.gameOver && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-6 z-30 flex justify-center">
+          <div
+            className="flex items-center gap-3 rounded-sm border bg-black/75 px-6 py-2.5 backdrop-blur-sm"
+            style={{ borderColor: getPalette(currentTeam).rim }}
+          >
+            <span className="flex gap-1" aria-hidden="true">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="h-1.5 w-1.5 animate-bounce rounded-full"
+                  style={{ background: getPalette(currentTeam).rim, animationDelay: `${i * 150}ms` }}
+                />
+              ))}
+            </span>
+            <p className="text-sm font-black uppercase tracking-[0.25em] text-white">
+              Aguarde · {teams[currentTeam].playerName} está jogando
+            </p>
+          </div>
         </div>
       )}
 
