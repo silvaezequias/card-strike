@@ -1,5 +1,14 @@
 import { useEffect, useRef } from "react";
-import { MusicMode, SoundName, playSound, resumeMusic, setLoopVolume, setMusic, startAudio } from "@/lib/game-audio";
+import {
+  MusicMode,
+  SoundName,
+  playSound,
+  resumeMusic,
+  setBombRush,
+  setLoopVolume,
+  setMusic,
+  startAudio,
+} from "@/lib/game-audio";
 import { Card } from "@/lib/types";
 import { BULLET_GAP_MS, THROW_MS, fxKind, shotCount } from "./card-fx";
 import { GameState, MapEffect, TeamName } from "./game-types";
@@ -78,6 +87,12 @@ export const useGameSounds = (state: GameState, fx: CombatFx, shaking: boolean, 
 
   // Guerra na partida, a mesma acelerada com a bomba armada e calma no fim.
   useMusic(over ? "menu" : bomb.planted && !bomb.exploded ? "bomb" : "game");
+
+  // Bomba armada: acelera a cada round até o último antes da explosão.
+  useEffect(() => {
+    const rounds = Math.max(1, bomb.maxTime - 1);
+    setBombRush(bomb.planted && !bomb.exploded ? (bomb.maxTime - bomb.timer) / rounds : 0);
+  }, [bomb.planted, bomb.exploded, bomb.timer, bomb.maxTime]);
 
   useEffect(() => {
     startAudio();

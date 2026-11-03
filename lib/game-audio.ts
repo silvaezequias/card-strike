@@ -151,6 +151,14 @@ const FAST_RATE = 1.25;
 /** Bem abaixo dos efeitos, para não brigar com tiros e narração. */
 const MUSIC_VOLUME: Record<MusicMode, number> = { menu: 0.22, game: 0.24, bomb: 0.28 };
 const MUSIC_FADE_S = 0.7;
+/**
+ * Com a bomba armada a faixa "-fast" ainda acelera aos poucos, round a round,
+ * até este tanto a mais no último round antes da explosão (o tom não muda).
+ */
+const BOMB_RUSH_MAX = 0.35;
+/** A mudança de velocidade escorrega por este tempo, sem pulos. */
+const RUSH_GLIDE_MS = 3000;
+const RUSH_STEP_MS = 50;
 
 /** Volume da música do momento, já com o ajuste do jogador (menu ou partida). */
 const musicVolume = (mode: MusicMode) => {
@@ -166,6 +174,37 @@ let wantedMode: MusicMode | null = null;
 let playingMode: MusicMode | null = null;
 let musicTrack = 0;
 let switchToken = 0;
+/** Velocidade extra pedida para a música da bomba (1 = normal). */
+let rushTarget = 1;
+let rushTimer: number | null = null;
+
+/** Leva a velocidade da música até o alvo aos poucos. */
+const glideRush = () => {
+  if (rushTimer !== null || typeof window === "undefined") return;
+  rushTimer = window.setInterval(() => {
+    const el = music;
+    const target = playingMode === "bomb" ? rushTarget : 1;
+    if (!el) return;
+    const step = (BOMB_RUSH_MAX * RUSH_STEP_MS) / RUSH_GLIDE_MS;
+    const diff = target - el.playbackRate;
+    if (Math.abs(diff) <= step) {
+      el.playbackRate = target;
+      window.clearInterval(rushTimer!);
+      rushTimer = null;
+      return;
+    }
+    el.playbackRate += Math.sign(diff) * step;
+  }, RUSH_STEP_MS);
+};
+
+/**
+ * Quanto falta para a bomba explodir, de 0 (acabou de ser plantada) a 1
+ * (último round): a música da bomba acelera junto.
+ */
+export const setBombRush = (progress: number) => {
+  rushTarget = 1 + Math.max(0, Math.min(1, progress)) * BOMB_RUSH_MAX;
+  glideRush();
+};
 
 const fadeMusic = (volume: number) => {
   if (!context || !musicGain) return;
@@ -220,6 +259,9 @@ export const resumeMusic = () => {
       const at = sameSong ? (to === "bomb" ? el.currentTime / FAST_RATE : el.currentTime * FAST_RATE) : 0;
       if (!sameSong) musicTrack = Math.floor(Math.random() * PLAYLISTS[to].length);
       el.src = PLAYLISTS[to][musicTrack];
+      // Trocar a faixa volta a velocidade ao normal; a da bomba retoma a aceleração.
+      el.playbackRate = 1;
+      if (to === "bomb") glideRush();
       el.addEventListener("loadedmetadata", () => (el.currentTime = Math.min(at, el.duration - 1)), { once: true });
       el.play().catch(() => {});
       fadeMusic(musicVolume(to));
