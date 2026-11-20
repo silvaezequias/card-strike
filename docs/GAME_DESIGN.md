@@ -1,6 +1,8 @@
 # Card Strike: como o jogo funciona
 
-Documento de referência do jogo inteiro: regras, fluxo da partida, cartas, modos, BOT, online, interface e onde cada coisa está no código. Foi escrito a partir do código (é ele que manda, se algo divergir) para quem for estudar o jogo do zero, por exemplo para refazê-lo em 3D.
+Documento de referência do jogo inteiro: a ideia, as regras, a divisão dos turnos, as cartas, os modos, o BOT e o online. Foi escrito a partir do código (é ele que manda, se algo divergir) para quem for estudar o jogo do zero.
+
+**Regra × apresentação.** O que importa aqui é **como o jogo funciona**: regras, turnos, cartas e condições de vitória. Tudo o que descreve a **apresentação atual** (mesa de cartas, slots desenhados, painéis, câmera, banner de "vez de", animações, tempos de pausa, HUD) é só a forma como a versão de hoje mostra essas regras, e pode ser feito de outro jeito. A seção 13 separa uma coisa da outra.
 
 > Leia junto: [`docs/ONLINE.md`](ONLINE.md) (servidor, banco, contas e deploy) e [`desktop/README.md`](../desktop/README.md) (app da Steam).
 
@@ -94,7 +96,7 @@ Cada time compra de um baralho próprio: **armas do time + utilitários comparti
 
 ### Começo
 1. Os dois times começam **na base**, com **10 de vida** e **mão vazia**.
-2. **Distribuição**: 3 cartas para cada time, alternando, saindo do baralho. As cartas do jogador voam de costas até a mão e **viram em 3D** ao chegar; as do oponente vão de costas até o cartão dele (`components/game/deal-layer.tsx`). Durante a distribuição o relógio fica parado.
+2. **Distribuição**: 3 cartas para cada time, alternando, saindo do baralho. Na versão atual, as cartas do jogador voam de costas até a mão e viram ao chegar; as do oponente vão de costas até o cartão dele (`components/game/deal-layer.tsx`). Durante a distribuição o relógio fica parado.
 3. **O Terrorista começa.**
 
 ### Um turno
@@ -218,12 +220,12 @@ Detalhes em [`docs/ONLINE.md`](ONLINE.md).
 
 ---
 
-## 11. Interface e apresentação (versão atual, 2D)
+## 11. Interface e apresentação (versão atual)
 
 - **Estilo visual "noir"**: ilustração plana com luz de recorte colorida. Cores dos times: Militar em **azul** (`policePalette`, rim `#86e3ff`) e Terrorista em **vermelho** (`factionPalette`, rim `#ff8197`), em `components/art/palette.ts`.
 - **Personagens**: 4 operadores em SVG (2 por time) em `public/art/characters/`, recoloridos na paleta de cada time.
 - **Cartas**: desenhadas em SVG (`components/art/noir-card.tsx`, arte dos itens em `components/art/items.tsx`).
-- **Câmera**: a mesa de cartas é um plano 3D em CSS (`components/game/board-stage.tsx`) com enquadramentos (geral, minhas cartas, inimigo), zoom e rotação. O mapa e a roleta ficam em painéis ao lado (`map-board.tsx`, `roulette-board.tsx`), com o minimapa.
+- **Câmera**: a mesa de cartas é um plano inclinado em CSS (`components/game/board-stage.tsx`) com enquadramentos (geral, minhas cartas, inimigo), zoom e rotação. O mapa e a roleta ficam em painéis ao lado (`map-board.tsx`, `roulette-board.tsx`), com o minimapa.
 - **Efeitos de combate** (`components/game/combat-fx.tsx`, tempos em `game/card-fx.ts`): voo da carta até o mapa, tiros, granada, fogo, fumaça, clarão da flash, explosão da C4 com tremor de tela.
 - **HUD**: cartão de cada jogador (vida, posição, efeitos ativos), cronômetro e rodada, painel da bomba, mão embaixo, seletor de ação. Quem só assiste a vez do oponente vê "Aguarde · <nome> está jogando" e o slot sorteado só com o contorno, sem instruções.
 - **Som**: efeitos (`pistol`, `rifle`, `sniper`, `deagle`, `grenade`, `flashbang`, `smoke`, `fire`, `bomb-*`, `dice-*`) e música (menu calmo; guerra na partida; versão acelerada com a bomba). Arquivos em `public/audio/`, motor em `lib/game-audio.ts`.
@@ -248,14 +250,33 @@ Detalhes em [`docs/ONLINE.md`](ONLINE.md).
 | `game/useBot.ts`, `game/useSetupGame.ts`, `game/useGameSounds.ts` | BOT com pausas, lobby, sons | React |
 | `lib/server/` | Servidor online (partida, salas, amigos, contas) | Não |
 | `lib/online/` | Cliente online (API, tempo real, motor online) | React |
-| `components/` | Toda a parte visual 2D | Sim |
+| `components/` | Toda a parte visual | Sim |
 | `app/` | Páginas (menu, partida online, tutorial, cartas, tabuleiro) e rotas da API | Sim |
 
-**Ponto importante para uma nova versão:** tudo de `game/` (menos os `use*.ts`), `lib/game-helpers.tsx`, `lib/card-catalog.ts` e `lib/server/` é **TypeScript puro, sem nada de tela**. O reducer recebe o estado e uma ação e devolve o novo estado. Dá para reaproveitar inteiro numa versão 3D feita em JavaScript/TypeScript (por exemplo Three.js / React Three Fiber), inclusive o online, que já usa esse mesmo reducer no servidor. Numa engine de outra linguagem (Unity, Godot), essas regras precisam ser reescritas usando este documento e o código como referência, e o servidor online teria de ser adaptado ou refeito.
+**Regras sem tela:** tudo de `game/` (menos os `use*.ts`), `lib/game-helpers.tsx`, `lib/card-catalog.ts` e `lib/server/` é TypeScript puro, sem nada visual. O reducer recebe o estado e uma ação e devolve o novo estado; o servidor online usa esse mesmo reducer. A parte visual inteira fica em `components/` e `app/`.
 
 ---
 
-## 13. Decisões já tomadas (para manter)
+## 13. O que é regra e o que é apresentação
+
+| É regra do jogo (a ideia) | É só a apresentação atual (pode ser feita de outro jeito) |
+|---|---|
+| Dois times, 10 de vida, Terrorista começa, Militar fecha a rodada | Os times aparecem como cartões com retrato no topo da tela |
+| Cada turno: **ou** se posicionar **ou** posicionar carta | A escolha é feita em dois cartões grandes ("Posicionar carta" / "Se posicionar") |
+| A posição é base ou um dos sites A, B, C; confronto = mesmo site | Mapa tático desenhado, minimapa, peões |
+| O dado sorteia um dos **6 slots** do jogador; a roleta sorteia um site diferente do atual | Dado com física rolando sobre a mesa; roleta numa mesa própria |
+| Slot vazio recebe uma carta da mão; slot com carta pode ser jogado ou mantido | Slots desenhados numa mesa de cartas; arrastar ou clicar |
+| Mão de até 3 cartas, uma compra por turno | Baralho clicável na mesa; mão aberta embaixo da tela |
+| Efeitos e números das cartas, bomba, Smoke, fogo, Flashbang, vitória | Animações de tiros, granada, fumaça, fogo, clarão e explosão |
+| Limites de tempo por turno e o que acontece quando o tempo acaba | Banner de "vez de", contagem na HUD, pausas de 3 s entre ações (servem para dar tempo das animações) |
+| Cartas ocultas: o oponente não sabe suas cartas até você jogar | Cartas de costas nos slots |
+| Quem não está na vez só observa | Aviso "Aguarde · <nome> está jogando" |
+
+A **distribuição inicial**, a **câmera**, a **mesa** e as **pausas** existem para apresentar o jogo; o que não pode mudar sem mudar o jogo são as regras da coluna da esquerda.
+
+---
+
+## 14. Decisões já tomadas (para manter)
 
 Coisas definidas durante o desenvolvimento que podem não ser óbvias só pelo código:
 
@@ -270,15 +291,3 @@ Coisas definidas durante o desenvolvimento que podem não ser óbvias só pelo c
 - **Quem assiste** a vez do oponente não recebe instruções de jogada, só o aviso de aguardar.
 - **Música da bomba** acelera a cada rodada até a explosão.
 - **Online**: o servidor é a fonte da verdade; a interface prevê a jogada para não ter atraso; abandono dá W.O. em 60 s.
-
----
-
-## 14. Para uma versão 3D: o que precisa ser decidido
-
-Estas respostas não estão no código e mudam o caminho:
-
-1. **Tecnologia**: dentro deste mesmo site (Three.js / React Three Fiber, reaproveitando `game/`, `lib/server/`, contas e online) ou numa engine separada (Unity, Godot, com regras e online refeitos)?
-2. **Modelos e arte 3D**: personagens (hoje SVG 2D), armas, mesa, mapa e bombsites, efeitos. De onde vêm (comprados, gerados, feitos sob medida)?
-3. **O que mudar na apresentação**: continua um jogo de mesa (cartas sobre uma mesa 3D, peões no mapa) ou os operadores aparecem andando pelos bombsites?
-4. **O que manter**: as regras ficam iguais? O online, as contas, a Steam, o menu e as configurações migram?
-5. **Plataforma alvo**: navegador, desktop/Steam, celular? Isso define o peso aceitável dos modelos e a qualidade gráfica.
